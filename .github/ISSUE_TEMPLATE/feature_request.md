@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest an idea for @earsyntax/blackbox
+about: Suggest an idea for the earsyntax toolkit
 title: '[feature] '
 labels: enhancement
 assignees: ''

@@ -45,15 +45,8 @@ env:
   NODE_VERSION: 22.x
 
 jobs:
-  release-e2e:
-    name: Release E2E Gate
-    uses: ./.github/workflows/e2e-release.yml
-    with:
-      target_branch: ${{ github.event.inputs.target_branch }}
-
   tag-version:
     name: Version & Tag
-    needs: [release-e2e]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

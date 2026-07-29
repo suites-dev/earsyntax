@@ -63,11 +63,6 @@ jobs:
       - name: Build
         run: pnpm build
 
-      # Hard gate: fail before publish if any catalog:/workspace: specifier
-      # would ship verbatim (lerna's blind spot; pnpm publish resolves them).
-      - name: Check packed specifiers
-        run: pnpm check:packed
-
       - name: Capture versions for report
         run: |
           echo "## Publishing to npm" >> $GITHUB_STEP_SUMMARY

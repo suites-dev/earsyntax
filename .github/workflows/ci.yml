@@ -8,39 +8,14 @@ on:
 
 permissions:
   contents: read
-  checks: write
 
 env:
   PNPM_VERSION: 9.15.4
   NODE_VERSION: 22.x
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
   lint:
-    name: Lint & Format
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -60,11 +35,32 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint (packages)
-        run: pnpm -r --filter './packages/**' lint
+      - name: Lint
+        run: pnpm lint
 
-      - name: Format check (packages)
-        run: pnpm prettier --check "packages/**/*.{ts,cjs,json,md}"
+  format:
+    name: Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
 
   typecheck:
     name: Typecheck
@@ -93,17 +89,33 @@ jobs:
       - name: Typecheck (tests)
         run: pnpm typecheck:tests
 
-  unit:
-    name: Unit Tests (${{ matrix.package }})
+  build:
+    name: Build
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        package:
-          - blackbox
-          - blackbox-features
-          - blackbox-coverage
-          - blackbox-otel-static
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -123,20 +135,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test
-        run: >
-          pnpm --filter "./packages/${{ matrix.package }}" test --
-          --reporter=verbose
-          --reporter=junit
-          --outputFile.junit=./junit.xml
-
-      - name: Publish test results
-        if: always()
-        uses: dorny/test-reporter@v2
-        with:
-          name: Unit Tests (${{ matrix.package }})
-          path: packages/${{ matrix.package }}/junit.xml
-          reporter: java-junit
-          fail-on-error: true
+        run: pnpm test
 
   deps:
     name: Dependency Boundaries
@@ -161,33 +160,3 @@ jobs:
 
       - name: Check dependency boundaries
         run: pnpm check:deps
-
-  smoke:
-    name: Smoke Tests
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-
-      - name: Setup Node
-        uses: actions/setup-node@v6
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build OTEL bootstrap image
-        run: pnpm build:otel-image
-
-      - name: Build
-        run: pnpm build
-
-      - name: Smoke tests
-        run: pnpm test

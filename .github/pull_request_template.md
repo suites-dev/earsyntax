@@ -22,7 +22,6 @@ Types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
 - [ ] `pnpm lint` and `pnpm typecheck` pass
 - [ ] `pnpm build` succeeds
 - [ ] Tests added or updated where relevant
-- [ ] For packaging changes: `pnpm check:packed` passes
 
 ## Notes for reviewers
 

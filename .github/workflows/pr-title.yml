@@ -2,7 +2,7 @@ name: PR Title
 
 # Enforces a Conventional Commits prefix on every pull request title, e.g.
 #   feat(core): add catalog glob matcher
-#   fix(runners/bdd): resolve catalog source for scenario specs
+#   fix(extract): resolve markdown table extraction
 # PR titles become the squash-merge commit subject, which lerna reads for
 # conventional versioning, so the title must be prefixed.
 
@@ -40,8 +40,8 @@ jobs:
             ci
             chore
             revert
-          # Scopes are optional and free-form (e.g. core, drivers,
-          # runners/playwright, runners/bdd, otel.bootstrap).
+          # Scopes are optional and free-form (e.g. core, extract, cli,
+          # cli-contract).
           requireScope: false
           # Subject must not start with an uppercase letter.
           subjectPattern: ^(?![A-Z]).+$

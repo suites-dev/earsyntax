@@ -9,13 +9,6 @@ updates:
       prefix: chore
       include: scope
     groups:
-      opentelemetry:
-        patterns:
-          - '@opentelemetry/*'
-      testcontainers:
-        patterns:
-          - 'testcontainers'
-          - '@testcontainers/*'
       eslint:
         patterns:
           - 'eslint'
