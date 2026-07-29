@@ -33,6 +33,9 @@
     "verify": "pnpm build && pnpm test",
     "prepack": "pnpm build"
   },
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@earsyntax/core": "workspace:*"
   },
