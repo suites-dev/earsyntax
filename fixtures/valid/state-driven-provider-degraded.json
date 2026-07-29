@@ -1,0 +1,19 @@
+{
+  "id": "VAL-005",
+  "text": "While the payment provider is degraded, the billing service shall reduce the webhook batch size.",
+  "expected": {
+    "valid": true,
+    "pattern": "state-driven",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "state-driven",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "reduce the webhook batch size"
+    ]
+  }
+}

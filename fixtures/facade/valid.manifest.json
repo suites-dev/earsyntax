@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "checkout-webhooks",
+  "mode": "convert",
+  "status": "valid",
+  "source": {
+    "path": "specs/checkout.md",
+    "hash": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+    "kind": "markdown"
+  },
+  "output": {
+    "path": ".earsyntax/work/checkout-webhooks/requirements.ears",
+    "hash": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+  },
+  "artifacts": {
+    "questions": ".earsyntax/work/checkout-webhooks/questions.md",
+    "traceability": ".earsyntax/work/checkout-webhooks/traceability.json",
+    "validationJson": ".earsyntax/work/checkout-webhooks/validation.json",
+    "validationMarkdown": ".earsyntax/work/checkout-webhooks/validation.md"
+  },
+  "createdAt": "2026-07-28T10:00:00.000Z",
+  "updatedAt": "2026-07-28T10:15:00.000Z"
+}

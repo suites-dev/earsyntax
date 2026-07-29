@@ -1,0 +1,35 @@
+{
+  "id": "INV-014",
+  "text": "The BFF shall verify the HMAC signature.",
+  "catalog": {
+    "systems": [
+      {
+        "id": "SYS-BILLING",
+        "name": "billing service",
+        "aliases": [
+          "BFF"
+        ]
+      },
+      {
+        "id": "SYS-BACKEND",
+        "name": "backend for frontend",
+        "aliases": [
+          "BFF"
+        ]
+      }
+    ]
+  },
+  "options": {
+    "mode": "strict"
+  },
+  "expected": {
+    "valid": false,
+    "pattern": "ubiquitous",
+    "diagnostics": [
+      {
+        "code": "catalog.system_ambiguous",
+        "severity": "error"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "VAL-028",
+  "text": "The billing service shall verify the HMAC signature; reject invalid webhooks.",
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [
+      {
+        "code": "lint.multiple_responses",
+        "severity": "warning"
+      }
+    ],
+    "ast": {
+      "pattern": "ubiquitous",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "verify the HMAC signature",
+      "reject invalid webhooks"
+    ]
+  }
+}

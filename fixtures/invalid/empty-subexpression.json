@@ -1,0 +1,13 @@
+{
+  "id": "INV-012",
+  "text": "When a payment webhook is received and (), the billing service shall verify the HMAC signature.",
+  "expected": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "expr.empty_subexpression",
+        "severity": "error"
+      }
+    ]
+  }
+}

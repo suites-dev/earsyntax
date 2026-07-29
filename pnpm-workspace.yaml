@@ -1,0 +1,44 @@
+packages:
+  - 'packages/**'
+
+catalog:
+  # TypeScript
+  typescript: ~5.7.3
+
+  # Node types
+  '@types/node': ^22.13.0
+
+  # ESLint (Flat Config)
+  eslint: ^9.19.0
+  '@eslint/js': ^9.19.0
+  typescript-eslint: ^8.22.0
+  '@typescript-eslint/eslint-plugin': ^8.22.0
+  '@typescript-eslint/parser': ^8.22.0
+  # Pinned exact: 10.1.6 and 10.1.7 were compromised in the 2025 npm
+  # supply-chain attack. Do not widen to a caret range that includes them.
+  eslint-config-prettier: 10.1.8
+  eslint-plugin-import-x: ^4.6.1
+  eslint-plugin-unicorn: ^57.0.0
+  globals: ^15.14.0
+
+  # Code quality
+  dependency-cruiser: ^16.9.0
+  prettier: ^3.4.2
+
+  # Release tooling
+  lerna: ^8.2.3
+  husky: ^9.1.7
+  lint-staged: ^15.5.2
+  '@commitlint/cli': ^19.8.1
+  '@commitlint/config-conventional': ^19.8.1
+
+  # Utilities
+  rimraf: ^6.0.1
+
+  # Unit testing
+  vitest: ^3.0.5
+  vite-tsconfig-paths: ^5.1.4
+
+  # Library runtime deps (used by @earsyntax/extract for YAML input parsing)
+  js-yaml: ^4.1.0
+  '@types/js-yaml': ^4.0.9

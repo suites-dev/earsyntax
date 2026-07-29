@@ -1,0 +1,13 @@
+{
+  "id": "INV-010",
+  "text": "When a payment webhook is received or or a refund is requested, the billing service shall open a dispute case.",
+  "expected": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "expr.invalid_operator_sequence",
+        "severity": "error"
+      }
+    ]
+  }
+}

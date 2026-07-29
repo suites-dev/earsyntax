@@ -1,0 +1,31 @@
+{
+  "id": "VAL-032",
+  "text": "While the payment provider is available, where dunning management is enabled, when a payment is declined, the billing service shall retry the charge.",
+  "expected": {
+    "valid": true,
+    "pattern": "complex",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "complex",
+      "preconditions": {
+        "kind": "term",
+        "text": "the payment provider is available"
+      },
+      "feature": {
+        "kind": "term",
+        "text": "dunning management is enabled"
+      },
+      "trigger": {
+        "kind": "term",
+        "text": "a payment is declined"
+      },
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "retry the charge"
+    ]
+  }
+}

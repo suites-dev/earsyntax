@@ -1,0 +1,36 @@
+{
+  "id": "VAL-026",
+  "text": "The BFF shall verify the HMAC signature.",
+  "catalog": {
+    "systems": [
+      {
+        "id": "SYS-BILLING",
+        "name": "billing service",
+        "aliases": [
+          "BFF"
+        ]
+      }
+    ]
+  },
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [
+      {
+        "code": "lint.alias_used",
+        "severity": "warning"
+      }
+    ],
+    "ast": {
+      "pattern": "ubiquitous",
+      "system": {
+        "raw": "BFF",
+        "role": "system",
+        "viaAlias": true
+      }
+    },
+    "responses": [
+      "verify the HMAC signature"
+    ]
+  }
+}

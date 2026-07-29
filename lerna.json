@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "version": "independent",
+  "npmClient": "pnpm",
+  "packages": [
+    "packages/*"
+  ],
+  "command": {
+    "version": {
+      "allowBranch": [
+        "master",
+        "next"
+      ],
+      "message": "chore(release): version packages [skip ci]",
+      "conventionalCommits": true
+    },
+    "publish": {
+      "allowBranch": [
+        "master",
+        "next"
+      ],
+      "registry": "https://registry.npmjs.org/",
+      "conventionalCommits": true
+    }
+  }
+}

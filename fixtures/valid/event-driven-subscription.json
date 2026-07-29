@@ -1,0 +1,19 @@
+{
+  "id": "VAL-009",
+  "text": "When a subscription is canceled, the billing service shall stop future invoicing.",
+  "expected": {
+    "valid": true,
+    "pattern": "event-driven",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "event-driven",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "stop future invoicing"
+    ]
+  }
+}

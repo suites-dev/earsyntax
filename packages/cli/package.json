@@ -1,0 +1,48 @@
+{
+  "name": "@earsyntax/cli",
+  "version": "0.0.1-alpha.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Suites",
+  "description": "The earsyntax CLI facade for validating and authoring EARS requirements.",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "earsyntax": "./bin/run.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "predev": "pnpm rimraf dist tsconfig.build.tsbuildinfo",
+    "build": "pnpm tsc -p tsconfig.build.json",
+    "dev": "pnpm tsc -p tsconfig.build.json --watch --incremental",
+    "lint": "pnpm eslint \"src/**/*.ts\"",
+    "lint:fix": "pnpm eslint \"src/**/*.ts\" --fix",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@earsyntax/cli-contract": "workspace:*",
+    "@earsyntax/core": "workspace:*",
+    "@earsyntax/extract": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

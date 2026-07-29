@@ -1,0 +1,19 @@
+{
+  "id": "VAL-014",
+  "text": "If the payment is declined, then the billing service shall notify the customer.",
+  "expected": {
+    "valid": true,
+    "pattern": "unwanted-behaviour",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "unwanted-behaviour",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "notify the customer"
+    ]
+  }
+}

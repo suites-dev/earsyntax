@@ -1,0 +1,59 @@
+{
+  "id": "LIB-ifthen-valid",
+  "text": "If reverse thrust is commanded, then the engine control system shall enable reverse thrust.",
+  "options": {
+    "mode": "strict"
+  },
+  "catalog": {
+    "systems": [
+      {
+        "id": "SYS-ENGINE",
+        "name": "engine control system",
+        "aliases": [
+          "engine ctrl system"
+        ]
+      }
+    ],
+    "events": [
+      {
+        "id": "EVT-REV",
+        "name": "reverse thrust is commanded"
+      },
+      {
+        "id": "EVT-EMB",
+        "name": "emergency braking is active"
+      }
+    ],
+    "states": [
+      {
+        "id": "STATE-GROUND",
+        "name": "aircraft is on ground"
+      },
+      {
+        "id": "STATE-HYD",
+        "name": "hydraulic pressure is available"
+      }
+    ],
+    "features": [
+      {
+        "id": "FEAT-PREMIUM",
+        "name": "premium mode is enabled"
+      }
+    ]
+  },
+  "expected": {
+    "valid": true,
+    "pattern": "unwanted-behaviour",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "unwanted-behaviour",
+      "system": {
+        "role": "system",
+        "raw": "engine control system"
+      }
+    },
+    "responses": [
+      "enable reverse thrust"
+    ]
+  }
+}

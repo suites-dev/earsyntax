@@ -1,0 +1,25 @@
+{
+  "id": "VAL-022",
+  "text": "While not the retry queue is full, the billing service shall accept new events.",
+  "expected": {
+    "valid": true,
+    "pattern": "state-driven",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "state-driven",
+      "preconditions": {
+        "kind": "not",
+        "item": {
+          "kind": "term"
+        }
+      },
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "accept new events"
+    ]
+  }
+}

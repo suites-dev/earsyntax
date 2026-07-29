@@ -1,0 +1,19 @@
+{
+  "id": "VAL-019",
+  "text": "While the payment provider is unavailable, the billing service SHALL queue retryable events.",
+  "expected": {
+    "valid": true,
+    "pattern": "state-driven",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "state-driven",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "queue retryable events"
+    ]
+  }
+}

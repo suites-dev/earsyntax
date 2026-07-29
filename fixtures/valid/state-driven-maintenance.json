@@ -1,0 +1,19 @@
+{
+  "id": "VAL-006",
+  "text": "While the system is in maintenance mode, the billing service shall reject incoming webhooks.",
+  "expected": {
+    "valid": true,
+    "pattern": "state-driven",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "state-driven",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "reject incoming webhooks"
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "VAL-034",
+  "text": "While the payment provider is available and (the retry queue is not full or the system is in maintenance mode), when a payment webhook is received, the billing service shall verify the HMAC signature.",
+  "expected": {
+    "valid": true,
+    "pattern": "complex",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "complex",
+      "preconditions": {
+        "kind": "and",
+        "items": [
+          {
+            "kind": "term"
+          },
+          {
+            "kind": "group"
+          }
+        ]
+      },
+      "trigger": {
+        "kind": "term",
+        "text": "a payment webhook is received"
+      },
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "verify the HMAC signature"
+    ]
+  }
+}

@@ -1,0 +1,15 @@
+REQ-001: The billing service shall verify the HMAC signature of every incoming webhook.
+REQ-002: The billing service shall retry failed webhook deliveries up to five times.
+REQ-003: The payment gateway shall record an audit log entry for every processed webhook.
+REQ-004: While the payment provider is unavailable, the billing service shall queue retryable events.
+REQ-005: While the system is in maintenance mode, the billing service shall reject incoming webhooks.
+REQ-006: When a payment webhook is received, the billing service shall verify the HMAC signature.
+REQ-007: When a refund is requested, the billing service shall issue a refund to the original payment method.
+REQ-008: When an invoice is finalized, the billing service shall send the invoice to the customer.
+REQ-009: Where dunning management is enabled, the billing service shall retry declined charges.
+REQ-010: Where tax calculation is enabled, the billing service shall add sales tax to each invoice.
+REQ-011: If the HMAC signature is invalid, then the billing service shall reject the webhook.
+REQ-012: If the payment is declined, then the billing service shall notify the customer.
+REQ-013: If the webhook timestamp is stale, then the billing service shall discard the event.
+REQ-014: While the payment provider is unavailable, when a payment webhook is received, the billing service shall queue the event for retry.
+REQ-015: When a payment webhook is received, if the HMAC signature is invalid, then the billing service shall reject the webhook.

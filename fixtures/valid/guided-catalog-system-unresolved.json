@@ -1,0 +1,19 @@
+{
+  "id": "VAL-040",
+  "text": "The reconciliation engine shall verify the HMAC signature.",
+  "options": {
+    "mode": "guided"
+  },
+  "catalog": {
+    "systems": [
+      { "id": "SYS-BILLING", "name": "billing service", "aliases": ["BFF"] }
+    ]
+  },
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [
+      { "code": "catalog.system_unresolved", "severity": "warning" }
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "VAL-030",
+  "text": "When a payment webhook is received and a refund is requested or a chargeback is received, the billing service shall open a dispute case.",
+  "expected": {
+    "valid": true,
+    "pattern": "event-driven",
+    "diagnostics": [
+      {
+        "code": "expr.operator_precedence_warning",
+        "severity": "warning"
+      }
+    ],
+    "ast": {
+      "pattern": "event-driven",
+      "trigger": {
+        "kind": "or",
+        "items": [
+          {
+            "kind": "and"
+          },
+          {
+            "kind": "term"
+          }
+        ]
+      },
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "open a dispute case"
+    ]
+  }
+}

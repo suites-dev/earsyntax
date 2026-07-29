@@ -1,0 +1,51 @@
+{
+  "version": "0.1.0",
+  "command": "instructions review",
+  "ok": true,
+  "root": "/repo",
+  "mode": "review",
+  "work": {
+    "id": "checkout-webhooks",
+    "status": "valid",
+    "source": "specs/checkout.md",
+    "output": ".earsyntax/work/checkout-webhooks/requirements.ears",
+    "questions": ".earsyntax/work/checkout-webhooks/questions.md",
+    "traceability": ".earsyntax/work/checkout-webhooks/traceability.json"
+  },
+  "rules": [
+    "Present a review summary before recommending acceptance; do not accept on the human's behalf.",
+    "Report how many requirements were generated and the distribution across the six EARS patterns.",
+    "List every unresolved question in questions.md and the requirements each one blocks.",
+    "State the validation status and the exact command that produced it.",
+    "Call out source lines translated with medium or low confidence.",
+    "Call out any source behavior that was intentionally not converted, with the reason.",
+    "Recommend acceptance only when validation is clean and no blocking questions remain."
+  ],
+  "format": {
+    "line": "REQ-001 [source: specs/checkout.md:7]: When a payment webhook is received, the billing service shall verify the HMAC signature.",
+    "allowedPatterns": [
+      "The <system> shall <response>.",
+      "When <trigger>, the <system> shall <response>.",
+      "While <state>, the <system> shall <response>.",
+      "Where <feature>, the <system> shall <response>.",
+      "If <condition>, then the <system> shall <response>."
+    ],
+    "metadataPrefixes": [
+      "REQ-001:",
+      "REQ-001 [source: path:line]:",
+      "REQ-001 [source: path:line-line]:"
+    ]
+  },
+  "next": [
+    {
+      "command": "earsyntax show checkout-webhooks --artifact questions --json",
+      "reason": "Read the open questions the human must resolve before acceptance.",
+      "forAgent": true
+    },
+    {
+      "command": "earsyntax accept checkout-webhooks --by \"omer\"",
+      "reason": "Record human acceptance once the reviewer approves.",
+      "blocking": true
+    }
+  ]
+}

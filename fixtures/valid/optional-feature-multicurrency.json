@@ -1,0 +1,19 @@
+{
+  "id": "VAL-012",
+  "text": "Where multi-currency is enabled, the billing service shall convert charges to the customer currency.",
+  "expected": {
+    "valid": true,
+    "pattern": "optional-feature",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "optional-feature",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "convert charges to the customer currency"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "VAL-029",
+  "text": "The billing service shall verify the HMAC signature. Additional operator notes follow here.",
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [
+      {
+        "code": "lint.unparsed_tail",
+        "severity": "warning"
+      }
+    ],
+    "ast": {
+      "pattern": "ubiquitous",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "verify the HMAC signature"
+    ]
+  }
+}

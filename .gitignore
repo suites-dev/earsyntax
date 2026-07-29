@@ -1,0 +1,41 @@
+node_modules
+.DS_Store
+
+# build outputs
+dist
+**/dist
+*.tsbuildinfo
+*.tsbuildinfo.*
+
+# eslint cache
+.eslintcache
+
+# test outputs
+test-results
+.tarballs
+.baselines/*.json
+
+# package managers
+# pnpm-lock.yaml is committed; package-lock.json is the legacy npm artifact, ignore it
+package-lock.json
+
+# env
+.env
+.env.local
+.env.*.local
+
+# misc
+.DS_Store
+
+*.js.map
+*.d.ts.map
+
+knowledgebase
+poc
+.claude
+.claire
+research
+.idea
+*.zip
+.baseline
+/worktrees/

@@ -1,0 +1,13 @@
+{
+  "id": "INV-008",
+  "text": "Payment webhooks are important for billing accuracy.",
+  "expected": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "ears.no_match",
+        "severity": "error"
+      }
+    ]
+  }
+}

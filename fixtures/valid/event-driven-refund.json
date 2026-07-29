@@ -1,0 +1,19 @@
+{
+  "id": "VAL-008",
+  "text": "When a refund is requested, the billing service shall issue a refund to the original payment method.",
+  "expected": {
+    "valid": true,
+    "pattern": "event-driven",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "event-driven",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "issue a refund to the original payment method"
+    ]
+  }
+}

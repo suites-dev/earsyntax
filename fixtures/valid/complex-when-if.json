@@ -1,0 +1,27 @@
+{
+  "id": "VAL-033",
+  "text": "When a payment webhook is received, if the HMAC signature is invalid, then the billing service shall reject the webhook.",
+  "expected": {
+    "valid": true,
+    "pattern": "complex",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "complex",
+      "trigger": {
+        "kind": "term",
+        "text": "a payment webhook is received"
+      },
+      "unwanted": {
+        "kind": "term",
+        "text": "the HMAC signature is invalid"
+      },
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": [
+      "reject the webhook"
+    ]
+  }
+}

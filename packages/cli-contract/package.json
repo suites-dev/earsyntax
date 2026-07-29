@@ -1,0 +1,46 @@
+{
+  "name": "@earsyntax/cli-contract",
+  "version": "0.0.1-alpha.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "author": "Suites",
+  "description": "Shared report output contracts (JSON/SARIF) for ears-lint.",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "predev": "pnpm rimraf dist tsconfig.build.tsbuildinfo",
+    "build": "pnpm tsc -p tsconfig.build.json",
+    "dev": "pnpm tsc -p tsconfig.build.json --watch --incremental",
+    "lint": "pnpm eslint \"src/**/*.ts\"",
+    "lint:fix": "pnpm eslint \"src/**/*.ts\" --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "boundaries": "depcruise src --config .dependency-cruiser.cjs",
+    "verify": "pnpm build && pnpm test",
+    "prepack": "pnpm build"
+  },
+  "dependencies": {
+    "@earsyntax/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "dependency-cruiser": "catalog:",
+    "rimraf": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

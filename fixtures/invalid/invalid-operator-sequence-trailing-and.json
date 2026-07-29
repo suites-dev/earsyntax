@@ -1,0 +1,16 @@
+{
+  "id": "INV-011",
+  "text": "While the payment provider is available and, when a payment webhook is received, the billing service shall verify the HMAC signature.",
+  "options": {
+    "commaAsAnd": true
+  },
+  "expected": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "expr.invalid_operator_sequence",
+        "severity": "error"
+      }
+    ]
+  }
+}

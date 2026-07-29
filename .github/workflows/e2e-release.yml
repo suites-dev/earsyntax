@@ -1,0 +1,118 @@
+name: E2E Release Simulation
+
+env:
+  CI: true
+
+on:
+  workflow_call:
+    inputs:
+      target_branch:
+        description: 'Branch to simulate release from'
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      target_branch:
+        description: 'Branch to simulate release from'
+        required: true
+        type: string
+        default: 'next'
+
+permissions:
+  contents: read
+
+env:
+  PNPM_VERSION: 9.15.4
+  NODE_VERSION: 22.x
+  REGISTRY_URL: http://localhost:4873
+
+jobs:
+  release-e2e:
+    name: Packed-artifact E2E via Verdaccio
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.ref || inputs.target_branch }}
+          fetch-depth: 0
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # Validates the core packaging guarantee before we even publish: no
+      # catalog:/workspace: specifier survives into the packed manifests.
+      - name: Check packed specifiers
+        run: pnpm check:packed
+
+      - name: Start Verdaccio
+        run: |
+          docker run -d --name verdaccio \
+            -p 4873:4873 \
+            -v ${{ github.workspace }}/.github/verdaccio/config.yaml:/verdaccio/conf/config.yaml \
+            verdaccio/verdaccio
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:4873/-/ping >/dev/null; then
+              echo "Verdaccio is up"; break
+            fi
+            sleep 2
+          done
+
+      - name: Configure registry auth
+        run: |
+          cat >> .npmrc <<'EOF'
+          @earsyntax:registry=http://localhost:4873/
+          //localhost:4873/:_authToken=blackbox-e2e
+          EOF
+
+      # Verdaccio has no OIDC; provenance would fail. Strip it for the
+      # simulation only (the real publish workflow keeps it).
+      - name: Strip provenance for simulation
+        run: |
+          sudo apt-get install -y jq
+          for f in packages/*/package.json; do
+            jq 'del(.publishConfig.provenance)' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+          done
+
+      - name: Publish packages to Verdaccio
+        run: pnpm -r --filter './packages/**' publish --no-git-checks --registry http://localhost:4873/
+
+      - name: Capture released version
+        id: ver
+        run: echo "version=$(node -p "require('./packages/blackbox/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # Materialize a catalog-free consumer (npm has no catalog: support) and
+      # install the just-published tarballs from Verdaccio with plain npm.
+      - name: Prepare release consumer
+        run: node scripts/prepare-release-consumer.mjs /tmp/release-consumer ${{ steps.ver.outputs.version }}
+
+      - name: Install consumer from Verdaccio
+        working-directory: /tmp/release-consumer
+        run: npm install --no-audit --no-fund
+
+      - name: Run e2e against published packages
+        working-directory: /tmp/release-consumer
+        run: npx playwright test --config ./playwright.config.ts
+
+      - name: Upload consumer report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-e2e-report
+          path: /tmp/release-consumer/.playwright-report/
+          if-no-files-found: ignore
