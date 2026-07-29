@@ -6,8 +6,17 @@ import { extractFromContent, extractFromFile } from './dispatch.js';
 
 describe('extractFromContent', () => {
   it('routes .ears content to the ears extractor', () => {
-    const { items } = extractFromContent('REQ-001: The billing service shall verify signatures.', 'requirements.ears');
-    expect(items).toEqual([{ id: 'REQ-001', text: 'The billing service shall verify signatures.', source: { file: 'requirements.ears', line: 1 } }]);
+    const { items } = extractFromContent(
+      'REQ-001: The billing service shall verify signatures.',
+      'requirements.ears',
+    );
+    expect(items).toEqual([
+      {
+        id: 'REQ-001',
+        text: 'The billing service shall verify signatures.',
+        source: { file: 'requirements.ears', line: 1 },
+      },
+    ]);
   });
 
   it('routes .md and .markdown content to the markdown extractor', () => {
@@ -17,13 +26,15 @@ describe('extractFromContent', () => {
   });
 
   it('routes .yaml and .yml content to the yaml extractor', () => {
-    const yaml = 'requirements:\n  - id: REQ-001\n    text: The billing service shall verify signatures.\n';
+    const yaml =
+      'requirements:\n  - id: REQ-001\n    text: The billing service shall verify signatures.\n';
     expect(extractFromContent(yaml, 'reqs.yaml').items[0].id).toBe('REQ-001');
     expect(extractFromContent(yaml, 'reqs.yml').items[0].id).toBe('REQ-001');
   });
 
   it('routes .json content to the json extractor', () => {
-    const json = '{ "requirements": [ { "id": "REQ-001", "text": "The billing service shall verify signatures." } ] }';
+    const json =
+      '{ "requirements": [ { "id": "REQ-001", "text": "The billing service shall verify signatures." } ] }';
     expect(extractFromContent(json, 'reqs.json').items[0].id).toBe('REQ-001');
   });
 
@@ -54,7 +65,13 @@ describe('extractFromFile', () => {
     const { items, errors } = extractFromFile(path);
 
     expect(errors).toEqual([]);
-    expect(items).toEqual([{ id: 'REQ-001', text: 'The billing service shall verify signatures.', source: { file: path, line: 1 } }]);
+    expect(items).toEqual([
+      {
+        id: 'REQ-001',
+        text: 'The billing service shall verify signatures.',
+        source: { file: path, line: 1 },
+      },
+    ]);
   });
 
   it('reports a read error for a missing file rather than throwing', () => {

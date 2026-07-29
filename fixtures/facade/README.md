@@ -26,17 +26,17 @@ Each manifest pins the `WorkManifest` shape at one `WorkStatus` state. They shar
 
 Each pins the `instructions <mode> --json` response for one mode. Every `next[]` entry is a real `earsyntax` command from the facade contract.
 
-| File                        | Pins                                                                                                              |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `instructions-author.json`  | Author mode: no `source` block, rules forbid inventing behavior beyond the prompt.                                |
-| `instructions-convert.json` | Convert mode: a `source` block with hash and excerpts, full convert rule set.                                     |
-| `instructions-repair.json`  | Repair mode: a `diagnostics` array the repair must address, rules keyed to the reported codes.                    |
-| `instructions-review.json`  | Review mode: review-summary rules, `next[]` points at reading questions and recording acceptance.                 |
+| File                        | Pins                                                                                              |
+| --------------------------- | ------------------------------------------------------------------------------------------------- |
+| `instructions-author.json`  | Author mode: no `source` block, rules forbid inventing behavior beyond the prompt.                |
+| `instructions-convert.json` | Convert mode: a `source` block with hash and excerpts, full convert rule set.                     |
+| `instructions-repair.json`  | Repair mode: a `diagnostics` array the repair must address, rules keyed to the reported codes.    |
+| `instructions-review.json`  | Review mode: review-summary rules, `next[]` points at reading questions and recording acceptance. |
 
 ## Other responses
 
-| File                     | Pins                                                                                                        |
-| ------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| File                     | Pins                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------ |
 | `traceability.json`      | The `TraceabilityFile` shape: requirement traces with source lines and confidence, plus a blocking question. |
 | `validate.response.json` | A `validate --json` response with one error result, one warning result, and a `work` summary; `ok` is false. |
-| `status.response.json`   | A `status --json` response for a `valid` work item, with review and accept as next actions.                 |
+| `status.response.json`   | A `status --json` response for a `valid` work item, with review and accept as next actions.                  |

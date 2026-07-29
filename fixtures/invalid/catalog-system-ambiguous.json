@@ -6,16 +6,12 @@
       {
         "id": "SYS-BILLING",
         "name": "billing service",
-        "aliases": [
-          "BFF"
-        ]
+        "aliases": ["BFF"]
       },
       {
         "id": "SYS-BACKEND",
         "name": "backend for frontend",
-        "aliases": [
-          "BFF"
-        ]
+        "aliases": ["BFF"]
       }
     ]
   },

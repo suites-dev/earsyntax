@@ -6,9 +6,7 @@
       {
         "id": "SYS-BILLING",
         "name": "billing service",
-        "aliases": [
-          "BFF"
-        ]
+        "aliases": ["BFF"]
       }
     ]
   },
@@ -29,8 +27,6 @@
         "viaAlias": true
       }
     },
-    "responses": [
-      "verify the HMAC signature"
-    ]
+    "responses": ["verify the HMAC signature"]
   }
 }

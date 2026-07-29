@@ -58,7 +58,9 @@ export function requireRoot(cwd: string): string {
 
 /** Load config from an explicit path or the project's `.earsyntax/config.json`. */
 export function loadConfig(root: string, explicitPath?: string): EarsyntaxConfig {
-  const path = explicitPath ? resolve(root, explicitPath) : resolve(earsyntaxDir(root), 'config.json');
+  const path = explicitPath
+    ? resolve(root, explicitPath)
+    : resolve(earsyntaxDir(root), 'config.json');
   let raw: string;
   try {
     raw = readFileSync(path, 'utf8');
@@ -78,7 +80,9 @@ export function loadConfig(root: string, explicitPath?: string): EarsyntaxConfig
   return {
     version: typeof obj.version === 'number' ? obj.version : 1,
     workDir: typeof obj.workDir === 'string' ? obj.workDir : '.earsyntax/work',
-    tools: Array.isArray(obj.tools) ? obj.tools.filter((t): t is string => typeof t === 'string') : [],
+    tools: Array.isArray(obj.tools)
+      ? obj.tools.filter((t): t is string => typeof t === 'string')
+      : [],
   };
 }
 

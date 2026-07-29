@@ -130,7 +130,12 @@ function tokenizeExpression(
     }
     if (c === '(') {
       depth++;
-      tokens.push({ kind: TokenKind.LParen, text: '(', start: baseOffset + i, end: baseOffset + i + 1 });
+      tokens.push({
+        kind: TokenKind.LParen,
+        text: '(',
+        start: baseOffset + i,
+        end: baseOffset + i + 1,
+      });
       i++;
       continue;
     }
@@ -143,12 +148,22 @@ function tokenizeExpression(
       } else {
         depth--;
       }
-      tokens.push({ kind: TokenKind.RParen, text: ')', start: baseOffset + i, end: baseOffset + i + 1 });
+      tokens.push({
+        kind: TokenKind.RParen,
+        text: ')',
+        start: baseOffset + i,
+        end: baseOffset + i + 1,
+      });
       i++;
       continue;
     }
     if (c === ',') {
-      tokens.push({ kind: TokenKind.Comma, text: ',', start: baseOffset + i, end: baseOffset + i + 1 });
+      tokens.push({
+        kind: TokenKind.Comma,
+        text: ',',
+        start: baseOffset + i,
+        end: baseOffset + i + 1,
+      });
       i++;
       continue;
     }
@@ -156,7 +171,15 @@ function tokenizeExpression(
     const start = i;
     while (i < raw.length) {
       const x = raw[i];
-      if (x === ' ' || x === '\t' || x === '\n' || x === '\r' || x === '(' || x === ')' || x === ',') {
+      if (
+        x === ' ' ||
+        x === '\t' ||
+        x === '\n' ||
+        x === '\r' ||
+        x === '(' ||
+        x === ')' ||
+        x === ','
+      ) {
         break;
       }
       i++;

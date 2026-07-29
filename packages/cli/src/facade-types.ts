@@ -50,13 +50,7 @@ export type WorkMode = 'author' | 'convert';
 
 /** The lifecycle state of a work item. */
 export type WorkStatus =
-  | 'missing'
-  | 'scaffolded'
-  | 'drafted'
-  | 'invalid'
-  | 'valid'
-  | 'accepted'
-  | 'stale';
+  'missing' | 'scaffolded' | 'drafted' | 'invalid' | 'valid' | 'accepted' | 'stale';
 
 /** How a source file was classified for extraction. */
 export type SourceKind = 'markdown' | 'yaml' | 'json' | 'text' | 'prompt';

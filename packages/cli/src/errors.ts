@@ -28,11 +28,19 @@ export class CliError extends Error {
 }
 
 /** Build a usage/resolution error (exit 2). */
-export function usageError(code: string, message: string, extra?: Partial<FacadeDiagnostic>): CliError {
+export function usageError(
+  code: string,
+  message: string,
+  extra?: Partial<FacadeDiagnostic>,
+): CliError {
   return new CliError(2, { code, severity: 'error', message, ...extra });
 }
 
 /** Build a refusal error (exit 3): overwrite protection, stale source, confirmation required. */
-export function refusalError(code: string, message: string, extra?: Partial<FacadeDiagnostic>): CliError {
+export function refusalError(
+  code: string,
+  message: string,
+  extra?: Partial<FacadeDiagnostic>,
+): CliError {
   return new CliError(3, { code, severity: 'error', message, ...extra });
 }

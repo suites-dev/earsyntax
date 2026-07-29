@@ -92,9 +92,7 @@ describe('lintEars: clause expression trees', () => {
   });
 
   it('flags mixed and/or without grouping', () => {
-    const result = lintEars(
-      'When a or b and c, the billing service shall process the event.',
-    );
+    const result = lintEars('When a or b and c, the billing service shall process the event.');
     expect(codes(result.diagnostics)).toContain('expr.operator_precedence_warning');
   });
 });

@@ -10,7 +10,10 @@ import { buildResponse, emit } from '../response.js';
 import { CLI_VERSION, FEATURES } from '../version.js';
 
 export function versionCommand(context: CommandContext): number {
-  const response = buildResponse({ command: 'version', ok: true, next: [] }, { features: FEATURES });
+  const response = buildResponse(
+    { command: 'version', ok: true, next: [] },
+    { features: FEATURES },
+  );
 
   const pretty = context.args.booleans.has('features')
     ? [

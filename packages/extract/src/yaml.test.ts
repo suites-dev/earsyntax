@@ -29,7 +29,10 @@ describe('extractYaml', () => {
   });
 
   it('tolerates missing ids', () => {
-    const content = ['requirements:', '  - text: The billing service shall retain receipts for seven years.'].join('\n');
+    const content = [
+      'requirements:',
+      '  - text: The billing service shall retain receipts for seven years.',
+    ].join('\n');
 
     const { items, errors } = extractYaml(content);
 
@@ -41,9 +44,12 @@ describe('extractYaml', () => {
   });
 
   it('reports an error for an entry missing text but keeps the others', () => {
-    const content = ['requirements:', '  - id: REQ-001', '  - id: REQ-002', '    text: The billing service shall reject invalid webhooks.'].join(
-      '\n',
-    );
+    const content = [
+      'requirements:',
+      '  - id: REQ-001',
+      '  - id: REQ-002',
+      '    text: The billing service shall reject invalid webhooks.',
+    ].join('\n');
 
     const { items, errors } = extractYaml(content, 'requirements.yaml');
 
@@ -74,6 +80,9 @@ describe('extractYaml', () => {
   });
 
   it('returns no items for an empty document', () => {
-    expect(extractYaml('')).toEqual({ items: [], errors: [{ message: 'Expected a top-level "requirements" sequence.' }] });
+    expect(extractYaml('')).toEqual({
+      items: [],
+      errors: [{ message: 'Expected a top-level "requirements" sequence.' }],
+    });
   });
 });

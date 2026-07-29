@@ -98,7 +98,10 @@ describe('parseClauseExpression', () => {
   it('emits only invalid_operator_sequence for "X or or Y" (fixture INV-010)', () => {
     // Once an operator error truncates the parse, the follow-on unparsed tail
     // is suppressed so a single root cause yields a single finding.
-    const { findings } = parseClauseExpression('a webhook is received or or a refund is requested', 0);
+    const { findings } = parseClauseExpression(
+      'a webhook is received or or a refund is requested',
+      0,
+    );
     const codes = findings.map((f) => f.code);
     expect(codes).toContain('expr.invalid_operator_sequence');
     expect(codes).not.toContain('lint.unparsed_tail');

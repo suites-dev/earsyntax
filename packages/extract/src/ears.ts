@@ -34,7 +34,9 @@ export function extractEars(content: string, file?: string): ExtractResult {
     const line = i + 1;
     const { id, ref, text } = splitId(trimmed);
     const source =
-      ref === undefined ? { ...(file === undefined ? {} : { file }), line } : { file: ref.file, line: ref.line };
+      ref === undefined
+        ? { ...(file === undefined ? {} : { file }), line }
+        : { file: ref.file, line: ref.line };
     items.push({
       ...(id === undefined ? {} : { id }),
       text,

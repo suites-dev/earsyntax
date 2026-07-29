@@ -5,22 +5,54 @@
     { "id": "SYS-WEBHOOK", "name": "webhook processor", "aliases": ["webhook handler"] }
   ],
   "events": [
-    { "id": "EVT-WEBHOOK", "name": "a payment webhook is received", "aliases": ["payment webhook received"] },
+    {
+      "id": "EVT-WEBHOOK",
+      "name": "a payment webhook is received",
+      "aliases": ["payment webhook received"]
+    },
     { "id": "EVT-REFUND", "name": "a refund is requested", "aliases": ["refund requested"] },
     { "id": "EVT-INVOICE", "name": "an invoice is finalized", "aliases": ["invoice finalized"] },
-    { "id": "EVT-PAYMENT-DECLINED", "name": "a payment is declined", "aliases": ["payment declined"] }
+    {
+      "id": "EVT-PAYMENT-DECLINED",
+      "name": "a payment is declined",
+      "aliases": ["payment declined"]
+    }
   ],
   "states": [
-    { "id": "STATE-PROVIDER-UNAVAIL", "name": "the payment provider is unavailable", "aliases": ["provider unavailable"] },
-    { "id": "STATE-MAINTENANCE", "name": "the system is in maintenance mode", "aliases": ["maintenance mode"] }
+    {
+      "id": "STATE-PROVIDER-UNAVAIL",
+      "name": "the payment provider is unavailable",
+      "aliases": ["provider unavailable"]
+    },
+    {
+      "id": "STATE-MAINTENANCE",
+      "name": "the system is in maintenance mode",
+      "aliases": ["maintenance mode"]
+    }
   ],
   "features": [
-    { "id": "FEAT-DUNNING", "name": "dunning management is enabled", "aliases": ["dunning enabled", "dunning"] },
+    {
+      "id": "FEAT-DUNNING",
+      "name": "dunning management is enabled",
+      "aliases": ["dunning enabled", "dunning"]
+    },
     { "id": "FEAT-TAX", "name": "tax calculation is enabled", "aliases": ["tax calculation"] }
   ],
   "conditions": [
-    { "id": "COND-HMAC-INVALID", "name": "the HMAC signature is invalid", "aliases": ["invalid HMAC signature"] },
-    { "id": "COND-PAYMENT-DECLINED", "name": "the payment is declined", "aliases": ["payment declined"] },
-    { "id": "COND-STALE-TIMESTAMP", "name": "the webhook timestamp is stale", "aliases": ["stale webhook timestamp"] }
+    {
+      "id": "COND-HMAC-INVALID",
+      "name": "the HMAC signature is invalid",
+      "aliases": ["invalid HMAC signature"]
+    },
+    {
+      "id": "COND-PAYMENT-DECLINED",
+      "name": "the payment is declined",
+      "aliases": ["payment declined"]
+    },
+    {
+      "id": "COND-STALE-TIMESTAMP",
+      "name": "the webhook timestamp is stale",
+      "aliases": ["stale webhook timestamp"]
+    }
   ]
 }

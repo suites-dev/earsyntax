@@ -39,23 +39,23 @@ Fixtures are the source-of-truth examples for the EARS toolkit. Each fixture fil
 
 ### Top-level fields
 
-| Field      | Type                       | Required | Meaning                                                              |
-| ---------- | -------------------------- | -------- | -------------------------------------------------------------------- |
-| `id`       | `string`                   | yes      | Stable fixture identifier, echoed into `LintResult.id`.              |
-| `text`     | `string`                   | yes      | The raw requirement text passed to `lintEars`.                       |
-| `options`  | `object`                   | no       | Subset of `Options`. Omitted fields fall back to library defaults.   |
-| `catalog`  | `Catalog`                  | no       | Catalog passed to the linter. Omit for catalog-free fixtures.        |
-| `expected` | `object`                   | yes      | The assertions the fixture makes about the result.                   |
+| Field      | Type      | Required | Meaning                                                            |
+| ---------- | --------- | -------- | ------------------------------------------------------------------ |
+| `id`       | `string`  | yes      | Stable fixture identifier, echoed into `LintResult.id`.            |
+| `text`     | `string`  | yes      | The raw requirement text passed to `lintEars`.                     |
+| `options`  | `object`  | no       | Subset of `Options`. Omitted fields fall back to library defaults. |
+| `catalog`  | `Catalog` | no       | Catalog passed to the linter. Omit for catalog-free fixtures.      |
+| `expected` | `object`  | yes      | The assertions the fixture makes about the result.                 |
 
 ### `options`
 
 A partial `Options` object. Any field may be omitted; omitted fields use the library defaults (`mode: "strict"`, `commaAsAnd: false`, `vagueTerms: ["appropriate", "sufficient", "as needed"]`).
 
-| Field        | Type       | Meaning                                            |
-| ------------ | ---------- | -------------------------------------------------- |
-| `mode`       | `Mode`     | `"strict"` or `"guided"`.                          |
-| `commaAsAnd` | `boolean`  | Treat unambiguous clause-body commas as `and`.     |
-| `vagueTerms` | `string[]` | Terms flagged when they appear in a response.      |
+| Field        | Type       | Meaning                                        |
+| ------------ | ---------- | ---------------------------------------------- |
+| `mode`       | `Mode`     | `"strict"` or `"guided"`.                      |
+| `commaAsAnd` | `boolean`  | Treat unambiguous clause-body commas as `and`. |
+| `vagueTerms` | `string[]` | Terms flagged when they appear in a response.  |
 
 ### `catalog`
 
@@ -63,13 +63,13 @@ A full `Catalog` object as defined in `packages/core/src/types.ts`. Only the gro
 
 ### `expected`
 
-| Field         | Type              | Required | Meaning                                                                    |
-| ------------- | ----------------- | -------- | -------------------------------------------------------------------------- |
-| `valid`       | `boolean`         | yes      | Expected `LintResult.valid`.                                               |
-| `pattern`     | `Pattern`         | no       | Expected classified pattern. Assert only when the fixture parses.          |
-| `diagnostics` | `Diagnostic[]`    | yes      | Expected diagnostics. May be empty. See matching semantics below.          |
-| `ast`         | partial `EarsAst` | no       | Selected AST fields to assert. Compared as a subset. See below.            |
-| `responses`   | `string[]`        | no       | Expected `ast.responses`. Convenience alias for `ast.responses`.           |
+| Field         | Type              | Required | Meaning                                                           |
+| ------------- | ----------------- | -------- | ----------------------------------------------------------------- |
+| `valid`       | `boolean`         | yes      | Expected `LintResult.valid`.                                      |
+| `pattern`     | `Pattern`         | no       | Expected classified pattern. Assert only when the fixture parses. |
+| `diagnostics` | `Diagnostic[]`    | yes      | Expected diagnostics. May be empty. See matching semantics below. |
+| `ast`         | partial `EarsAst` | no       | Selected AST fields to assert. Compared as a subset. See below.   |
+| `responses`   | `string[]`        | no       | Expected `ast.responses`. Convenience alias for `ast.responses`.  |
 
 Each entry in `expected.diagnostics` is a partial `Diagnostic`:
 
@@ -77,11 +77,11 @@ Each entry in `expected.diagnostics` is a partial `Diagnostic`:
 { "code": "ears.missing_shall", "severity": "error", "span": { "start": 0, "end": 12 } }
 ```
 
-| Field      | Type             | Required | Meaning                                        |
-| ---------- | ---------------- | -------- | ---------------------------------------------- |
-| `code`     | `DiagnosticCode` | yes      | The registered diagnostic code.                |
-| `severity` | `Severity`       | yes      | `"error"`, `"warning"`, or `"info"`.           |
-| `span`     | `Span`           | no       | Asserted only when present. See below.         |
+| Field      | Type             | Required | Meaning                                |
+| ---------- | ---------------- | -------- | -------------------------------------- |
+| `code`     | `DiagnosticCode` | yes      | The registered diagnostic code.        |
+| `severity` | `Severity`       | yes      | `"error"`, `"warning"`, or `"info"`.   |
+| `span`     | `Span`           | no       | Asserted only when present. See below. |
 
 ## Matching semantics
 

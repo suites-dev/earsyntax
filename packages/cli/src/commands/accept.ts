@@ -37,7 +37,10 @@ export function acceptCommand(context: CommandContext): number {
   }
   const outputHash = currentOutputHash(root, manifest);
   if (outputHash === undefined) {
-    throw refusalError('accept.output_missing', `Cannot accept "${slug}": the .ears output is unreadable.`);
+    throw refusalError(
+      'accept.output_missing',
+      `Cannot accept "${slug}": the .ears output is unreadable.`,
+    );
   }
   if (manifest.output.hash !== undefined && outputHash !== manifest.output.hash) {
     throw refusalError(

@@ -12,8 +12,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "record an audit log entry for every processed webhook"
-    ]
+    "responses": ["record an audit log entry for every processed webhook"]
   }
 }

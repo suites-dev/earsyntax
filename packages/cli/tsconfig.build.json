@@ -8,7 +8,13 @@
     "tsBuildInfoFile": "./tsconfig.build.tsbuildinfo"
   },
   "include": ["src/**/*"],
-  "exclude": ["src/**/*.test.ts", "src/**/*.spec.ts", "src/__fixtures__/**", "node_modules", "dist"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/__fixtures__/**",
+    "node_modules",
+    "dist"
+  ],
   "references": [
     { "path": "../core/tsconfig.build.json" },
     { "path": "../cli-contract/tsconfig.build.json" },

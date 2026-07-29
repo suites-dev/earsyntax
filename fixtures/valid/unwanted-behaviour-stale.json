@@ -12,8 +12,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "discard the event"
-    ]
+    "responses": ["discard the event"]
   }
 }

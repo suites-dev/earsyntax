@@ -12,8 +12,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "add sales tax to each invoice"
-    ]
+    "responses": ["add sales tax to each invoice"]
   }
 }

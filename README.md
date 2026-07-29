@@ -24,7 +24,12 @@ const result = lintEars(
 {
   "valid": true,
   "references": [
-    { "clause": "trigger", "text": "a payment webhook is received", "role": "event", "span": { "start": 5, "end": 34 } },
+    {
+      "clause": "trigger",
+      "text": "a payment webhook is received",
+      "role": "event",
+      "span": { "start": 5, "end": 34 }
+    },
     { "clause": "system", "text": "billing service", "role": "system" }
   ],
   "diagnostics": [],
@@ -34,7 +39,12 @@ const result = lintEars(
     "system": { "raw": "billing service", "role": "system" },
     "responses": ["verify the HMAC signature"],
     "raw": "When a payment webhook is received, the billing service shall verify the HMAC signature.",
-    "trigger": { "kind": "term", "text": "a payment webhook is received", "term": { "raw": "a payment webhook is received", "role": "event" }, "span": { "start": 5, "end": 34 } }
+    "trigger": {
+      "kind": "term",
+      "text": "a payment webhook is received",
+      "term": { "raw": "a payment webhook is received", "role": "event" },
+      "span": { "start": 5, "end": 34 }
+    }
   }
 }
 ```
@@ -58,12 +68,12 @@ This toolkit parses those templates and reports where a requirement departs from
 
 ## Packages
 
-| Package                   | Purpose                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------------ |
-| `@earsyntax/core`         | Parse, lint, classify, catalog-match, and produce diagnostics. No runtime dependencies.          |
-| `@earsyntax/extract`      | Extract EARS requirements from `.ears`, Markdown, YAML, and JSON files. Depends on core types.   |
-| `@earsyntax/cli-contract` | Shared report output contracts: the JSON report, SARIF 2.1.0, the pretty model, and exit codes.  |
-| `@earsyntax/cli`          | The `earsyntax` command-line facade for humans, scripts, and coding agents.                      |
+| Package                   | Purpose                                                                                         |
+| ------------------------- | ----------------------------------------------------------------------------------------------- |
+| `@earsyntax/core`         | Parse, lint, classify, catalog-match, and produce diagnostics. No runtime dependencies.         |
+| `@earsyntax/extract`      | Extract EARS requirements from `.ears`, Markdown, YAML, and JSON files. Depends on core types.  |
+| `@earsyntax/cli-contract` | Shared report output contracts: the JSON report, SARIF 2.1.0, the pretty model, and exit codes. |
+| `@earsyntax/cli`          | The `earsyntax` command-line facade for humans, scripts, and coding agents.                     |
 
 ## Install
 
@@ -86,8 +96,14 @@ import { lintEars, lintEarsBatch } from '@earsyntax/core';
 const one = lintEars('The billing service shall verify the HMAC signature.');
 
 const many = lintEarsBatch([
-  { id: 'REQ-001', text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.' },
-  { id: 'REQ-002', text: 'If the HMAC signature is invalid, then the billing service shall reject the webhook.' },
+  {
+    id: 'REQ-001',
+    text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
+  },
+  {
+    id: 'REQ-002',
+    text: 'If the HMAC signature is invalid, then the billing service shall reject the webhook.',
+  },
 ]);
 ```
 

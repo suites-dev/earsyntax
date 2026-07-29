@@ -5,12 +5,7 @@
 For the exact type definitions, see [`packages/core/src/types.ts`](../packages/core/src/types.ts) and the [public API reference](public-api.md). To write EARS by hand, see the [authoring guide](authoring-ears.md).
 
 ```ts
-import {
-  lintEars,
-  lintEarsBatch,
-  parseEars,
-  lintCatalogCoverage,
-} from '@earsyntax/core';
+import { lintEars, lintEarsBatch, parseEars, lintCatalogCoverage } from '@earsyntax/core';
 ```
 
 ## Determinism guarantees
@@ -34,14 +29,21 @@ Lints a single requirement and returns a complete `LintResult`: `valid`, the cla
 ### Without a catalog
 
 ```ts
-lintEars('When a payment webhook is received, the billing service shall verify the HMAC signature.');
+lintEars(
+  'When a payment webhook is received, the billing service shall verify the HMAC signature.',
+);
 ```
 
 ```json
 {
   "valid": true,
   "references": [
-    { "clause": "trigger", "text": "a payment webhook is received", "role": "event", "span": { "start": 5, "end": 34 } },
+    {
+      "clause": "trigger",
+      "text": "a payment webhook is received",
+      "role": "event",
+      "span": { "start": 5, "end": 34 }
+    },
     { "clause": "system", "text": "billing service", "role": "system" }
   ],
   "diagnostics": [],
@@ -105,8 +107,14 @@ Lints many requirements at once. Returns one `LintResult` per input item, in the
 
 ```ts
 lintEarsBatch([
-  { id: 'REQ-001', text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.' },
-  { id: 'REQ-002', text: 'If the HMAC signature is invalid, then the billing service shall reject the webhook.' },
+  {
+    id: 'REQ-001',
+    text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
+  },
+  {
+    id: 'REQ-002',
+    text: 'If the HMAC signature is invalid, then the billing service shall reject the webhook.',
+  },
 ]);
 ```
 
@@ -130,7 +138,9 @@ function parseEars(text: string, catalog?: Catalog, options?: Options): ParseRes
 Parses a requirement without full linting. Returns the classified `pattern`, the parsed `ast`, and structural `diagnostics`. It does not return catalog `references` or lint-level findings, so it is the lighter surface when you only need the shape.
 
 ```ts
-parseEars('While the payment provider is unavailable, the billing service shall queue retryable events.');
+parseEars(
+  'While the payment provider is unavailable, the billing service shall queue retryable events.',
+);
 ```
 
 ```json
@@ -168,7 +178,12 @@ Reports catalog entries that no requirement text references. Emits `catalog.term
 
 ```ts
 lintCatalogCoverage(
-  [{ id: 'REQ-001', text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.' }],
+  [
+    {
+      id: 'REQ-001',
+      text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
+    },
+  ],
   {
     systems: [
       { id: 'SYS-BILLING', name: 'billing service' },
@@ -195,9 +210,9 @@ The ledger service is never mentioned, so the result contains one diagnostic:
 
 ```ts
 interface Options {
-  mode?: Mode;            // 'strict' | 'guided'; default 'strict'
-  commaAsAnd?: boolean;   // default false
-  vagueTerms?: string[];  // default ['appropriate', 'sufficient', 'as needed']
+  mode?: Mode; // 'strict' | 'guided'; default 'strict'
+  commaAsAnd?: boolean; // default false
+  vagueTerms?: string[]; // default ['appropriate', 'sufficient', 'as needed']
 }
 ```
 
@@ -277,8 +292,16 @@ import { lintEars } from '@earsyntax/core';
 import { buildJsonReport, exitCodeForReport } from '@earsyntax/cli-contract';
 
 const inputs = [
-  { id: 'REQ-001', text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.', source: { file: 'requirements.ears', line: 1 } },
-  { id: 'REQ-002', text: 'If the HMAC signature is invalid, the billing service shall reject the webhook.', source: { file: 'requirements.ears', line: 2 } },
+  {
+    id: 'REQ-001',
+    text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
+    source: { file: 'requirements.ears', line: 1 },
+  },
+  {
+    id: 'REQ-002',
+    text: 'If the HMAC signature is invalid, the billing service shall reject the webhook.',
+    source: { file: 'requirements.ears', line: 2 },
+  },
 ];
 
 const report = buildJsonReport([

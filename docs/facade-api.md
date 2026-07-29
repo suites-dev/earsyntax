@@ -51,11 +51,11 @@ interface FacadeDiagnostic {
 
 Field descriptions:
 
-| Field         | Description                                                                                                                            |
+| Field         | Description                                                                                                                           |
 | ------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `version`     | The installed `@earsyntax/cli` package version, for example `0.1.0`.                                                                   |
+| `version`     | The installed `@earsyntax/cli` package version, for example `0.1.0`.                                                                  |
 | `command`     | The command that produced the response. Subcommands use a space, for example `instructions convert`.                                  |
-| `ok`          | `true` when the command completed with no error-severity diagnostic. See each command for what counts as an error.                     |
+| `ok`          | `true` when the command completed with no error-severity diagnostic. See each command for what counts as an error.                    |
 | `root`        | The resolved project root as an absolute path. Present on commands that resolve a project.                                            |
 | `data`        | Reserved generic payload. In v0.1 commands expose their payload through top-level convenience keys instead (see the note below).      |
 | `diagnostics` | Facade-level diagnostics (config, path, or work-item problems). Distinct from the core linting `Diagnostic` inside a validate result. |
@@ -63,12 +63,12 @@ Field descriptions:
 
 `NextAction`:
 
-| Field      | Description                                                                                       |
-| ---------- | ------------------------------------------------------------------------------------------------- |
-| `command`  | A runnable `earsyntax` command. Every value is a real command from this contract.                 |
-| `reason`   | One factual sentence explaining why this action follows.                                          |
+| Field      | Description                                                                                           |
+| ---------- | ----------------------------------------------------------------------------------------------------- |
+| `command`  | A runnable `earsyntax` command. Every value is a real command from this contract.                     |
+| `reason`   | One factual sentence explaining why this action follows.                                              |
 | `blocking` | `true` when the action requires a human decision (for example acceptance). Optional; default `false`. |
-| `forAgent` | `true` when a coding agent can run the action without human input. Optional; default `false`.     |
+| `forAgent` | `true` when a coding agent can run the action without human input. Optional; default `false`.         |
 
 [DECIDED] Convenience keys over `data`. The orchestration brief shows command payloads as top-level keys (`work`, `written`, `summary`, `results`) rather than nested under `data`. v0.1 follows the examples: each command adds its own top-level keys and leaves `data` unset. Rationale: it matches every example in the brief and keeps the JSON one level flatter for agents.
 
@@ -78,27 +78,27 @@ Field descriptions:
 
 Exit codes are uniform across commands.
 
-| Code | Meaning                                                                                                     |
-| ---- | ----------------------------------------------------------------------------------------------------------- |
-| `0`  | The command completed and produced no error-severity diagnostic.                                            |
-| `1`  | Validation completed and at least one error-severity diagnostic exists. Only `validate` returns `1`.        |
-| `2`  | CLI usage, config, missing file, unparseable JSON/YAML, or work-item resolution error.                      |
+| Code | Meaning                                                                                                      |
+| ---- | ------------------------------------------------------------------------------------------------------------ |
+| `0`  | The command completed and produced no error-severity diagnostic.                                             |
+| `1`  | Validation completed and at least one error-severity diagnostic exists. Only `validate` returns `1`.         |
+| `2`  | CLI usage, config, missing file, unparseable JSON/YAML, or work-item resolution error.                       |
 | `3`  | Refused write, stale source, overwrite protection, or a human confirmation required in non-interactive mode. |
 
 Per-command notes:
 
-| Command        | `0`                          | `1`                     | `2`                                              | `3`                                                     |
-| -------------- | ---------------------------- | ----------------------- | ------------------------------------------------ | ------------------------------------------------------- |
-| `init`         | Initialized or already valid | not used                | bad `--tools` value, unwritable root             | `.earsyntax/` exists and `--force` not passed           |
-| `doctor`       | all checks pass or warn      | not used                | config unreadable                                | not used                                                |
-| `version`      | always                       | not used                | not used                                         | not used                                                |
-| `new`          | work item created            | not used                | bad slug, missing `--source` file, missing mode  | work item exists and `--force` not passed               |
-| `list`         | always                       | not used                | config unreadable                                | not used                                                |
-| `status`       | work item resolved           | not used                | unknown work item                                | not used                                                |
-| `instructions` | instructions returned        | not used                | unknown work item, unknown mode                  | not used                                                |
-| `validate`     | no error diagnostics         | one or more error diags | missing file, bad glob, unreadable catalog       | source stale relative to a work item (see `validate`)   |
-| `accept`       | acceptance recorded          | not used                | unknown work item                                | status not `valid`, or source stale                     |
-| `show`         | artifact resolved            | not used                | unknown work item, unknown artifact              | not used                                                |
+| Command        | `0`                          | `1`                     | `2`                                             | `3`                                                   |
+| -------------- | ---------------------------- | ----------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| `init`         | Initialized or already valid | not used                | bad `--tools` value, unwritable root            | `.earsyntax/` exists and `--force` not passed         |
+| `doctor`       | all checks pass or warn      | not used                | config unreadable                               | not used                                              |
+| `version`      | always                       | not used                | not used                                        | not used                                              |
+| `new`          | work item created            | not used                | bad slug, missing `--source` file, missing mode | work item exists and `--force` not passed             |
+| `list`         | always                       | not used                | config unreadable                               | not used                                              |
+| `status`       | work item resolved           | not used                | unknown work item                               | not used                                              |
+| `instructions` | instructions returned        | not used                | unknown work item, unknown mode                 | not used                                              |
+| `validate`     | no error diagnostics         | one or more error diags | missing file, bad glob, unreadable catalog      | source stale relative to a work item (see `validate`) |
+| `accept`       | acceptance recorded          | not used                | unknown work item                               | status not `valid`, or source stale                   |
+| `show`         | artifact resolved            | not used                | unknown work item, unknown artifact             | not used                                              |
 
 [DECIDED] Only `validate` returns exit `1`. Exit `1` means "error diagnostics exist", which is a linting outcome. Other commands surface problems as exit `2` (resolution) or `3` (refusal), never `1`. Rationale: keeps `1` a reliable signal that requirements failed validation, which is what scripts branch on.
 
@@ -110,10 +110,10 @@ Initialize `.earsyntax/` and optional agent wrapper files.
 
 Top-level keys beyond the base:
 
-| Key       | Type       | Description                                                        |
-| --------- | ---------- | ------------------------------------------------------------------ |
+| Key       | Type       | Description                                                       |
+| --------- | ---------- | ----------------------------------------------------------------- |
 | `written` | `string[]` | Every path written, relative to root. Empty when nothing changed. |
-| `tools`   | `string[]` | Tool wrappers written, for example `["claude", "codex"]`.          |
+| `tools`   | `string[]` | Tool wrappers written, for example `["claude", "codex"]`.         |
 
 ```json
 {
@@ -141,9 +141,9 @@ Read-only project health report. Never writes.
 
 Top-level keys beyond the base:
 
-| Key      | Type                | Description                                                             |
-| -------- | ------------------- | ----------------------------------------------------------------------- |
-| `checks` | `DoctorCheck[]`     | One entry per health check, each with `name`, `ok`, and a `message`.    |
+| Key      | Type            | Description                                                          |
+| -------- | --------------- | -------------------------------------------------------------------- |
+| `checks` | `DoctorCheck[]` | One entry per health check, each with `name`, `ok`, and a `message`. |
 
 [DECIDED] `checks` shape. The brief lists the checks doctor performs but not a JSON field. v0.1 returns `checks: { name: string; ok: boolean; severity: 'error'|'warning'|'info'; message: string }[]`, and mirrors any non-passing check into the base `diagnostics` array. Rationale: agents can read one array (`diagnostics`) for problems while humans get the full ordered checklist in `checks`.
 
@@ -155,8 +155,8 @@ Expose installed capabilities. Never resolves a project, so `root` may be absent
 
 Top-level keys beyond the base:
 
-| Key        | Type     | Description                                          |
-| ---------- | -------- | ---------------------------------------------------- |
+| Key        | Type     | Description                                              |
+| ---------- | -------- | -------------------------------------------------------- |
 | `features` | `object` | Capability map for agents to branch on without guessing. |
 
 ```json
@@ -184,10 +184,10 @@ Create a work item. Does not generate EARS content; it prepares the directory th
 
 Top-level keys beyond the base:
 
-| Key       | Type          | Description                                            |
-| --------- | ------------- | ------------------------------------------------------ |
-| `work`    | `WorkSummary` | The created work item summary.                         |
-| `written` | `string[]`    | Every path written, relative to root.                  |
+| Key       | Type          | Description                           |
+| --------- | ------------- | ------------------------------------- |
+| `work`    | `WorkSummary` | The created work item summary.        |
+| `written` | `string[]`    | Every path written, relative to root. |
 
 ```json
 {
@@ -228,14 +228,7 @@ Mode selection: `--mode convert` requires `--source <path>`; `--mode author` req
 ```ts
 type WorkMode = 'author' | 'convert';
 
-type WorkStatus =
-  | 'missing'
-  | 'scaffolded'
-  | 'drafted'
-  | 'invalid'
-  | 'valid'
-  | 'accepted'
-  | 'stale';
+type WorkStatus = 'missing' | 'scaffolded' | 'drafted' | 'invalid' | 'valid' | 'accepted' | 'stale';
 
 interface WorkManifest {
   schemaVersion: 1;
@@ -283,9 +276,9 @@ List work items. Supports `--status <state>` to filter.
 
 Top-level keys beyond the base:
 
-| Key     | Type            | Description                     |
-| ------- | --------------- | ------------------------------- |
-| `items` | `WorkSummary[]` | Work items, sorted by `id`.     |
+| Key     | Type            | Description                 |
+| ------- | --------------- | --------------------------- |
+| `items` | `WorkSummary[]` | Work items, sorted by `id`. |
 
 ## `status`
 
@@ -293,9 +286,9 @@ Report one work item's state and next steps.
 
 Top-level keys beyond the base:
 
-| Key    | Type     | Description                          |
-| ------ | -------- | ------------------------------------ |
-| `work` | `object` | Work item state (shape below).       |
+| Key    | Type     | Description                    |
+| ------ | -------- | ------------------------------ |
+| `work` | `object` | Work item state (shape below). |
 
 ```json
 {
@@ -375,12 +368,12 @@ The response carries `InstructionResponse` fields as top-level keys alongside th
 
 Per-mode content:
 
-| Mode      | `source` present            | `diagnostics` present          | `rules` focus                                                    |
-| --------- | --------------------------- | ------------------------------ | ---------------------------------------------------------------- |
-| `author`  | no (prompt-based work item) | no                             | Author from the prompt only; do not invent behavior.             |
-| `convert` | yes (path, hash, excerpts)  | no                             | Convert the source; preserve traceability; split compounds.      |
-| `repair`  | yes when the item has one   | yes (the diagnostics to fix)   | Change only what the diagnostics justify; keyed to codes.        |
-| `review`  | yes when the item has one   | no                             | Produce a human review summary; recommend accept only if clean.  |
+| Mode      | `source` present            | `diagnostics` present        | `rules` focus                                                   |
+| --------- | --------------------------- | ---------------------------- | --------------------------------------------------------------- |
+| `author`  | no (prompt-based work item) | no                           | Author from the prompt only; do not invent behavior.            |
+| `convert` | yes (path, hash, excerpts)  | no                           | Convert the source; preserve traceability; split compounds.     |
+| `repair`  | yes when the item has one   | yes (the diagnostics to fix) | Change only what the diagnostics justify; keyed to codes.       |
+| `review`  | yes when the item has one   | no                           | Produce a human review summary; recommend accept only if clean. |
 
 The full rule text is specified in `docs/agent-rules.md`. The `command` field is `instructions <mode>` (for example `instructions convert`). Fixtures: `fixtures/facade/instructions-*.json`.
 
@@ -423,9 +416,9 @@ Record that a human accepted the generated `.ears` file. This is the human gate.
 
 Top-level keys beyond the base:
 
-| Key    | Type     | Description                                 |
-| ------ | -------- | ------------------------------------------- |
-| `work` | `object` | Updated work summary including `accepted`.  |
+| Key    | Type     | Description                                |
+| ------ | -------- | ------------------------------------------ |
+| `work` | `object` | Updated work summary including `accepted`. |
 
 Rules, each a refusal with exit `3` when violated:
 

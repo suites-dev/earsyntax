@@ -12,8 +12,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "reduce the webhook batch size"
-    ]
+    "responses": ["reduce the webhook batch size"]
   }
 }

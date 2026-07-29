@@ -105,9 +105,7 @@ Given this catalog:
 
 ```json
 {
-  "systems": [
-    { "id": "SYS-BILLING", "name": "billing service", "aliases": ["billing", "BFF"] }
-  ]
+  "systems": [{ "id": "SYS-BILLING", "name": "billing service", "aliases": ["billing", "BFF"] }]
 }
 ```
 
@@ -147,16 +145,16 @@ Vague terms do not fail validation. They flag a requirement that a reader cannot
 
 These are the diagnostics you meet most often while authoring. In strict mode the structural codes are errors; the style codes are always warnings. The [diagnostics reference](diagnostics.md) documents all 29 codes and their severity in each mode.
 
-| Code                        | What it means                                          | Fix                                                                      |
-| --------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------ |
-| `ears.missing_shall`        | No single `shall` response boundary.                   | State one obligation with `shall`: `the billing service shall ...`.      |
-| `ears.missing_system`       | No system name before `shall`.                         | Name the system: `... the billing service shall ...`.                    |
-| `ears.invalid_if_then_form` | An `If` clause has no `then`.                          | Add `then`: `If <condition>, then the <system> shall <response>.`        |
-| `ears.multiple_shall`       | More than one `shall` in the sentence.                 | Split into separate requirements, one obligation each.                   |
-| `ears.invalid_clause_order` | Clauses are out of order.                              | Reorder to `While -> Where -> When -> If`.                               |
-| `lint.multiple_responses`   | Semicolon-joined responses in one requirement.         | Split into separate requirements.                                        |
-| `lint.vague_response`       | The response contains a configured vague term.         | Replace it with an observable, bounded response.                         |
-| `expr.operator_precedence_warning` | Mixed `and`/`or` without parentheses.           | Add parentheses to make the grouping explicit.                           |
+| Code                               | What it means                                  | Fix                                                                 |
+| ---------------------------------- | ---------------------------------------------- | ------------------------------------------------------------------- |
+| `ears.missing_shall`               | No single `shall` response boundary.           | State one obligation with `shall`: `the billing service shall ...`. |
+| `ears.missing_system`              | No system name before `shall`.                 | Name the system: `... the billing service shall ...`.               |
+| `ears.invalid_if_then_form`        | An `If` clause has no `then`.                  | Add `then`: `If <condition>, then the <system> shall <response>.`   |
+| `ears.multiple_shall`              | More than one `shall` in the sentence.         | Split into separate requirements, one obligation each.              |
+| `ears.invalid_clause_order`        | Clauses are out of order.                      | Reorder to `While -> Where -> When -> If`.                          |
+| `lint.multiple_responses`          | Semicolon-joined responses in one requirement. | Split into separate requirements.                                   |
+| `lint.vague_response`              | The response contains a configured vague term. | Replace it with an observable, bounded response.                    |
+| `expr.operator_precedence_warning` | Mixed `and`/`or` without parentheses.          | Add parentheses to make the grouping explicit.                      |
 
 For example, these four lines each fail with a different structural error:
 

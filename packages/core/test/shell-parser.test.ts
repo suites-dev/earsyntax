@@ -41,7 +41,9 @@ describe('parseShell: valid shell patterns', () => {
   });
 
   it('parses an optional-feature requirement (Where)', () => {
-    const { ast, findings } = parseShell('Where analytics is enabled, the system shall log events.');
+    const { ast, findings } = parseShell(
+      'Where analytics is enabled, the system shall log events.',
+    );
     expect(findings).toEqual([]);
     expect(ast!.pattern).toBe('optional-feature');
     expect((ast!.feature as FreeTextExpr).text).toBe('analytics is enabled');
@@ -74,7 +76,9 @@ describe('parseShell: case-insensitive keywords', () => {
 
 describe('parseShell: complex multi-clause', () => {
   it('classifies a While + When requirement as complex', () => {
-    const { ast, findings } = parseShell('While the door is open, when the user acts, the system shall respond.');
+    const { ast, findings } = parseShell(
+      'While the door is open, when the user acts, the system shall respond.',
+    );
     expect(findings).toEqual([]);
     expect(ast!.pattern).toBe('complex');
     expect((ast!.preconditions as FreeTextExpr).text).toBe('the door is open');
@@ -94,12 +98,16 @@ describe('parseShell: complex multi-clause', () => {
   });
 
   it('flags repeated When clauses as invalid clause order', () => {
-    const { findings } = parseShell('When the user logs in, when the user logs out, the system shall respond.');
+    const { findings } = parseShell(
+      'When the user logs in, when the user logs out, the system shall respond.',
+    );
     expect(codes(findings)).toContain('ears.invalid_clause_order');
   });
 
   it('and-joins repeated same-kind clauses', () => {
-    const { ast } = parseShell('While the door is open, while the light is on, the system shall respond.');
+    const { ast } = parseShell(
+      'While the door is open, while the light is on, the system shall respond.',
+    );
     expect(ast!.pattern).toBe('complex');
     const pre = ast!.preconditions as AndExpr;
     expect(pre.kind).toBe('and');
@@ -135,7 +143,9 @@ describe('parseShell: commaAsAnd', () => {
 
 describe('parseShell: structural findings', () => {
   it('reports invalid clause order (When before While)', () => {
-    const { ast, findings } = parseShell('When the user acts, while the door is open, the system shall respond.');
+    const { ast, findings } = parseShell(
+      'When the user acts, while the door is open, the system shall respond.',
+    );
     expect(codes(findings)).toContain('ears.invalid_clause_order');
     expect(ast).toBeDefined();
   });

@@ -16,8 +16,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "queue retryable events"
-    ]
+    "responses": ["queue retryable events"]
   }
 }

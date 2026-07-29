@@ -16,8 +16,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "retry declined charges"
-    ]
+    "responses": ["retry declined charges"]
   }
 }

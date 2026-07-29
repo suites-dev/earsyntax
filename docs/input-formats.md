@@ -9,7 +9,8 @@ line for each requirement.
 ```ts
 import { extractFromContent } from '@earsyntax/extract';
 
-const md = '- REQ-001: When a payment webhook is received, the billing service shall verify the HMAC signature.';
+const md =
+  '- REQ-001: When a payment webhook is received, the billing service shall verify the HMAC signature.';
 const { items, errors } = extractFromContent(md, 'requirements.md');
 // items[0] === {
 //   id: 'REQ-001',
@@ -116,6 +117,7 @@ reference that becomes the item's source location.
 ```md
 - REQ-001: When a payment webhook is received, the billing service shall verify the HMAC signature.
 - If the HMAC signature is invalid, then the billing service shall reject the webhook.
+
 1. REQ-003 [source: specs/checkout.md:20]: The billing service shall retain receipts for seven years.
 ```
 
@@ -131,17 +133,17 @@ columns takes the id from the `ID` column:
 | ID      | Requirement                                                                              |
 | ------- | ---------------------------------------------------------------------------------------- |
 | REQ-001 | When a payment webhook is received, the billing service shall verify the HMAC signature. |
-| REQ-002 | If the HMAC signature is invalid, then the billing service shall reject the webhook.      |
+| REQ-002 | If the HMAC signature is invalid, then the billing service shall reject the webhook.     |
 ```
 
 A single-column requirement table also works, and an `ID:` prefix inside a cell
 is lifted just like in a bullet:
 
 ```md
-| Requirement |
-| --- |
+| Requirement                                                   |
+| ------------------------------------------------------------- |
 | REQ-001: The billing service shall verify the HMAC signature. |
-| The billing service shall reject invalid webhooks. |
+| The billing service shall reject invalid webhooks.            |
 ```
 
 Column headers are matched case-insensitively. `ID` selects the id column;
@@ -217,12 +219,12 @@ the raw document, and malformed JSON or the wrong top-level shape is reported in
 `extractFromContent` picks the right extractor from a file name's extension and
 records that name as each item's source file:
 
-| Extension            | Extractor         |
-| -------------------- | ----------------- |
-| `.ears`              | `extractEars`     |
-| `.md`, `.markdown`   | `extractMarkdown` |
-| `.yaml`, `.yml`      | `extractYaml`     |
-| `.json`              | `extractJson`     |
+| Extension          | Extractor         |
+| ------------------ | ----------------- |
+| `.ears`            | `extractEars`     |
+| `.md`, `.markdown` | `extractMarkdown` |
+| `.yaml`, `.yml`    | `extractYaml`     |
+| `.json`            | `extractJson`     |
 
 An unsupported extension returns no items and a single `ExtractError`.
 

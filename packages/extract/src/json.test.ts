@@ -6,8 +6,14 @@ describe('extractJson', () => {
     const content = JSON.stringify(
       {
         requirements: [
-          { id: 'REQ-001', text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.' },
-          { id: 'REQ-002', text: 'If the HMAC signature is invalid, then the billing service shall reject the webhook.' },
+          {
+            id: 'REQ-001',
+            text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
+          },
+          {
+            id: 'REQ-002',
+            text: 'If the HMAC signature is invalid, then the billing service shall reject the webhook.',
+          },
         ],
       },
       null,
@@ -28,7 +34,8 @@ describe('extractJson', () => {
   });
 
   it('tolerates missing ids', () => {
-    const content = '{ "requirements": [ { "text": "The billing service shall retain receipts." } ] }';
+    const content =
+      '{ "requirements": [ { "text": "The billing service shall retain receipts." } ] }';
 
     const { items, errors } = extractJson(content);
 
@@ -39,7 +46,12 @@ describe('extractJson', () => {
   });
 
   it('reports an error for an entry missing text but keeps the others', () => {
-    const content = JSON.stringify({ requirements: [{ id: 'REQ-001' }, { id: 'REQ-002', text: 'The billing service shall reject invalid webhooks.' }] });
+    const content = JSON.stringify({
+      requirements: [
+        { id: 'REQ-001' },
+        { id: 'REQ-002', text: 'The billing service shall reject invalid webhooks.' },
+      ],
+    });
 
     const { items, errors } = extractJson(content, 'requirements.json');
 

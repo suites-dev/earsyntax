@@ -9,9 +9,7 @@
       {
         "id": "SYS-ENGINE",
         "name": "engine control system",
-        "aliases": [
-          "engine ctrl system"
-        ]
+        "aliases": ["engine ctrl system"]
       }
     ],
     "events": [
@@ -65,8 +63,6 @@
         "raw": "unknown system"
       }
     },
-    "responses": [
-      "do something appropriate"
-    ]
+    "responses": ["do something appropriate"]
   }
 }

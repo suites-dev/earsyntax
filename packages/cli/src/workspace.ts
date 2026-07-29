@@ -102,7 +102,10 @@ export function sourceKind(path: string): SourceKind {
  * is absent or unreadable. `sourceInput` is the manifest-stored path resolved
  * against the root.
  */
-export function currentSourceHash(root: string, sourcePath: string | undefined): string | undefined {
+export function currentSourceHash(
+  root: string,
+  sourcePath: string | undefined,
+): string | undefined {
   if (sourcePath === undefined) {
     return undefined;
   }

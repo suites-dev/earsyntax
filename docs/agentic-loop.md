@@ -4,11 +4,11 @@ This document describes how any coding agent derives `.ears` files from source s
 
 Three parties have separate responsibilities, and the loop keeps them separate.
 
-| Party        | Responsibility                                                                                                       |
-| ------------ | -------------------------------------------------------------------------------------------------------------------- |
+| Party        | Responsibility                                                                                                                           |
+| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | CLI facade   | Resolve paths, scaffold work directories, return instructions, validate `.ears`, report status, record acceptance, detect stale sources. |
-| Coding agent | Read the source, decide which behaviors are requirements, write and repair `.ears`, and raise questions when the source is unclear.       |
-| Human        | Approve behavior, answer questions, and accept or reject the generated `.ears`.                                                            |
+| Coding agent | Read the source, decide which behaviors are requirements, write and repair `.ears`, and raise questions when the source is unclear.      |
+| Human        | Approve behavior, answer questions, and accept or reject the generated `.ears`.                                                          |
 
 The CLI never interprets the source semantically. The agent never accepts its own work. Validation success and human acceptance are two different events.
 
@@ -43,33 +43,33 @@ missing -> scaffolded -> drafted -> invalid -> valid -> accepted
 
 ### States
 
-| State        | Meaning                                                                                     |
-| ------------ | ------------------------------------------------------------------------------------------- |
-| `missing`    | No manifest exists for the queried id. Reported by `status`; never stored.                  |
-| `scaffolded` | `earsyntax new` created the directory and empty artifacts. No requirements written yet.     |
-| `drafted`    | The `.ears` file has content but has not passed a clean validation.                         |
-| `invalid`    | The last `validate` produced at least one error-severity diagnostic.                        |
-| `valid`      | The last `validate` produced no error diagnostics. Eligible for review and acceptance.      |
-| `accepted`   | A human accepted the `.ears` file. `accepted` metadata and hashes are recorded.             |
+| State        | Meaning                                                                                                           |
+| ------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `missing`    | No manifest exists for the queried id. Reported by `status`; never stored.                                        |
+| `scaffolded` | `earsyntax new` created the directory and empty artifacts. No requirements written yet.                           |
+| `drafted`    | The `.ears` file has content but has not passed a clean validation.                                               |
+| `invalid`    | The last `validate` produced at least one error-severity diagnostic.                                              |
+| `valid`      | The last `validate` produced no error diagnostics. Eligible for review and acceptance.                            |
+| `accepted`   | A human accepted the `.ears` file. `accepted` metadata and hashes are recorded.                                   |
 | `stale`      | The source hash changed after the last `valid` or `accepted` state. The `.ears` may no longer reflect the source. |
 
 ### Transitions
 
 Each transition names the command or event that triggers it.
 
-| From         | To           | Trigger                                                                                                   |
-| ------------ | ------------ | --------------------------------------------------------------------------------------------------------- |
-| `missing`    | `scaffolded` | `earsyntax new <slug>` creates the manifest and artifact files.                                           |
+| From         | To           | Trigger                                                                                                                                                  |
+| ------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `missing`    | `scaffolded` | `earsyntax new <slug>` creates the manifest and artifact files.                                                                                          |
 | `scaffolded` | `drafted`    | The next `validate` observes a non-empty `.ears` output. (The agent writing the file is not a CLI event; the state advances when the CLI next reads it.) |
-| `drafted`    | `invalid`    | `earsyntax validate` produces at least one error-severity diagnostic.                                     |
-| `drafted`    | `valid`      | `earsyntax validate` produces no error-severity diagnostic.                                               |
-| `invalid`    | `invalid`    | `earsyntax validate` still finds error diagnostics after a repair pass.                                   |
-| `invalid`    | `valid`      | `earsyntax validate` finds no error diagnostics after a repair pass.                                      |
-| `valid`      | `invalid`    | A later `validate` (for example after an edit) finds error diagnostics again.                             |
-| `valid`      | `accepted`   | `earsyntax accept <slug>` after a human approves. Refused unless status is `valid` and the source is not stale. |
-| `valid`      | `stale`      | The source content hash no longer matches the hash recorded at the `valid` transition.                    |
-| `accepted`   | `stale`      | The source content hash no longer matches `accepted.sourceHash`.                                          |
-| `stale`      | `drafted`    | Re-running the loop (`instructions convert`, rewrite, `validate`) against the changed source.             |
+| `drafted`    | `invalid`    | `earsyntax validate` produces at least one error-severity diagnostic.                                                                                    |
+| `drafted`    | `valid`      | `earsyntax validate` produces no error-severity diagnostic.                                                                                              |
+| `invalid`    | `invalid`    | `earsyntax validate` still finds error diagnostics after a repair pass.                                                                                  |
+| `invalid`    | `valid`      | `earsyntax validate` finds no error diagnostics after a repair pass.                                                                                     |
+| `valid`      | `invalid`    | A later `validate` (for example after an edit) finds error diagnostics again.                                                                            |
+| `valid`      | `accepted`   | `earsyntax accept <slug>` after a human approves. Refused unless status is `valid` and the source is not stale.                                          |
+| `valid`      | `stale`      | The source content hash no longer matches the hash recorded at the `valid` transition.                                                                   |
+| `accepted`   | `stale`      | The source content hash no longer matches `accepted.sourceHash`.                                                                                         |
+| `stale`      | `drafted`    | Re-running the loop (`instructions convert`, rewrite, `validate`) against the changed source.                                                            |
 
 [DECIDED] `drafted` is CLI-observed, not agent-signaled. The CLI has no hook that fires when the agent writes the file, so `scaffolded` advances to `drafted`, `valid`, or `invalid` at the next `validate`. `status` reports `scaffolded` until then. Rationale: the CLI only changes state on its own commands; it does not watch the filesystem.
 

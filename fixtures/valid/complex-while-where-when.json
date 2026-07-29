@@ -24,8 +24,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "retry the charge"
-    ]
+    "responses": ["retry the charge"]
   }
 }

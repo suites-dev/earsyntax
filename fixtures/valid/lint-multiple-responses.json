@@ -17,9 +17,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "verify the HMAC signature",
-      "reject invalid webhooks"
-    ]
+    "responses": ["verify the HMAC signature", "reject invalid webhooks"]
   }
 }

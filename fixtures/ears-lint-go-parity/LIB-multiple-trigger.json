@@ -9,9 +9,7 @@
       {
         "id": "SYS-ENGINE",
         "name": "engine control system",
-        "aliases": [
-          "engine ctrl system"
-        ]
+        "aliases": ["engine ctrl system"]
       }
     ],
     "events": [
@@ -57,8 +55,6 @@
         "raw": "engine control system"
       }
     },
-    "responses": [
-      "enable reverse thrust"
-    ]
+    "responses": ["enable reverse thrust"]
   }
 }

@@ -28,8 +28,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "open a dispute case"
-    ]
+    "responses": ["open a dispute case"]
   }
 }

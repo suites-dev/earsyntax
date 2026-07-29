@@ -28,10 +28,7 @@ describe('buildJsonReport', () => {
 
   it('preserves file and requirement input order', () => {
     const report = buildJsonReport(sampleRun);
-    expect(report.files.map((f) => f.path)).toEqual([
-      'specs/subscribe.ears',
-      'specs/payment.ears',
-    ]);
+    expect(report.files.map((f) => f.path)).toEqual(['specs/subscribe.ears', 'specs/payment.ears']);
     expect(report.files[0]?.requirements.map((r) => r.id)).toEqual(['REQ-1', 'REQ-2']);
   });
 

@@ -5,15 +5,11 @@
     "mode": "guided"
   },
   "catalog": {
-    "systems": [
-      { "id": "SYS-BILLING", "name": "billing service", "aliases": ["BFF"] }
-    ]
+    "systems": [{ "id": "SYS-BILLING", "name": "billing service", "aliases": ["BFF"] }]
   },
   "expected": {
     "valid": true,
     "pattern": "ubiquitous",
-    "diagnostics": [
-      { "code": "catalog.system_unresolved", "severity": "warning" }
-    ]
+    "diagnostics": [{ "code": "catalog.system_unresolved", "severity": "warning" }]
   }
 }

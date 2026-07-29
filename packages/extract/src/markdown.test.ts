@@ -35,14 +35,19 @@ describe('extractMarkdown', () => {
   });
 
   it('extracts numbered lists', () => {
-    const content = ['1. REQ-001: The billing service shall verify the HMAC signature.', '2) The billing service shall reject invalid webhooks.'].join(
-      '\n',
-    );
+    const content = [
+      '1. REQ-001: The billing service shall verify the HMAC signature.',
+      '2) The billing service shall reject invalid webhooks.',
+    ].join('\n');
 
     const { items } = extractMarkdown(content);
 
     expect(items).toEqual([
-      { id: 'REQ-001', text: 'The billing service shall verify the HMAC signature.', source: { line: 1 } },
+      {
+        id: 'REQ-001',
+        text: 'The billing service shall verify the HMAC signature.',
+        source: { line: 1 },
+      },
       { text: 'The billing service shall reject invalid webhooks.', source: { line: 2 } },
     ]);
   });
@@ -82,7 +87,11 @@ describe('extractMarkdown', () => {
     const { items } = extractMarkdown(content);
 
     expect(items).toEqual([
-      { id: 'REQ-001', text: 'The billing service shall verify the HMAC signature.', source: { line: 3 } },
+      {
+        id: 'REQ-001',
+        text: 'The billing service shall verify the HMAC signature.',
+        source: { line: 3 },
+      },
       { text: 'The billing service shall reject invalid webhooks.', source: { line: 4 } },
     ]);
   });
@@ -112,9 +121,15 @@ describe('extractMarkdown', () => {
   });
 
   it('ignores prose, headings, and horizontal rules', () => {
-    const content = ['# Heading', '', 'Just a paragraph of prose.', '', '---', '', '- REQ-001: The billing service shall verify signatures.'].join(
-      '\n',
-    );
+    const content = [
+      '# Heading',
+      '',
+      'Just a paragraph of prose.',
+      '',
+      '---',
+      '',
+      '- REQ-001: The billing service shall verify signatures.',
+    ].join('\n');
 
     const { items } = extractMarkdown(content);
 
@@ -163,7 +178,8 @@ describe('extractMarkdown', () => {
   });
 
   it('strips a malformed [source:] segment in a bullet and falls back to the physical location', () => {
-    const content = '- REQ-003 [source: not-a-real-ref]: The billing service shall retain receipts.';
+    const content =
+      '- REQ-003 [source: not-a-real-ref]: The billing service shall retain receipts.';
 
     const { items } = extractMarkdown(content, 'requirements.md');
 

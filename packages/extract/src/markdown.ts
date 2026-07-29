@@ -41,9 +41,16 @@ export function extractMarkdown(content: string, file?: string): ExtractResult {
   const lines = content.split('\n');
   let inFence = false;
 
-  const push = (id: string | undefined, text: string, line: number, ref: SourceRef | undefined): void => {
+  const push = (
+    id: string | undefined,
+    text: string,
+    line: number,
+    ref: SourceRef | undefined,
+  ): void => {
     const source =
-      ref === undefined ? { ...(file === undefined ? {} : { file }), line } : { file: ref.file, line: ref.line };
+      ref === undefined
+        ? { ...(file === undefined ? {} : { file }), line }
+        : { file: ref.file, line: ref.line };
     items.push({
       ...(id === undefined || id === '' ? {} : { id }),
       text,

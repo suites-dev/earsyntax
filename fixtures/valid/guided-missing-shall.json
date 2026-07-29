@@ -6,8 +6,6 @@
   },
   "expected": {
     "valid": true,
-    "diagnostics": [
-      { "code": "ears.missing_shall", "severity": "warning" }
-    ]
+    "diagnostics": [{ "code": "ears.missing_shall", "severity": "warning" }]
   }
 }

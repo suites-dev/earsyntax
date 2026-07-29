@@ -7,8 +7,6 @@
   "expected": {
     "valid": true,
     "pattern": "complex",
-    "diagnostics": [
-      { "code": "ears.invalid_clause_order", "severity": "warning" }
-    ]
+    "diagnostics": [{ "code": "ears.invalid_clause_order", "severity": "warning" }]
   }
 }

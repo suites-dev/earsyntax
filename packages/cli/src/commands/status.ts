@@ -12,7 +12,11 @@ import { buildResponse, emit } from '../response.js';
 import { nextForStatus } from '../next-actions.js';
 import { isStale, listSlugs, reportedStatus, requireManifest } from '../workspace.js';
 
-function resolveSlug(context: CommandContext, root: string, config: ReturnType<typeof loadConfig>): string {
+function resolveSlug(
+  context: CommandContext,
+  root: string,
+  config: ReturnType<typeof loadConfig>,
+): string {
   const explicit = context.args.positionals.at(0);
   if (explicit !== undefined) {
     return explicit;
@@ -48,7 +52,12 @@ export function statusCommand(context: CommandContext): number {
   };
 
   const response = buildResponse(
-    { command: 'status', ok: true, root, next: nextForStatus(manifest.id, status, manifest.source?.path) },
+    {
+      command: 'status',
+      ok: true,
+      root,
+      next: nextForStatus(manifest.id, status, manifest.source?.path),
+    },
     { work },
   );
 

@@ -117,7 +117,15 @@ describe('convert loop (happy path)', () => {
 
     r('init', '--json');
 
-    const createdRes = r('new', 'checkout-webhooks', '--source', 'source.md', '--mode', 'convert', '--json');
+    const createdRes = r(
+      'new',
+      'checkout-webhooks',
+      '--source',
+      'source.md',
+      '--mode',
+      'convert',
+      '--json',
+    );
     expect(createdRes.code).toBe(0);
     const newBody = createdRes.json();
     const work = newBody.work as Record<string, unknown>;

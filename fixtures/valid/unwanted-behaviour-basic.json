@@ -16,8 +16,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "reject the webhook"
-    ]
+    "responses": ["reject the webhook"]
   }
 }

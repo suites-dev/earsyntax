@@ -17,8 +17,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "retry failed charges as needed"
-    ]
+    "responses": ["retry failed charges as needed"]
   }
 }

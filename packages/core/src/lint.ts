@@ -162,7 +162,11 @@ function runPipeline(
   const structural: Diagnostic[] = [];
 
   if (!shell.ast) {
-    return { references: [], structural: recoverFailedShell(text, shell.findings, opts), semantic: [] };
+    return {
+      references: [],
+      structural: recoverFailedShell(text, shell.findings, opts),
+      semantic: [],
+    };
   }
 
   // Re-parse each clause body into a real expression tree before catalog
@@ -201,7 +205,10 @@ function runPipeline(
 
   // Split and lint the response; the AST gains its final responses through
   // construction rather than mutation.
-  const { responses, diagnostics: responseDiagnostics } = lintResponses(resolvedAst.responses, opts);
+  const { responses, diagnostics: responseDiagnostics } = lintResponses(
+    resolvedAst.responses,
+    opts,
+  );
   const ast: EarsAst = { ...resolvedAst, responses };
 
   const semantic: Diagnostic[] = [...catalogDiagnostics, ...responseDiagnostics];
@@ -244,8 +251,7 @@ function recoverFailedShell(
   let kept = findings;
   if (hasNoMatch) {
     kept = findings.filter(
-      (finding) =>
-        finding.code !== 'ears.missing_shall' && finding.code !== 'ears.missing_system',
+      (finding) => finding.code !== 'ears.missing_shall' && finding.code !== 'ears.missing_system',
     );
   } else if (hasMissingShall) {
     kept = findings.filter((finding) => finding.code !== 'ears.missing_system');

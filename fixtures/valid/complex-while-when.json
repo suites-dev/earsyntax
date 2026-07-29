@@ -20,8 +20,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "verify the HMAC signature"
-    ]
+    "responses": ["verify the HMAC signature"]
   }
 }

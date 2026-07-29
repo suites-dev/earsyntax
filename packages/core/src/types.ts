@@ -61,14 +61,7 @@ export type ClauseType = 'while' | 'when' | 'where' | 'if';
  * one onto these roles (for example `systems` entries carry role `system`).
  */
 export type TermRole =
-  | 'system'
-  | 'actor'
-  | 'event'
-  | 'state'
-  | 'feature'
-  | 'mode'
-  | 'condition'
-  | 'data-term';
+  'system' | 'actor' | 'event' | 'state' | 'feature' | 'mode' | 'condition' | 'data-term';
 
 /**
  * A half-open source offset range `[start, end)`.

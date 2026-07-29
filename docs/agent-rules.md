@@ -174,52 +174,52 @@ The table below maps every diagnostic code in the registry (see `docs/diagnostic
 
 ### `ears.*` shell structure
 
-| Code                        | What to change                                                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Code                        | What to change                                                                                                               |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `ears.no_match`             | The line is not an EARS requirement. Rewrite it into one of the allowed templates, or move the text out of the `.ears` file. |
-| `ears.invalid_clause_order` | Reorder shell clauses to `While -> Where -> When -> If -> the <system> shall <response>`.                            |
-| `ears.missing_system`       | Insert the system name before `shall`: `the <system> shall ...`.                                                    |
-| `ears.missing_shall`        | Add a single `shall` response boundary. A requirement must state one obligation with `shall`.                       |
-| `ears.multiple_shall`       | Split into separate requirements, one `shall` each, following the compound-splitting rule.                          |
-| `ears.invalid_if_then_form` | Add the missing `then`: `If <condition>, then the <system> shall <response>.`                                       |
-| `ears.empty_clause`         | Fill the empty `While`/`Where`/`When`/`If` clause body, or remove the clause if it was accidental.                  |
-| `ears.empty_response`       | Add the response after `shall`, or raise a question if the source does not state one.                               |
+| `ears.invalid_clause_order` | Reorder shell clauses to `While -> Where -> When -> If -> the <system> shall <response>`.                                    |
+| `ears.missing_system`       | Insert the system name before `shall`: `the <system> shall ...`.                                                             |
+| `ears.missing_shall`        | Add a single `shall` response boundary. A requirement must state one obligation with `shall`.                                |
+| `ears.multiple_shall`       | Split into separate requirements, one `shall` each, following the compound-splitting rule.                                   |
+| `ears.invalid_if_then_form` | Add the missing `then`: `If <condition>, then the <system> shall <response>.`                                                |
+| `ears.empty_clause`         | Fill the empty `While`/`Where`/`When`/`If` clause body, or remove the clause if it was accidental.                           |
+| `ears.empty_response`       | Add the response after `shall`, or raise a question if the source does not state one.                                        |
 
 ### `expr.*` clause expressions
 
-| Code                               | What to change                                                                                        |
-| ---------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| `expr.unbalanced_parentheses`      | Balance the parentheses in the clause expression.                                                     |
-| `expr.invalid_operator_sequence`   | Fix the malformed operator run (for example `A or or B`, a trailing `and`, a leading `or`).           |
-| `expr.empty_subexpression`         | Remove the empty group or supply the missing operand (for example `A and ()`).                        |
+| Code                               | What to change                                                                                            |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `expr.unbalanced_parentheses`      | Balance the parentheses in the clause expression.                                                         |
+| `expr.invalid_operator_sequence`   | Fix the malformed operator run (for example `A or or B`, a trailing `and`, a leading `or`).               |
+| `expr.empty_subexpression`         | Remove the empty group or supply the missing operand (for example `A and ()`).                            |
 | `expr.operator_precedence_warning` | Warning. Add parentheses to a mixed `and`/`or` expression to make grouping explicit if intent is unclear. |
-| `expr.unknown_term`                | Warning. Align the clause term with a catalog entry, or add the term to the catalog if it is correct. |
-| `expr.ambiguous_term`              | Warning. Disambiguate the term so it matches one catalog entry, or use the canonical name.            |
-| `expr.mixed_unresolved_terms`      | Warning. One clause mixes resolved and unresolved terms; align the unresolved term with the catalog.  |
+| `expr.unknown_term`                | Warning. Align the clause term with a catalog entry, or add the term to the catalog if it is correct.     |
+| `expr.ambiguous_term`              | Warning. Disambiguate the term so it matches one catalog entry, or use the canonical name.                |
+| `expr.mixed_unresolved_terms`      | Warning. One clause mixes resolved and unresolved terms; align the unresolved term with the catalog.      |
 
 ### `catalog.*` term matching
 
-| Code                         | What to change                                                                                          |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `catalog.system_unresolved`  | Error in strict mode. Use the catalog's canonical system name, or confirm the system with the catalog owner. |
-| `catalog.system_ambiguous`   | Error in strict mode. Use the specific canonical system name so it matches exactly one entry.           |
-| `catalog.state_unresolved`   | Warning. Use the canonical state name, or add the state to the catalog if it is correct.                |
-| `catalog.state_ambiguous`    | Warning. Use the specific canonical state name.                                                         |
-| `catalog.event_unresolved`   | Warning. Use the canonical event name, or add the event to the catalog if it is correct.                |
-| `catalog.event_ambiguous`    | Warning. Use the specific canonical event name.                                                         |
-| `catalog.feature_unresolved` | Warning. Use the canonical feature name, or add the feature to the catalog if it is correct.            |
-| `catalog.feature_ambiguous`  | Warning. Use the specific canonical feature name.                                                        |
+| Code                         | What to change                                                                                                                                                           |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `catalog.system_unresolved`  | Error in strict mode. Use the catalog's canonical system name, or confirm the system with the catalog owner.                                                             |
+| `catalog.system_ambiguous`   | Error in strict mode. Use the specific canonical system name so it matches exactly one entry.                                                                            |
+| `catalog.state_unresolved`   | Warning. Use the canonical state name, or add the state to the catalog if it is correct.                                                                                 |
+| `catalog.state_ambiguous`    | Warning. Use the specific canonical state name.                                                                                                                          |
+| `catalog.event_unresolved`   | Warning. Use the canonical event name, or add the event to the catalog if it is correct.                                                                                 |
+| `catalog.event_ambiguous`    | Warning. Use the specific canonical event name.                                                                                                                          |
+| `catalog.feature_unresolved` | Warning. Use the canonical feature name, or add the feature to the catalog if it is correct.                                                                             |
+| `catalog.feature_ambiguous`  | Warning. Use the specific canonical feature name.                                                                                                                        |
 | `catalog.term_unreferenced`  | Warning (coverage). A cataloged term is never referenced. Add a requirement that uses it if one is missing, or note the gap; do not invent behavior to satisfy coverage. |
 
 ### `lint.*` style advice
 
-| Code                         | What to change                                                                                         |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `lint.multiple_responses`    | Warning. The response holds several semicolon-joined responses. Split into separate requirements.      |
+| Code                         | What to change                                                                                                     |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `lint.multiple_responses`    | Warning. The response holds several semicolon-joined responses. Split into separate requirements.                  |
 | `lint.vague_response`        | Warning. Replace the vague term with an observable, bounded response, or raise a question if the bound is unknown. |
-| `lint.unparsed_tail`         | Warning. Text remains after the parsed requirement. Move it into the requirement or remove it.         |
-| `lint.alias_used`            | Warning. A catalog alias matched. Prefer the canonical name.                                           |
-| `lint.suspicious_text_shape` | Warning. The sentence shape looks accidental. Rewrite it into a clean EARS template.                   |
+| `lint.unparsed_tail`         | Warning. Text remains after the parsed requirement. Move it into the requirement or remove it.                     |
+| `lint.alias_used`            | Warning. A catalog alias matched. Prefer the canonical name.                                                       |
+| `lint.suspicious_text_shape` | Warning. The sentence shape looks accidental. Rewrite it into a clean EARS template.                               |
 
 ## Review before accept
 

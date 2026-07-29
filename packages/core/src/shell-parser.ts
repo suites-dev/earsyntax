@@ -23,7 +23,15 @@
  * matching. The same input always yields the same result.
  */
 
-import type { ClauseExpr, DiagnosticCode, EarsAst, FreeTextExpr, Pattern, Span, TermMatch } from './types.js';
+import type {
+  ClauseExpr,
+  DiagnosticCode,
+  EarsAst,
+  FreeTextExpr,
+  Pattern,
+  Span,
+  TermMatch,
+} from './types.js';
 
 /**
  * A raw structural finding produced by the shell parser.
@@ -451,7 +459,11 @@ const LEADING_CLAUSE_KEYWORDS: readonly string[] = ['while', 'when', 'where', 'i
  * resume parsing from (the keyword after the comma). When no boundary is
  * found, both are the end of the text.
  */
-function scanUntilClauseBoundary(text: string, start: number, commaAsAnd: boolean): { end: number; next: number } {
+function scanUntilClauseBoundary(
+  text: string,
+  start: number,
+  commaAsAnd: boolean,
+): { end: number; next: number } {
   let depth = 0;
   for (let i = start; i < text.length; i++) {
     const ch = text[i];

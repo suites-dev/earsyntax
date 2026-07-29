@@ -170,7 +170,11 @@ function allowedGroups(role: TermRole, all: GroupEntries[]): GroupEntries[] {
  * checked against its aliases, but only when its canonical name did not match
  * (mirroring the Go `continue`). Duplicate entries are removed.
  */
-export function findMatches(raw: string, requestedRole: TermRole, catalog: Catalog): MatchCandidate[] {
+export function findMatches(
+  raw: string,
+  requestedRole: TermRole,
+  catalog: Catalog,
+): MatchCandidate[] {
   const key = normalizeKey(raw);
   if (key === '') {
     return [];
@@ -311,7 +315,12 @@ export function resolveTerm(
     // Go, which emits both for every role).
     if (requestedRole !== 'system') {
       diagnostics.push(
-        makeDiagnostic('expr.ambiguous_term', 'warning', 'ambiguous catalog term in expression', span),
+        makeDiagnostic(
+          'expr.ambiguous_term',
+          'warning',
+          'ambiguous catalog term in expression',
+          span,
+        ),
       );
     }
     diagnostics.push(

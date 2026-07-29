@@ -12,8 +12,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "convert charges to the customer currency"
-    ]
+    "responses": ["convert charges to the customer currency"]
   }
 }

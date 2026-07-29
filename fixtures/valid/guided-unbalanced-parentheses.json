@@ -6,8 +6,6 @@
   },
   "expected": {
     "valid": true,
-    "diagnostics": [
-      { "code": "expr.unbalanced_parentheses", "severity": "warning" }
-    ]
+    "diagnostics": [{ "code": "expr.unbalanced_parentheses", "severity": "warning" }]
   }
 }

@@ -12,8 +12,6 @@
         "role": "system"
       }
     },
-    "responses": [
-      "stop future invoicing"
-    ]
+    "responses": ["stop future invoicing"]
   }
 }

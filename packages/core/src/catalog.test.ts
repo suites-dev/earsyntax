@@ -68,7 +68,11 @@ describe('resolveTerm: single match', () => {
     expect(term.matched?.id).toBe('SYS-BILLING');
     expect(term.viaAlias).toBe(true);
     expect(diagnostics).toEqual([
-      { code: 'lint.alias_used', severity: 'warning', message: 'alias used instead of canonical term' },
+      {
+        code: 'lint.alias_used',
+        severity: 'warning',
+        message: 'alias used instead of canonical term',
+      },
     ]);
   });
 
@@ -99,7 +103,10 @@ describe('resolveTerm: unresolved', () => {
 
   it('keeps expr.unknown_term for unresolved clause-expression terms', () => {
     const { diagnostics } = resolveTerm('never happens', 'event', catalog, 'strict');
-    expect(diagnostics.map((d) => d.code)).toEqual(['expr.unknown_term', 'catalog.event_unresolved']);
+    expect(diagnostics.map((d) => d.code)).toEqual([
+      'expr.unknown_term',
+      'catalog.event_unresolved',
+    ]);
   });
 
   it('downgrades an unresolved system to a warning in guided mode', () => {
@@ -134,8 +141,16 @@ describe('resolveTerm: ambiguous', () => {
       { group: 'states', id: 'ST-B', name: 'session ended' },
     ]);
     expect(diagnostics).toEqual([
-      { code: 'expr.ambiguous_term', severity: 'warning', message: 'ambiguous catalog term in expression' },
-      { code: 'catalog.event_ambiguous', severity: 'warning', message: 'ambiguous catalog term match' },
+      {
+        code: 'expr.ambiguous_term',
+        severity: 'warning',
+        message: 'ambiguous catalog term in expression',
+      },
+      {
+        code: 'catalog.event_ambiguous',
+        severity: 'warning',
+        message: 'ambiguous catalog term match',
+      },
     ]);
   });
 
@@ -149,7 +164,11 @@ describe('resolveTerm: ambiguous', () => {
     const { term, diagnostics } = resolveTerm('core', 'system', catalog, 'strict');
     expect(term.ambiguous?.map((ref) => ref.id)).toEqual(['SYS-A', 'SYS-B']);
     expect(diagnostics).toEqual([
-      { code: 'catalog.system_ambiguous', severity: 'error', message: 'ambiguous catalog term match' },
+      {
+        code: 'catalog.system_ambiguous',
+        severity: 'error',
+        message: 'ambiguous catalog term match',
+      },
     ]);
   });
 
@@ -290,9 +309,9 @@ describe('resolveAndCollect', () => {
     const ast = buildAst();
     const { references, diagnostics } = resolveAndCollect(ast, undefined);
     expect(diagnostics).toEqual([]);
-    expect(references.every((ref) => ref.matched === undefined && ref.unresolved === undefined)).toBe(
-      true,
-    );
+    expect(
+      references.every((ref) => ref.matched === undefined && ref.unresolved === undefined),
+    ).toBe(true);
   });
 });
 
@@ -315,7 +334,8 @@ describe('catalogCoverageDiagnostics', () => {
     expect(diagnostics[0]).toEqual({
       code: 'catalog.term_unreferenced',
       severity: 'warning',
-      message: 'catalog events term "reverse thrust" (EV-2) is not referenced by any requirement text',
+      message:
+        'catalog events term "reverse thrust" (EV-2) is not referenced by any requirement text',
     });
   });
 

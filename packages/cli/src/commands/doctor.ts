@@ -100,7 +100,11 @@ export function doctorCommand(context: CommandContext): number {
 
   const diagnostics: FacadeDiagnostic[] = checks
     .filter((check) => !check.ok)
-    .map((check) => ({ code: `doctor.${check.name}`, severity: check.severity, message: check.message }));
+    .map((check) => ({
+      code: `doctor.${check.name}`,
+      severity: check.severity,
+      message: check.message,
+    }));
 
   const hasError = checks.some((check) => !check.ok && check.severity === 'error');
 

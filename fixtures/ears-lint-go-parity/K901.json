@@ -10,76 +10,54 @@
       {
         "id": "SYS-ENG-CTRL",
         "name": "engine control system",
-        "aliases": [
-          "FADEC",
-          "ECS"
-        ]
+        "aliases": ["FADEC", "ECS"]
       },
       {
         "id": "SYS-ENV-CTRL",
         "name": "environmental control system",
-        "aliases": [
-          "ECS"
-        ]
+        "aliases": ["ECS"]
       },
       {
         "id": "SYS-BRAKE-CTRL",
         "name": "brake control system",
-        "aliases": [
-          "brake controller",
-          "BCS"
-        ]
+        "aliases": ["brake controller", "BCS"]
       },
       {
         "id": "SYS-DIAG",
         "name": "diagnostic system",
-        "aliases": [
-          "diagnostics"
-        ]
+        "aliases": ["diagnostics"]
       },
       {
         "id": "SYS-POWER-MGMT",
         "name": "power management system",
-        "aliases": [
-          "PMS"
-        ]
+        "aliases": ["PMS"]
       },
       {
         "id": "SYS-NAV",
         "name": "navigation system",
-        "aliases": [
-          "nav system"
-        ]
+        "aliases": ["nav system"]
       },
       {
         "id": "SYS-DOOR-CTRL",
         "name": "door control system",
-        "aliases": [
-          "door controller"
-        ]
+        "aliases": ["door controller"]
       },
       {
         "id": "SYS-ATM",
         "name": "ATM",
-        "aliases": [
-          "cash machine"
-        ]
+        "aliases": ["cash machine"]
       }
     ],
     "actors": [
       {
         "id": "ACT-PILOT",
         "name": "pilot",
-        "aliases": [
-          "flight crew member"
-        ]
+        "aliases": ["flight crew member"]
       },
       {
         "id": "ACT-FLIGHT-CREW",
         "name": "flight crew",
-        "aliases": [
-          "crew"
-        ]
+        "aliases": ["crew"]
       },
       {
         "id": "ACT-DRIVER",
@@ -88,255 +66,182 @@
       {
         "id": "ACT-MAINT",
         "name": "maintenance technician",
-        "aliases": [
-          "technician",
-          "maintainer"
-        ]
+        "aliases": ["technician", "maintainer"]
       },
       {
         "id": "ACT-USER",
         "name": "user",
-        "aliases": [
-          "operator"
-        ]
+        "aliases": ["operator"]
       }
     ],
     "events": [
       {
         "id": "EVT-REV-CMD",
         "name": "reverse thrust is commanded",
-        "aliases": [
-          "reverse thrust command",
-          "reverse thrust commanded"
-        ]
+        "aliases": ["reverse thrust command", "reverse thrust commanded"]
       },
       {
         "id": "EVT-REV-CMD-PILOT",
         "name": "reverse thrust is commanded by pilot",
-        "aliases": [
-          "reverse thrust command"
-        ]
+        "aliases": ["reverse thrust command"]
       },
       {
         "id": "EVT-BRAKE-REQ",
         "name": "brake is requested",
-        "aliases": [
-          "brake request",
-          "brake requested"
-        ]
+        "aliases": ["brake request", "brake requested"]
       },
       {
         "id": "EVT-EMERG-BRAKE",
         "name": "emergency braking is active",
-        "aliases": [
-          "emergency braking"
-        ]
+        "aliases": ["emergency braking"]
       },
       {
         "id": "EVT-SENSOR-FAULT",
         "name": "sensor fault is detected",
-        "aliases": [
-          "sensor fault"
-        ]
+        "aliases": ["sensor fault"]
       },
       {
         "id": "EVT-LINK-LOSS",
         "name": "data link is lost",
-        "aliases": [
-          "link loss"
-        ]
+        "aliases": ["link loss"]
       },
       {
         "id": "EVT-DOOR-OPEN-CMD",
         "name": "door open is commanded",
-        "aliases": [
-          "door open command"
-        ]
+        "aliases": ["door open command"]
       },
       {
         "id": "EVT-DOOR-CLOSE-CMD",
         "name": "door close is commanded",
-        "aliases": [
-          "door close command"
-        ]
+        "aliases": ["door close command"]
       },
       {
         "id": "EVT-INVALID-CARD",
         "name": "an invalid credit card number is entered",
-        "aliases": [
-          "invalid credit card number"
-        ]
+        "aliases": ["invalid credit card number"]
       },
       {
         "id": "EVT-LOW-VOLTAGE",
         "name": "bus voltage falls below threshold",
-        "aliases": [
-          "low voltage event"
-        ]
+        "aliases": ["low voltage event"]
       }
     ],
     "states": [
       {
         "id": "STATE-ONGROUND",
         "name": "aircraft is on ground",
-        "aliases": [
-          "on ground",
-          "aircraft on ground"
-        ]
+        "aliases": ["on ground", "aircraft on ground"]
       },
       {
         "id": "STATE-INFLIGHT",
         "name": "aircraft is in flight",
-        "aliases": [
-          "in flight"
-        ]
+        "aliases": ["in flight"]
       },
       {
         "id": "STATE-HYD-PRESS",
         "name": "hydraulic pressure is available",
-        "aliases": [
-          "hydraulic pressure available"
-        ]
+        "aliases": ["hydraulic pressure available"]
       },
       {
         "id": "STATE-SERVICE-MODE",
         "name": "service mode is active",
-        "aliases": [
-          "service mode"
-        ]
+        "aliases": ["service mode"]
       },
       {
         "id": "STATE-DEGRADED",
         "name": "degraded mode is active",
-        "aliases": [
-          "degraded mode"
-        ]
+        "aliases": ["degraded mode"]
       },
       {
         "id": "STATE-RUNWAY-MODE",
         "name": "runway mode is active",
-        "aliases": [
-          "runway mode"
-        ]
+        "aliases": ["runway mode"]
       },
       {
         "id": "STATE-AUTOPILOT",
         "name": "autopilot is engaged",
-        "aliases": [
-          "autopilot engaged"
-        ]
+        "aliases": ["autopilot engaged"]
       },
       {
         "id": "STATE-CARD-ABSENT",
         "name": "there is no card in the ATM",
-        "aliases": [
-          "no card in the ATM"
-        ]
+        "aliases": ["no card in the ATM"]
       },
       {
         "id": "STATE-DOOR-OPEN",
         "name": "the door is open",
-        "aliases": [
-          "door is open"
-        ]
+        "aliases": ["door is open"]
       },
       {
         "id": "STATE-DOOR-CLOSED",
         "name": "the door is closed",
-        "aliases": [
-          "door is closed"
-        ]
+        "aliases": ["door is closed"]
       }
     ],
     "features": [
       {
         "id": "FEAT-REV",
         "name": "reverse thrust is installed",
-        "aliases": [
-          "reverse thrust installed"
-        ]
+        "aliases": ["reverse thrust installed"]
       },
       {
         "id": "FEAT-REMOTE-START",
         "name": "remote start is enabled",
-        "aliases": [
-          "remote start"
-        ]
+        "aliases": ["remote start"]
       },
       {
         "id": "FEAT-PREMIUM-NAV",
         "name": "premium navigation is enabled",
-        "aliases": [
-          "premium navigation",
-          "premium nav"
-        ]
+        "aliases": ["premium navigation", "premium nav"]
       },
       {
         "id": "FEAT-SUNROOF",
         "name": "sunroof is installed",
-        "aliases": [
-          "sunroof"
-        ]
+        "aliases": ["sunroof"]
       },
       {
         "id": "FEAT-DATALINK",
         "name": "data link is installed",
-        "aliases": [
-          "data link installed"
-        ]
+        "aliases": ["data link installed"]
       }
     ],
     "modes": [
       {
         "id": "MODE-NORMAL",
         "name": "normal mode is active",
-        "aliases": [
-          "normal mode"
-        ]
+        "aliases": ["normal mode"]
       },
       {
         "id": "MODE-DEGRADED",
         "name": "degraded mode is active",
-        "aliases": [
-          "degraded mode"
-        ]
+        "aliases": ["degraded mode"]
       },
       {
         "id": "MODE-MAINT",
         "name": "maintenance mode is active",
-        "aliases": [
-          "maintenance mode"
-        ]
+        "aliases": ["maintenance mode"]
       }
     ],
     "conditions": [
       {
         "id": "COND-OVERTEMP",
         "name": "engine overtemperature exists",
-        "aliases": [
-          "engine overtemperature"
-        ]
+        "aliases": ["engine overtemperature"]
       },
       {
         "id": "COND-POWER-UNSTABLE",
         "name": "power is unstable",
-        "aliases": [
-          "unstable power"
-        ]
+        "aliases": ["unstable power"]
       },
       {
         "id": "COND-SAFE-TO-OPEN",
         "name": "it is safe to open the door",
-        "aliases": [
-          "safe to open"
-        ]
+        "aliases": ["safe to open"]
       },
       {
         "id": "COND-SAFE-TO-CLOSE",
         "name": "it is safe to close the door",
-        "aliases": [
-          "safe to close"
-        ]
+        "aliases": ["safe to close"]
       }
     ],
     "dataTerms": [
@@ -351,9 +256,7 @@
       {
         "id": "DATA-CREDIT-CARD-NUMBER",
         "name": "credit card number",
-        "aliases": [
-          "card number"
-        ]
+        "aliases": ["card number"]
       }
     ]
   },
@@ -391,8 +294,6 @@
         "raw": "engine control system"
       }
     },
-    "responses": [
-      "enable reverse thrust"
-    ]
+    "responses": ["enable reverse thrust"]
   }
 }

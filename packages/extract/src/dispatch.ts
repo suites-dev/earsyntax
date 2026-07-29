@@ -40,7 +40,9 @@ export function extractFromContent(content: string, filename: string): ExtractRe
     default:
       return {
         items: [],
-        errors: [{ message: `Unsupported file extension: "${extension || filename}".`, file: filename }],
+        errors: [
+          { message: `Unsupported file extension: "${extension || filename}".`, file: filename },
+        ],
       };
   }
 }

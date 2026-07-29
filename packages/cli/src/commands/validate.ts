@@ -13,7 +13,12 @@ import { relative, resolve } from 'node:path';
 import { type Catalog, lintEarsBatch, type Options } from '@earsyntax/core';
 import { extractFromFile } from '@earsyntax/extract';
 import type { CommandContext } from '../context.js';
-import type { FacadeDiagnostic, ValidationResult, WorkManifest, WorkStatus } from '../facade-types.js';
+import type {
+  FacadeDiagnostic,
+  ValidationResult,
+  WorkManifest,
+  WorkStatus,
+} from '../facade-types.js';
 import { usageError } from '../errors.js';
 import { hashContent } from '../hash.js';
 import { findRoot, loadConfig, requireRoot, resolveInput, toRelative } from '../project.js';
@@ -89,12 +94,18 @@ function inferWorkSlug(root: string, workDir: string, absFiles: string[]): strin
 }
 
 /** Render a short human-readable validation.md artifact. */
-function renderValidationMarkdown(results: ValidationResult[], errors: number, warnings: number): string {
+function renderValidationMarkdown(
+  results: ValidationResult[],
+  errors: number,
+  warnings: number,
+): string {
   const lines = ['# Validation', '', `errors: ${errors}, warnings: ${warnings}`, ''];
   for (const result of results) {
     for (const diagnostic of result.diagnostics) {
       const at = result.line === undefined ? '' : `:${result.line}`;
-      lines.push(`- ${diagnostic.severity} ${diagnostic.code} (${result.id ?? '?'}${at}) ${diagnostic.message}`);
+      lines.push(
+        `- ${diagnostic.severity} ${diagnostic.code} (${result.id ?? '?'}${at}) ${diagnostic.message}`,
+      );
     }
   }
   lines.push('');
@@ -108,8 +119,11 @@ export function validateCommand(context: CommandContext): number {
   }
 
   const workId = context.args.values.get('work');
-  const root = workId !== undefined ? requireRoot(context.cwd) : (findRoot(context.cwd) ?? context.cwd);
-  const config = existsSync(resolve(root, '.earsyntax')) ? loadConfig(root, context.global.config) : undefined;
+  const root =
+    workId !== undefined ? requireRoot(context.cwd) : (findRoot(context.cwd) ?? context.cwd);
+  const config = existsSync(resolve(root, '.earsyntax'))
+    ? loadConfig(root, context.global.config)
+    : undefined;
 
   const absFiles = expandFiles(context.cwd, patterns);
   const catalog = loadCatalog(context.cwd, context.args.values.get('catalog'));
@@ -121,7 +135,10 @@ export function validateCommand(context: CommandContext): number {
   for (const abs of absFiles) {
     const extracted = extractFromFile(abs);
     if (extracted.items.length === 0 && extracted.errors.length > 0) {
-      throw usageError('validate.unreadable', extracted.errors.at(0)?.message ?? `Could not read ${abs}.`);
+      throw usageError(
+        'validate.unreadable',
+        extracted.errors.at(0)?.message ?? `Could not read ${abs}.`,
+      );
     }
     const fileRel = toRelative(root, abs);
     const lintResults = lintEarsBatch(extracted.items, catalog, options);
@@ -275,12 +292,16 @@ function renderPretty(
   for (const result of results) {
     for (const diagnostic of result.diagnostics) {
       const at = result.line === undefined ? '' : `:${result.line}`;
-      lines.push(`${result.file}${at} ${diagnostic.severity} ${diagnostic.code}  ${diagnostic.message}`);
+      lines.push(
+        `${result.file}${at} ${diagnostic.severity} ${diagnostic.code}  ${diagnostic.message}`,
+      );
     }
   }
   for (const diagnostic of facadeDiagnostics) {
     const at = diagnostic.line === undefined ? '' : `:${diagnostic.line}`;
-    lines.push(`${diagnostic.path ?? ''}${at} ${diagnostic.severity} ${diagnostic.code}  ${diagnostic.message}`);
+    lines.push(
+      `${diagnostic.path ?? ''}${at} ${diagnostic.severity} ${diagnostic.code}  ${diagnostic.message}`,
+    );
   }
   lines.push(
     `\n${summary.valid}/${summary.requirements} valid, ${summary.errors} errors, ${summary.warnings} warnings`,

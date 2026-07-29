@@ -79,7 +79,12 @@ export function run(argv: string[], options: RunOptions = {}): number {
   return dispatch(command, rest, baseCwd, write);
 }
 
-function dispatch(command: string, rest: string[], baseCwd: string, write: (text: string) => void): number {
+function dispatch(
+  command: string,
+  rest: string[],
+  baseCwd: string,
+  write: (text: string) => void,
+): number {
   const args = parseArgs(rest);
   const global = resolveGlobals(args);
   const cwd = global.cwd ? resolveInput(baseCwd, global.cwd) : baseCwd;
@@ -89,7 +94,10 @@ function dispatch(command: string, rest: string[], baseCwd: string, write: (text
 
   try {
     if (!Object.hasOwn(COMMANDS, command)) {
-      throw usageError('cli.unknown_command', `Unknown command "${command}". Run \`earsyntax --help\`.`);
+      throw usageError(
+        'cli.unknown_command',
+        `Unknown command "${command}". Run \`earsyntax --help\`.`,
+      );
     }
     const handler = COMMANDS[command];
     const context: CommandContext = { args, global, cwd, emitter };

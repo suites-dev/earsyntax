@@ -57,7 +57,11 @@ export function emit(emitter: Emitter, response: FacadeResponse, pretty: string)
 }
 
 /** Build the response for a {@link CliError} so `run` can emit it uniformly. */
-export function errorResponse(command: string, root: string | undefined, error: CliError): FacadeResponse {
+export function errorResponse(
+  command: string,
+  root: string | undefined,
+  error: CliError,
+): FacadeResponse {
   return buildResponse(
     {
       command,

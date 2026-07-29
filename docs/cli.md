@@ -12,23 +12,23 @@ npx @earsyntax/cli <command> [options]
 
 These work on every command where they make sense:
 
-| Option              | Effect                                                            |
-| ------------------- | ----------------------------------------------------------------- |
-| `--json`            | Emit the machine-readable facade response instead of pretty text. |
-| `--no-color`        | Strip ANSI color from pretty output.                              |
-| `--cwd <path>`      | Resolve the project from this directory instead of the process working directory. |
-| `--config <path>`   | Use an explicit config file instead of `.earsyntax/config.json`.  |
-| `--no-interactive`  | Never prompt; a step that would require confirmation is refused with exit 3. |
+| Option             | Effect                                                                            |
+| ------------------ | --------------------------------------------------------------------------------- |
+| `--json`           | Emit the machine-readable facade response instead of pretty text.                 |
+| `--no-color`       | Strip ANSI color from pretty output.                                              |
+| `--cwd <path>`     | Resolve the project from this directory instead of the process working directory. |
+| `--config <path>`  | Use an explicit config file instead of `.earsyntax/config.json`.                  |
+| `--no-interactive` | Never prompt; a step that would require confirmation is refused with exit 3.      |
 
 Every `--json` response shares a base shape: `{ version, command, ok, root?, next: [] }` plus command-specific keys. Paths are relative to the resolved project root (the directory containing `.earsyntax/`) unless you passed an absolute path.
 
 ## Exit codes
 
-| Code | Meaning                                                                                             |
-| ---- | --------------------------------------------------------------------------------------------------- |
-| `0`  | Completed with no error-severity diagnostic.                                                        |
-| `1`  | Validation completed with at least one error diagnostic. Only `validate` returns `1`.               |
-| `2`  | Usage, config, missing file, unparseable input, or work-item resolution error.                     |
+| Code | Meaning                                                                                              |
+| ---- | ---------------------------------------------------------------------------------------------------- |
+| `0`  | Completed with no error-severity diagnostic.                                                         |
+| `1`  | Validation completed with at least one error diagnostic. Only `validate` returns `1`.                |
+| `2`  | Usage, config, missing file, unparseable input, or work-item resolution error.                       |
 | `3`  | Refused write, stale source, overwrite protection, or confirmation required in non-interactive mode. |
 
 ## `init`
@@ -186,8 +186,16 @@ Expected output (`--json`, hashes vary):
     "stale": false
   },
   "next": [
-    { "command": "earsyntax instructions review --work checkout-webhooks --json", "reason": "Prepare the human review summary.", "forAgent": true },
-    { "command": "earsyntax accept checkout-webhooks", "reason": "Record acceptance after human approval.", "blocking": true }
+    {
+      "command": "earsyntax instructions review --work checkout-webhooks --json",
+      "reason": "Prepare the human review summary.",
+      "forAgent": true
+    },
+    {
+      "command": "earsyntax accept checkout-webhooks",
+      "reason": "Record acceptance after human approval.",
+      "blocking": true
+    }
   ]
 }
 ```
@@ -212,16 +220,35 @@ Expected output (convert, `--json`, abridged):
   "ok": true,
   "root": "/repo",
   "mode": "convert",
-  "work": { "id": "checkout-webhooks", "status": "scaffolded", "source": "specs/checkout.md", "output": "...", "questions": "...", "traceability": "..." },
+  "work": {
+    "id": "checkout-webhooks",
+    "status": "scaffolded",
+    "source": "specs/checkout.md",
+    "output": "...",
+    "questions": "...",
+    "traceability": "..."
+  },
   "rules": ["Read the full source before writing requirements.", "..."],
   "format": {
     "line": "REQ-001 [source: specs/checkout.md:7]: When a payment webhook is received, the billing service shall verify the HMAC signature.",
     "allowedPatterns": ["The <system> shall <response>.", "..."],
-    "metadataPrefixes": ["REQ-001:", "REQ-001 [source: path:line]:", "REQ-001 [source: path:line-line]:"]
+    "metadataPrefixes": [
+      "REQ-001:",
+      "REQ-001 [source: path:line]:",
+      "REQ-001 [source: path:line-line]:"
+    ]
   },
-  "source": { "path": "specs/checkout.md", "hash": "sha256:...", "excerpts": [{ "path": "specs/checkout.md", "startLine": 3, "endLine": 3, "text": "..." }] },
+  "source": {
+    "path": "specs/checkout.md",
+    "hash": "sha256:...",
+    "excerpts": [{ "path": "specs/checkout.md", "startLine": 3, "endLine": 3, "text": "..." }]
+  },
   "next": [
-    { "command": "earsyntax validate .earsyntax/work/checkout-webhooks/requirements.ears --source specs/checkout.md --json", "reason": "Validate the generated .ears file once it is written.", "forAgent": true }
+    {
+      "command": "earsyntax validate .earsyntax/work/checkout-webhooks/requirements.ears --source specs/checkout.md --json",
+      "reason": "Validate the generated .ears file once it is written.",
+      "forAgent": true
+    }
   ]
 }
 ```

@@ -7,8 +7,6 @@
   "expected": {
     "valid": true,
     "pattern": "unwanted-behaviour",
-    "diagnostics": [
-      { "code": "ears.invalid_if_then_form", "severity": "warning" }
-    ]
+    "diagnostics": [{ "code": "ears.invalid_if_then_form", "severity": "warning" }]
   }
 }

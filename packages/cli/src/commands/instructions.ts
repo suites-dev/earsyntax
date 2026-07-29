@@ -147,9 +147,10 @@ export function instructionsCommand(context: CommandContext): number {
     extra,
   );
 
-  const pretty = [`instructions ${mode} for "${manifest.id}"`, ...rulesFor(mode).map((r) => `  - ${r}`)].join(
-    '\n',
-  );
+  const pretty = [
+    `instructions ${mode} for "${manifest.id}"`,
+    ...rulesFor(mode).map((r) => `  - ${r}`),
+  ].join('\n');
 
   emit(context.emitter, response, pretty);
   return 0;

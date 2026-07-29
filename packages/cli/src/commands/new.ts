@@ -91,7 +91,10 @@ export function newCommand(context: CommandContext): number {
 
   const paths = workPaths(root, config, slug);
   if (existsSync(paths.manifest) && !force) {
-    throw refusalError('new.exists', `Work item "${slug}" already exists. Pass --force to recreate.`);
+    throw refusalError(
+      'new.exists',
+      `Work item "${slug}" already exists. Pass --force to recreate.`,
+    );
   }
 
   // Read and hash the source for convert mode.

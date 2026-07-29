@@ -161,9 +161,9 @@ describe('messageForCode', () => {
 
   it('never emits an em dash', () => {
     for (const code of ALL_CODES) {
-      expect(messageForCode(code, { term: 'x', clause: 'while', alias: 'a', canonical: 'b' })).not.toContain(
-        '—',
-      );
+      expect(
+        messageForCode(code, { term: 'x', clause: 'while', alias: 'a', canonical: 'b' }),
+      ).not.toContain('—');
     }
   });
 
