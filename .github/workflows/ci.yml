@@ -35,6 +35,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Typed ESLint resolves @earsyntax/* imports through each package's
+      # exports map (dist/*.d.ts), which only exists after a build.
+      - name: Build
+        run: pnpm build
+
       - name: Lint
         run: pnpm lint
 
@@ -133,6 +138,11 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      # Cross-package test imports resolve @earsyntax/* through the exports
+      # map (dist/*.d.ts), which only exists after a build.
+      - name: Build
+        run: pnpm build
 
       - name: Test
         run: pnpm test
