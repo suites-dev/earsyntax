@@ -21,6 +21,7 @@
  * catalog means "nothing to match against".
  */
 
+import { sortDiagnostics } from './diagnostics.js';
 import type {
   Catalog,
   CatalogEntry,
@@ -180,11 +181,19 @@ export function findMatches(
     return [];
   }
   const groups = allowedGroups(requestedRole, allGroups(catalog));
-  const matches: MatchCandidate[] = [];
+  // Canonical name matches take precedence over alias matches (the documented
+  // TermMatch contract in types.ts: canonical, then alias, then ambiguous). An
+  // alias match is considered only when no entry matched by canonical name, so
+  // a term that names one entry canonically and another by alias resolves to
+  // the canonical entry rather than being reported ambiguous. This is an
+  // intentional deviation from the Go reference, which mixes both into one
+  // candidate set; see docs/compatibility.md.
+  const canonical: MatchCandidate[] = [];
+  const aliased: MatchCandidate[] = [];
   for (const group of groups) {
     for (const entry of group.entries) {
       if (normalizeKey(entry.name) === key) {
-        matches.push({
+        canonical.push({
           ref: { group: group.group, id: entry.id, name: entry.name },
           role: group.role,
           viaAlias: false,
@@ -193,7 +202,7 @@ export function findMatches(
       }
       for (const alias of entry.aliases ?? []) {
         if (normalizeKey(alias) === key) {
-          matches.push({
+          aliased.push({
             ref: { group: group.group, id: entry.id, name: entry.name },
             role: group.role,
             viaAlias: true,
@@ -203,7 +212,7 @@ export function findMatches(
       }
     }
   }
-  return dedupeMatches(matches);
+  return dedupeMatches(canonical.length > 0 ? canonical : aliased);
 }
 
 /** Remove duplicate candidates by group and id, keeping the first occurrence. */
@@ -297,7 +306,11 @@ export function resolveTerm(
 
   if (matches.length === 1) {
     const match = matches[0];
-    term.role = match.role;
+    // Keep the requested role on the TermMatch. Per the TermMatch contract in
+    // types.ts, `role` is the role the term was expected to play, not the role
+    // of the group it happened to match. The matched group is still recorded in
+    // `matched.group`. (The Go reference overwrites the role here; deviation
+    // noted in docs/compatibility.md.)
     term.matched = match.ref;
     if (match.viaAlias) {
       term.viaAlias = true;
@@ -468,29 +481,6 @@ function sortReferences(references: ReferenceMatch[]): ReferenceMatch[] {
   return out;
 }
 
-/** Stable sort of diagnostics by span start, then code, then message, then severity. */
-function sortDiagnostics(diagnostics: Diagnostic[]): Diagnostic[] {
-  const out = [...diagnostics];
-  out.sort((a, b) => {
-    const aStart = a.span ? a.span.start : NO_SPAN_START;
-    const bStart = b.span ? b.span.start : NO_SPAN_START;
-    if (aStart !== bStart) {
-      return aStart - bStart;
-    }
-    if (a.code !== b.code) {
-      return a.code < b.code ? -1 : 1;
-    }
-    if (a.message !== b.message) {
-      return a.message < b.message ? -1 : 1;
-    }
-    if (a.severity !== b.severity) {
-      return a.severity < b.severity ? -1 : 1;
-    }
-    return 0;
-  });
-  return out;
-}
-
 /**
  * Resolve every catalog reference in a requirement AST.
  *
@@ -539,7 +529,9 @@ export function resolveAndCollect(
   const nextAst: EarsAst = {
     pattern: ast.pattern,
     system: systemResolution.term,
-    responses: ast.responses,
+    // Copy the responses so the returned AST never aliases the input array; the
+    // resolver's contract is that it never mutates or shares its input.
+    responses: [...ast.responses],
     raw: ast.raw,
     ...(preconditions ? { preconditions } : {}),
     ...(trigger ? { trigger } : {}),

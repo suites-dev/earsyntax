@@ -1,0 +1,23 @@
+{
+  "expectedErrors": [{ "path": "idFormat.pattern", "code": "invalid-pattern" }],
+  "profile": {
+    "name": "ears-x",
+    "notation": "ears",
+    "dialect": {
+      "keywordCase": "strict",
+      "allowLiteralSystemName": [],
+      "commaAfterLeadingClause": "required",
+      "allowStoryWrapper": false,
+      "allowFrameMetadata": true,
+      "allowProhibition": true
+    },
+    "locator": {
+      "documentKinds": ["ears", "text"],
+      "include": [{ "id": "ears-x.every-line", "kind": "every-line" }],
+      "exclude": [],
+      "codeFences": "ignore"
+    },
+    "severity": {},
+    "idFormat": { "required": false, "pattern": "REQ-(\\d+" }
+  }
+}

@@ -41,17 +41,33 @@ interface Profile {
 interface LocatorRule {
   id: string;
   kind: 'every-line' | 'heading-section' | 'list-item' | 'block';
-  heading?: string;
+  headingPattern?: string;
+  underHeading?: string;
   listMarker?: 'bullet' | 'ordered' | 'any';
+  blockPrefix?: string;
   note?: string;
 }
 ```
 
 `LocatorRule` is the unit the extractor reports as the matching rule for each
-candidate (`extract` returns `locatorRuleId`). Its concrete field set is
-finalized by the profile schema agent (plan Agent 03) and the host profile
-agents (plan Agents 09-12); the `id` field and the four `kind` values are the
-frozen part, because `extract` output and profile fixtures depend on them.
+candidate (`extract` returns `locatorRuleId`). The `id` field and the four
+`kind` values are the frozen part, because `extract` output and profile
+fixtures depend on them. The optional fields are the finalized minimal set the
+built-in markdown profiles need; each applies to specific kinds:
+
+| Field | Applies to | Meaning |
+|---|---|---|
+| `headingPattern` | `heading-section` | Regex selecting the heading whose section body lines this rule targets (include) or removes (exclude). |
+| `underHeading` | `list-item` | Regex selecting the ancestor heading a candidate list must sit under. |
+| `listMarker` | `list-item` | Which list markers qualify: `bullet`, `ordered`, or `any`. Defaults to `any` when omitted. |
+| `blockPrefix` | `block` | Literal heading line that opens a candidate block; the block body runs until the next heading of equal or higher level. |
+| `note` | any | Human note documenting intent in the data file. Rendered nowhere. |
+
+`headingPattern` and `underHeading` are JavaScript regular-expression source
+strings matched case-insensitively against a heading's trimmed text.
+`blockPrefix` is a literal string matched against a trimmed line, not a regex.
+`every-line` rules (strict, ears-x) use none of these fields: every non-empty
+line of a `documentKinds` file is a candidate.
 
 ## Field semantics
 
@@ -115,7 +131,10 @@ severity is never hard-coded in the linter.
    severity values, `LocatorRule.kind`) must be one of their listed values.
 4. `severity` keys must be resolvable registry IDs (current `EARS-E###` /
    `EARS-W###` IDs; deprecated aliases are not accepted as override keys).
-5. A malformed profile is an environment failure: exit `2` (see the facade
+5. Regex fields (`LocatorRule.headingPattern`, `LocatorRule.underHeading`, and
+   `idFormat.pattern`) must be strings that compile as JavaScript regular
+   expressions. `LocatorRule.blockPrefix` is a literal string, not a regex.
+6. A malformed profile is an environment failure: exit `2` (see the facade
    contract), never a lint result.
 
 ## Built-in profiles (intended settings)

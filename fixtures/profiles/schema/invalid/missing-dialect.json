@@ -1,0 +1,15 @@
+{
+  "expectedErrors": [{ "path": "dialect", "code": "missing-key" }],
+  "profile": {
+    "name": "strict",
+    "notation": "ears",
+    "locator": {
+      "documentKinds": ["ears", "text"],
+      "include": [{ "id": "strict.every-line", "kind": "every-line" }],
+      "exclude": [],
+      "codeFences": "ignore"
+    },
+    "severity": {},
+    "idFormat": { "required": false }
+  }
+}

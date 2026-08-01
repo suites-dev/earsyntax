@@ -226,3 +226,67 @@ describe('parseClauseExpression', () => {
     expect(second).toEqual(first);
   });
 });
+
+describe('parseClauseExpression hardening (does not throw on adversarial input)', () => {
+  it('handles a very long "not not not ..." chain without overflowing the stack', () => {
+    const raw = `${'not '.repeat(50_000)}A`;
+    let result: ReturnType<typeof parseClauseExpression> | undefined;
+    expect(() => {
+      result = parseClauseExpression(raw, 0);
+    }).not.toThrow();
+    // A leading chain of `not` still parses to a nested negation over the term.
+    expect(result?.expr.kind).toBe('not');
+  });
+
+  it('handles deeply nested parentheses without overflowing the stack', () => {
+    const raw = `${'('.repeat(20_000)}A${')'.repeat(20_000)}`;
+    let result: ReturnType<typeof parseClauseExpression> | undefined;
+    expect(() => {
+      result = parseClauseExpression(raw, 0);
+    }).not.toThrow();
+    // Once nesting passes the depth guard, the over-deep subtree is reported as
+    // an empty subexpression rather than crashing the parser.
+    expect(result?.findings.map((f) => f.code)).toContain('expr.empty_subexpression');
+  });
+
+  it('merges the span of a very long and/or chain without a spread RangeError', () => {
+    const count = 500_000;
+    const raw = Array.from({ length: count }, () => 'A').join(' and ');
+    let result: ReturnType<typeof parseClauseExpression> | undefined;
+    expect(() => {
+      result = parseClauseExpression(raw, 0);
+    }).not.toThrow();
+    expect(result?.expr.kind).toBe('and');
+    // The merged span still spans the whole chain: first term start to last end.
+    expect(result?.expr.span).toEqual({ start: 0, end: raw.length });
+  });
+});
+
+describe('parseClauseExpression spans cover their keyword and delimiters', () => {
+  it('spans a "not" negation from the not keyword to the end of its operand', () => {
+    const { expr } = parseClauseExpression('not A', 0);
+    expect(expr.kind).toBe('not');
+    // Span starts at the `not` keyword (offset 0), not at the operand `A`.
+    expect(expr.span).toEqual({ start: 0, end: 5 });
+    const not = expr as NotExpr;
+    expect(term(not.item).span).toEqual({ start: 4, end: 5 });
+  });
+
+  it('spans a nested "not not" chain from the outermost keyword', () => {
+    const { expr } = parseClauseExpression('not not A', 0);
+    expect(expr.kind).toBe('not');
+    expect(expr.span).toEqual({ start: 0, end: 9 });
+    const inner = (expr as NotExpr).item as NotExpr;
+    expect(inner.kind).toBe('not');
+    expect(inner.span).toEqual({ start: 4, end: 9 });
+  });
+
+  it('spans a non-empty group across its parentheses', () => {
+    const { expr } = parseClauseExpression('(A or B)', 0);
+    expect(expr.kind).toBe('group');
+    // Span covers the opening and closing parentheses, not just the inner or.
+    expect(expr.span).toEqual({ start: 0, end: 8 });
+    const inner = (expr as GroupExpr).item as OrExpr;
+    expect(inner.span).toEqual({ start: 1, end: 7 });
+  });
+});

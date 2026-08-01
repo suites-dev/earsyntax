@@ -128,17 +128,46 @@ describe('resolveTerm: unresolved', () => {
   });
 });
 
-describe('resolveTerm: ambiguous', () => {
-  it('reports all candidates when more than one entry matches', () => {
+describe('resolveTerm: canonical precedence over aliases', () => {
+  // A term that matches one entry's canonical name and another entry's alias
+  // resolves to the canonical entry. Aliases are considered only when no
+  // canonical name matches (types.ts Catalog contract: canonical, then alias,
+  // then ambiguous). The Go reference mixes both into an ambiguous set; this is
+  // an intentional deviation recorded in docs/compatibility.md.
+  it('prefers a canonical match over an alias in another entry', () => {
     const catalog: Catalog = {
       events: [{ id: 'EV-A', name: 'timeout' }],
       states: [{ id: 'ST-B', name: 'session ended', aliases: ['timeout'] }],
     };
     const { term, diagnostics } = resolveTerm('timeout', 'event', catalog, 'strict');
+    expect(term.matched).toEqual({ group: 'events', id: 'EV-A', name: 'timeout' });
+    expect(term.ambiguous).toBeUndefined();
+    expect(term.viaAlias).toBeUndefined();
+    expect(diagnostics).toEqual([]);
+  });
+
+  it('falls back to alias matches only when no canonical name matches', () => {
+    const catalog: Catalog = {
+      events: [{ id: 'EV-A', name: 'connection timeout', aliases: ['timeout'] }],
+      states: [{ id: 'ST-B', name: 'session ended', aliases: ['timeout'] }],
+    };
+    const { term } = resolveTerm('timeout', 'event', catalog, 'strict');
+    expect(term.matched).toBeUndefined();
+    expect(term.ambiguous?.map((ref) => ref.id)).toEqual(['EV-A', 'ST-B']);
+  });
+});
+
+describe('resolveTerm: ambiguous', () => {
+  it('reports all candidates when more than one canonical name matches', () => {
+    const catalog: Catalog = {
+      events: [{ id: 'EV-A', name: 'timeout' }],
+      states: [{ id: 'ST-B', name: 'timeout' }],
+    };
+    const { term, diagnostics } = resolveTerm('timeout', 'event', catalog, 'strict');
     expect(term.matched).toBeUndefined();
     expect(term.ambiguous).toEqual([
       { group: 'events', id: 'EV-A', name: 'timeout' },
-      { group: 'states', id: 'ST-B', name: 'session ended' },
+      { group: 'states', id: 'ST-B', name: 'timeout' },
     ]);
     expect(diagnostics).toEqual([
       {
@@ -207,6 +236,17 @@ describe('findMatches: role-scoped groups', () => {
   it('returns no matches for a blank term', () => {
     expect(findMatches('   ', 'event', catalog)).toEqual([]);
   });
+
+  it('returns only canonical matches when a term is canonical here and an alias there', () => {
+    const mixed: Catalog = {
+      events: [{ id: 'EV-A', name: 'timeout' }],
+      states: [{ id: 'ST-B', name: 'session ended', aliases: ['timeout'] }],
+    };
+    const matches = findMatches('timeout', 'event', mixed);
+    expect(matches).toHaveLength(1);
+    expect(matches[0].ref.id).toBe('EV-A');
+    expect(matches[0].viaAlias).toBe(false);
+  });
 });
 
 describe('resolveTerm: no-catalog mode', () => {
@@ -272,6 +312,15 @@ describe('resolveAndCollect', () => {
     const items = ast.trigger?.kind === 'and' ? ast.trigger.items : [];
     const timeout = items[0];
     expect(timeout.kind === 'term' ? timeout.term : undefined).toBeUndefined();
+  });
+
+  it('returns a fresh responses array rather than aliasing the input', () => {
+    const ast = buildAst();
+    const { ast: resolved } = resolveAndCollect(ast, catalog);
+    expect(resolved.responses).toEqual(ast.responses);
+    // The output must not share the input array: a later mutation of one must
+    // not be observable through the other.
+    expect(resolved.responses).not.toBe(ast.responses);
   });
 
   it('orders references by span start with spanless system reference last', () => {

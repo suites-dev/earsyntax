@@ -1,0 +1,24 @@
+{
+  "expectedErrors": [{ "path": "workspace", "code": "unknown-key" }],
+  "profile": {
+    "name": "strict",
+    "notation": "ears",
+    "workspace": ".earsyntax",
+    "dialect": {
+      "keywordCase": "strict",
+      "allowLiteralSystemName": [],
+      "commaAfterLeadingClause": "required",
+      "allowStoryWrapper": false,
+      "allowFrameMetadata": false,
+      "allowProhibition": false
+    },
+    "locator": {
+      "documentKinds": ["ears", "text"],
+      "include": [{ "id": "strict.every-line", "kind": "every-line" }],
+      "exclude": [],
+      "codeFences": "ignore"
+    },
+    "severity": {},
+    "idFormat": { "required": false }
+  }
+}

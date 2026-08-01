@@ -1,27 +1,29 @@
 /**
  * `@earsyntax/cli-contract` public API surface.
  *
- * Shared report output contracts so external tools can consume `ears lint`
- * reports without depending on the CLI. This package defines report DATA
- * shapes and pure serializers only: no I/O, no argument parsing, no
- * `process.exit`, and no assumptions about command names or flags.
+ * Shared output contracts so external tools can consume `earsyntax` results
+ * without depending on the CLI. This package defines pure serializers and DATA
+ * shapes only: no I/O, no argument parsing, no `process.exit`, and no
+ * assumptions about command names or flags.
  *
- * Determinism contract: builders preserve input order and construct object
- * keys in a fixed order, so identical input always produces identical output.
+ * The canonical result is the Findings model, built in `@earsyntax/core`
+ * (`toFindings`) and serialized here by {@link serializeFindings}. SARIF and the
+ * pretty model are legacy projections kept compiling; they will be rebuilt from
+ * Findings by a later agent.
+ *
+ * Determinism contract: serializers construct object keys in a fixed order and
+ * preserve input order, so identical input always produces identical output.
  */
+
+export type { Findings, FindingsDiagnostic, FindingsSummary, FindingsSeverity } from '@earsyntax/core';
+
+export { canonicalizeFindings, serializeFindings } from './findings-report.js';
+
+export { EXIT_LINT_ERRORS, EXIT_OK, EXIT_USAGE, exitCodeForFindings } from './exit-codes.js';
 
 export type { ReportInput, ReportInputFile, ReportInputItem } from './input.js';
 
 export { DIAGNOSTIC_CODES, DIAGNOSTIC_DESCRIPTIONS } from './diagnostic-registry.js';
-
-export type {
-  JsonDiagnostic,
-  JsonReport,
-  JsonReportFile,
-  JsonReportSummary,
-  JsonRequirement,
-} from './json-report.js';
-export { buildJsonReport, JSON_REPORT_VERSION, serializeJsonReport } from './json-report.js';
 
 export type {
   SarifDriver,
@@ -38,5 +40,3 @@ export { buildSarifLog, SARIF_SCHEMA, SARIF_TOOL_NAME, SARIF_VERSION } from './s
 
 export type { PrettyModel, PrettyRecord, PrettySummary } from './pretty.js';
 export { buildPrettyModel } from './pretty.js';
-
-export { EXIT_LINT_ERRORS, EXIT_OK, EXIT_USAGE, exitCodeForReport } from './exit-codes.js';

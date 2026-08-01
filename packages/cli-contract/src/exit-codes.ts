@@ -1,33 +1,37 @@
 /**
- * The exit-code contract for tools that run `ears lint`.
+ * The exit-code contract for the host-native `earsyntax` CLI.
  *
- * These values match the orchestration brief. A tool derives the lint-outcome
- * code from a {@link JsonReport} with {@link exitCodeForReport}; it selects
- * {@link EXIT_USAGE} itself for argument, config, or file-read failures, since
- * those are not represented in a report.
+ * The surface is `0`, `1`, `2` only (exit `3`, the old workspace-refusal code,
+ * is removed). A findings run derives its outcome code from a {@link Findings}
+ * value with {@link exitCodeForFindings}; a tool selects {@link EXIT_USAGE}
+ * itself for argument, profile, or environment failures, since those are not
+ * represented in a findings result.
  */
 
-import type { JsonReport } from './json-report.js';
+import type { Findings } from '@earsyntax/core';
 
-/** No error-severity diagnostics. The run succeeded. */
+/** No error-severity findings. The run succeeded. */
 export const EXIT_OK = 0;
 
-/** At least one error-severity diagnostic was reported. */
+/** At least one error-severity finding was reported. */
 export const EXIT_LINT_ERRORS = 1;
 
-/** A CLI usage, configuration, or file-read error occurred. */
+/** A usage or environment failure occurred (bad flag, unknown profile, ...). */
 export const EXIT_USAGE = 2;
 
 /**
- * The exit code implied by a report's findings.
+ * The exit code implied by a findings result.
  *
- * Returns {@link EXIT_LINT_ERRORS} when the report contains any error-severity
+ * Returns {@link EXIT_LINT_ERRORS} when the findings contain any error-severity
  * diagnostic, otherwise {@link EXIT_OK}. It never returns {@link EXIT_USAGE}:
- * usage failures are a CLI concern, not a property of a completed report.
+ * usage and environment failures are a CLI concern, not a property of a
+ * completed findings run. Equivalent to `findings.ok ? EXIT_OK : EXIT_LINT_ERRORS`.
  *
- * @param report The JSON report to inspect.
+ * @param findings The findings to inspect.
  * @returns {@link EXIT_OK} or {@link EXIT_LINT_ERRORS}.
  */
-export function exitCodeForReport(report: JsonReport): typeof EXIT_OK | typeof EXIT_LINT_ERRORS {
-  return report.summary.errors > 0 ? EXIT_LINT_ERRORS : EXIT_OK;
+export function exitCodeForFindings(
+  findings: Findings,
+): typeof EXIT_OK | typeof EXIT_LINT_ERRORS {
+  return findings.summary.errors > 0 ? EXIT_LINT_ERRORS : EXIT_OK;
 }

@@ -16,7 +16,7 @@ import type { DiagnosticCode } from '@earsyntax/core';
  * code means, not how to fix it. The key set is exhaustive by construction
  * (`Record<DiagnosticCode, string>`).
  */
-export const DIAGNOSTIC_DESCRIPTIONS: Record<DiagnosticCode, string> = {
+export const DIAGNOSTIC_DESCRIPTIONS: Readonly<Record<DiagnosticCode, string>> = Object.freeze({
   // EARS shell diagnostics.
   'ears.no_match': 'Text does not match any EARS shell pattern.',
   'ears.invalid_clause_order': 'EARS clauses appear in an invalid order.',
@@ -54,7 +54,7 @@ export const DIAGNOSTIC_DESCRIPTIONS: Record<DiagnosticCode, string> = {
   'lint.unparsed_tail': 'Trailing text after the requirement could not be parsed.',
   'lint.alias_used': 'A term was matched via an alias rather than its canonical name.',
   'lint.suspicious_text_shape': 'Requirement text has a suspicious shape.',
-};
+});
 
 /**
  * Every diagnostic code, sorted lexicographically.
@@ -62,6 +62,6 @@ export const DIAGNOSTIC_DESCRIPTIONS: Record<DiagnosticCode, string> = {
  * Sorting makes the SARIF rule list deterministic regardless of the key order
  * the registry object was written in.
  */
-export const DIAGNOSTIC_CODES: DiagnosticCode[] = (
-  Object.keys(DIAGNOSTIC_DESCRIPTIONS) as DiagnosticCode[]
-).sort();
+export const DIAGNOSTIC_CODES: readonly DiagnosticCode[] = Object.freeze(
+  (Object.keys(DIAGNOSTIC_DESCRIPTIONS) as DiagnosticCode[]).sort(),
+);

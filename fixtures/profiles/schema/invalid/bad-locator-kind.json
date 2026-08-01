@@ -1,0 +1,23 @@
+{
+  "expectedErrors": [{ "path": "locator.include[0].kind", "code": "invalid-enum" }],
+  "profile": {
+    "name": "openspec",
+    "notation": "ears",
+    "dialect": {
+      "keywordCase": "strict",
+      "allowLiteralSystemName": [],
+      "commaAfterLeadingClause": "required",
+      "allowStoryWrapper": false,
+      "allowFrameMetadata": false,
+      "allowProhibition": false
+    },
+    "locator": {
+      "documentKinds": ["markdown"],
+      "include": [{ "id": "openspec.req", "kind": "paragraph" }],
+      "exclude": [],
+      "codeFences": "ignore"
+    },
+    "severity": {},
+    "idFormat": { "required": false }
+  }
+}

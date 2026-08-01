@@ -210,12 +210,22 @@ function tokenizeExpression(
   return { tokens, findings: sortFindings(findings) };
 }
 
+/**
+ * Maximum parenthesis-nesting depth the parser recurses through. Beyond this,
+ * the over-deep group is reported as an empty subexpression instead of
+ * recursing further, so pathological input (thousands of nested parentheses)
+ * cannot overflow the JS stack. Real requirements never approach this depth.
+ */
+const MAX_EXPR_DEPTH = 200;
+
 class ExprParser {
   pos = 0;
   readonly findings: ExprFinding[] = [];
   hasAnd = false;
   hasOr = false;
   hasGroup = false;
+  /** Current parenthesis-nesting depth, guarded by {@link MAX_EXPR_DEPTH}. */
+  private groupDepth = 0;
   /** Set once an operator error truncated the parse, to suppress a follow-on tail finding. */
   operatorError = false;
 
@@ -279,17 +289,38 @@ class ExprParser {
   }
 
   private parseUnary(): ClauseExpr | null {
-    if (this.match(TokenKind.Not)) {
-      const inner = this.parseUnary();
-      if (inner === null) {
-        this.addFinding('expr.invalid_operator_sequence', this.currentSpan());
-        const dangling: FreeTextExpr = { kind: 'free-text', text: 'not' };
-        return dangling;
-      }
-      const notExpr: NotExpr = { kind: 'not', item: inner, span: inner.span };
-      return notExpr;
+    // Collect a leading run of `not` keywords iteratively rather than recursing
+    // once per keyword. A `not not not ...` chain of unbounded length would
+    // otherwise recurse until the JS stack overflows (core must never throw on
+    // user input). The tree is identical to the recursive form: each keyword
+    // wraps the operand in one more negation, innermost first.
+    const notStarts: number[] = [];
+    while (this.peek(TokenKind.Not)) {
+      notStarts.push(this.tokens[this.pos].start);
+      this.pos++;
     }
-    return this.parsePrimary();
+    if (notStarts.length === 0) {
+      return this.parsePrimary();
+    }
+
+    const inner = this.parsePrimary();
+    if (inner === null) {
+      this.addFinding('expr.invalid_operator_sequence', this.currentSpan());
+      const dangling: FreeTextExpr = { kind: 'free-text', text: 'not' };
+      return dangling;
+    }
+
+    let node: ClauseExpr = inner;
+    for (let k = notStarts.length - 1; k >= 0; k--) {
+      // Each negation's span reaches from its own `not` keyword to the end of
+      // the operand it negates, so it covers the keyword rather than starting at
+      // the inner term.
+      const span: Span | undefined =
+        node.span === undefined ? undefined : { start: notStarts[k], end: node.span.end };
+      const notExpr: NotExpr = span ? { kind: 'not', item: node, span } : { kind: 'not', item: node };
+      node = notExpr;
+    }
+    return node;
   }
 
   private parsePrimary(): ClauseExpr | null {
@@ -311,17 +342,33 @@ class ExprParser {
         return emptyGroup;
       }
 
+      // Guard the parse depth before recursing into the group body. Past the
+      // limit the over-deep group is collapsed to an empty subexpression, which
+      // keeps a pathologically nested input from overflowing the stack.
+      this.groupDepth++;
+      if (this.groupDepth > MAX_EXPR_DEPTH) {
+        this.groupDepth--;
+        return this.bailDeepGroup(open);
+      }
+
       let inner = this.parseExpr();
-      if (!this.match(TokenKind.RParen)) {
+      let closeEnd = inner?.span?.end ?? open.end;
+      if (this.peek(TokenKind.RParen)) {
+        closeEnd = this.tokens[this.pos].end;
+        this.pos++;
+      } else {
         this.addFinding('expr.unbalanced_parentheses', this.currentSpan());
       }
+      this.groupDepth--;
       if (inner === null) {
         const span = this.currentSpan();
         this.addFinding('expr.empty_subexpression', span);
         const empty: FreeTextExpr = { kind: 'free-text', text: '', span };
         inner = empty;
       }
-      const group: GroupExpr = { kind: 'group', item: inner, span: inner.span };
+      // The group span covers its parentheses, from the opening paren to the
+      // closing one (or the end of the recovered body when it is unterminated).
+      const group: GroupExpr = { kind: 'group', item: inner, span: { start: open.start, end: closeEnd } };
       return group;
     }
 
@@ -401,21 +448,55 @@ class ExprParser {
     const last = this.tokens[this.tokens.length - 1];
     return { start: last.start, end: last.end };
   }
+
+  /**
+   * Skip an over-deep group without recursing, given that its opening paren is
+   * already consumed. Consumes tokens up to the matching close paren (tracking
+   * nested parens iteratively), reports the group as an empty subexpression, and
+   * returns a placeholder group node spanning the skipped range. This is the
+   * depth-guard escape hatch that keeps deeply nested input from overflowing the
+   * stack.
+   */
+  private bailDeepGroup(open: ExprToken): ClauseExpr {
+    let depth = 1;
+    let end = open.end;
+    while (this.pos < this.tokens.length && depth > 0) {
+      const token = this.tokens[this.pos];
+      if (token.kind === TokenKind.LParen) {
+        depth++;
+      } else if (token.kind === TokenKind.RParen) {
+        depth--;
+      }
+      end = token.end;
+      this.pos++;
+    }
+    const span: Span = { start: open.start, end };
+    this.addFinding('expr.empty_subexpression', span);
+    const item: FreeTextExpr = { kind: 'free-text', text: '', span };
+    const group: GroupExpr = { kind: 'group', item, span };
+    return group;
+  }
 }
 
 function mergeSpan(items: ClauseExpr[]): Span | undefined {
-  const starts: number[] = [];
-  const ends: number[] = [];
+  // Accumulate the min start and max end incrementally. A spread into
+  // Math.min/Math.max would throw a RangeError once the operand list grows past
+  // the engine's argument limit (long `and`/`or` chains), so a plain loop is the
+  // only safe form here.
+  let start: number | undefined;
+  let end: number | undefined;
   for (const item of items) {
-    if (item.span !== undefined) {
-      starts.push(item.span.start);
-      ends.push(item.span.end);
+    if (item.span === undefined) {
+      continue;
+    }
+    if (start === undefined || item.span.start < start) {
+      start = item.span.start;
+    }
+    if (end === undefined || item.span.end > end) {
+      end = item.span.end;
     }
   }
-  if (starts.length === 0) {
-    return undefined;
-  }
-  return { start: Math.min(...starts), end: Math.max(...ends) };
+  return start === undefined || end === undefined ? undefined : { start, end };
 }
 
 /**

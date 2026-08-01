@@ -278,15 +278,15 @@
       "preconditions": {
         "kind": "group",
         "span": {
-          "start": 7,
-          "end": 124
+          "start": 6,
+          "end": 127
         }
       },
       "trigger": {
         "kind": "group",
         "span": {
-          "start": 136,
-          "end": 222
+          "start": 134,
+          "end": 224
         }
       },
       "system": {

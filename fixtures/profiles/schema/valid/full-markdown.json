@@ -1,0 +1,37 @@
+{
+  "name": "kiro",
+  "notation": "ears",
+  "dialect": {
+    "keywordCase": "case-insensitive",
+    "allowLiteralSystemName": ["THE SYSTEM"],
+    "commaAfterLeadingClause": "optional",
+    "allowStoryWrapper": true,
+    "allowFrameMetadata": false,
+    "allowProhibition": false
+  },
+  "locator": {
+    "documentKinds": ["markdown"],
+    "include": [
+      {
+        "id": "kiro.acceptance-criteria-item",
+        "kind": "list-item",
+        "underHeading": "^acceptance criteria$",
+        "listMarker": "any",
+        "note": "Items under acceptance criteria."
+      }
+    ],
+    "exclude": [
+      {
+        "id": "kiro.design-section",
+        "kind": "heading-section",
+        "headingPattern": "^design$"
+      }
+    ],
+    "codeFences": "ignore"
+  },
+  "severity": {
+    "EARS-W011": "off",
+    "EARS-E006": "warning"
+  },
+  "idFormat": { "required": true, "pattern": "^REQ-\\d+$" }
+}
