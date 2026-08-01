@@ -225,7 +225,13 @@ export type DiagnosticCode =
   | 'lint.vague_response'
   | 'lint.unparsed_tail'
   | 'lint.alias_used'
-  | 'lint.suspicious_text_shape';
+  | 'lint.suspicious_text_shape'
+  // Host-native grammar diagnostics. Introduced by the host-native grammar
+  // work; these have no legacy code they migrate from, but the dotted form
+  // registers as an alias like every other code.
+  | 'ears.keyword_case'
+  | 'ears.missing_leading_comma'
+  | 'ears.prohibition_not_allowed';
 
 /**
  * A single machine-readable finding about a requirement.
@@ -345,6 +351,54 @@ export interface EarsAst {
   responses: string[];
   /** The original requirement text. */
   raw: string;
+  /**
+   * `true` when the requirement is a prohibition (`shall not`) accepted because
+   * the active dialect sets {@link DialectOptions.allowProhibition}. Absent or
+   * `false` for an ordinary `shall` obligation. See `docs/contracts/profile.md`.
+   */
+  prohibition?: boolean;
+}
+
+/**
+ * Grammar tolerances an EARS dialect applies during parsing and linting.
+ *
+ * These mirror the `dialect` block of a profile (see `docs/contracts/profile.md`,
+ * "dialect"). Every field is optional; an absent field takes the canonical
+ * strict default (strict keyword casing, no literal system names, a required
+ * leading comma, and no story wrapper, frame metadata, or prohibition).
+ */
+export interface DialectOptions {
+  /**
+   * `strict`: EARS keywords must match canonical casing (`When`, `While`,
+   * `Where`, `If`, `shall`). `case-insensitive`: any casing is accepted.
+   */
+  keywordCase?: 'strict' | 'case-insensitive';
+  /**
+   * Literal system phrases accepted in place of `the <system>` (for example
+   * `['THE SYSTEM']`). Absent or empty means only the canonical form is valid.
+   */
+  allowLiteralSystemName?: string[];
+  /**
+   * `required`: a leading `When`/`While`/`Where`/`If` clause must be followed by
+   * a comma before the main clause. `optional`: the comma may be absent.
+   */
+  commaAfterLeadingClause?: 'required' | 'optional';
+  /**
+   * When `true`, user-story frame lines (for example `As a user, I want ...`)
+   * are treated as non-requirement frame content and skipped, not parsed.
+   */
+  allowStoryWrapper?: boolean;
+  /**
+   * When `true`, `REQ-###` frame ids and `[source: path:line]` tags are accepted
+   * as metadata prefixes on a requirement line.
+   */
+  allowFrameMetadata?: boolean;
+  /**
+   * When `true`, `shall not` is accepted as a prohibition kind. When `false` or
+   * absent, `shall not` is rejected (canonical Mavin EARS has no prohibition
+   * template).
+   */
+  allowProhibition?: boolean;
 }
 
 /**
@@ -361,6 +415,11 @@ export interface Options {
   commaAsAnd?: boolean;
   /** Terms flagged as vague when they appear in a response. */
   vagueTerms?: string[];
+  /**
+   * Grammar tolerances applied while parsing and linting. Defaults to the
+   * canonical strict dialect when absent. See `docs/contracts/profile.md`.
+   */
+  dialect?: DialectOptions;
 }
 
 /**

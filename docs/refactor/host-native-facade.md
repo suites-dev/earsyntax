@@ -462,6 +462,23 @@ delete an id. A new diagnostic takes the next free number in its severity band.
 | `EARS-E012` | `expr.invalid_operator_sequence` |
 | `EARS-E013` | `expr.unbalanced_parentheses` |
 
+### Introduced by the host-native grammar: 3 error codes (`EARS-E014`-`EARS-E016`)
+
+These are not part of the original 29-code migration. The host-native grammar
+work added them; each has no legacy code it replaces, but its dotted form
+registers as a deprecated alias like every other code. All three default to
+`error` and resolve as errors in strict mode.
+
+| New id | Dotted code | Introduced by |
+|---|---|---|
+| `EARS-E014` | `ears.keyword_case` | host-native grammar |
+| `EARS-E015` | `ears.missing_leading_comma` | host-native grammar |
+| `EARS-E016` | `ears.prohibition_not_allowed` | host-native grammar |
+
+The `kiro` profile relaxes keyword case (`EARS-E014`) and the leading comma
+(`EARS-E015`) through its dialect; the `ears-x` profile legalizes prohibition
+(`EARS-E016`) through `allowProhibition`.
+
 ### Warnings: 16 codes (`EARS-W001`-`EARS-W016`)
 
 | New id | Old code |
@@ -483,7 +500,9 @@ delete an id. A new diagnostic takes the next free number in its severity band.
 | `EARS-W015` | `lint.unparsed_tail` |
 | `EARS-W016` | `lint.vague_response` |
 
-13 errors + 16 warnings = 29 ids, one per old code, no gaps.
+13 errors + 16 warnings = 29 ids in the original migration, one per old code, no
+gaps. The host-native grammar work then appended `EARS-E014`-`EARS-E016` (see
+above), bringing the registry to 32 ids.
 
 Notes:
 

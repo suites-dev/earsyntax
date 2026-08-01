@@ -41,7 +41,7 @@ Codes are grouped by prefix. The `ID` column is the primary public identifier; t
 
 ### `ears.*` shell structure
 
-These report defects in the outer EARS sentence shape. All are mode-dependent.
+These report defects in the outer EARS sentence shape. All are mode-dependent. `EARS-E014`, `EARS-E015`, and `EARS-E016` were introduced by the host-native grammar work and have no legacy code they migrate from. A relaxing dialect suppresses them: the `kiro` profile relaxes keyword case (`EARS-E014`) and the leading comma (`EARS-E015`), and the `ears-x` profile legalizes prohibition (`EARS-E016`).
 
 | ID          | Deprecated alias            | Meaning                                                     | strict  | guided    | Example trigger                                                     |
 | ----------- | --------------------------- | ----------------------------------------------------------- | ------- | --------- | ------------------------------------------------------------------- |
@@ -53,6 +53,9 @@ These report defects in the outer EARS sentence shape. All are mode-dependent.
 | `EARS-E006` | `ears.invalid_if_then_form` | An `If` clause is missing its required `then` boundary.     | `error` | `warning` | `If the signature is invalid, the system shall reject the webhook.` |
 | `EARS-E003` | `ears.empty_clause`         | A `While`, `Where`, `When`, or `If` clause body is empty.   | `error` | `warning` | `When , the system shall reset.`                                    |
 | `EARS-E004` | `ears.empty_response`       | The response after `shall` is empty.                        | `error` | `warning` | `The system shall .`                                                |
+| `EARS-E014` | `ears.keyword_case`         | A keyword violates strict canonical casing.                 | `error` | `warning` | `when the timer fires, the system Shall reset.`                     |
+| `EARS-E015` | `ears.missing_leading_comma` | A leading clause is not comma-delimited where required.    | `error` | `warning` | `When the timer fires the system shall reset.`                      |
+| `EARS-E016` | `ears.prohibition_not_allowed` | `shall not` is used where the dialect forbids prohibition. | `error` | `warning` | `The system shall not log the payment token.`                       |
 
 ### `expr.*` clause expressions
 

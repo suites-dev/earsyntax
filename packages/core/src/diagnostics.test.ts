@@ -42,6 +42,9 @@ const ALL_CODES = [
   'lint.unparsed_tail',
   'lint.alias_used',
   'lint.suspicious_text_shape',
+  'ears.keyword_case',
+  'ears.missing_leading_comma',
+  'ears.prohibition_not_allowed',
 ] as const satisfies readonly DiagnosticCode[];
 
 const STRUCTURAL_CODES = [
@@ -61,6 +64,12 @@ const STRUCTURAL_CODES = [
 const SYSTEM_CATALOG_CODES = [
   'catalog.system_unresolved',
   'catalog.system_ambiguous',
+] as const satisfies readonly DiagnosticCode[];
+
+const HOST_NATIVE_CODES = [
+  'ears.keyword_case',
+  'ears.missing_leading_comma',
+  'ears.prohibition_not_allowed',
 ] as const satisfies readonly DiagnosticCode[];
 
 const NON_SYSTEM_CATALOG_CODES = [
@@ -115,6 +124,13 @@ describe('severityForCode', () => {
     }
   });
 
+  it('makes host-native grammar failures errors in strict and warnings in guided', () => {
+    for (const code of HOST_NATIVE_CODES) {
+      expect(severityForCode(code, 'strict')).toBe('error');
+      expect(severityForCode(code, 'guided')).toBe('warning');
+    }
+  });
+
   it('keeps non-system catalog failures warnings in both modes', () => {
     for (const code of NON_SYSTEM_CATALOG_CODES) {
       expect(severityForCode(code, 'strict')).toBe('warning');
@@ -143,8 +159,8 @@ describe('severityForCode', () => {
     }
   });
 
-  it('MODE_DEPENDENT_CODES contains exactly the structural and system catalog codes', () => {
-    const expected = [...STRUCTURAL_CODES, ...SYSTEM_CATALOG_CODES].sort();
+  it('MODE_DEPENDENT_CODES contains exactly the structural, system catalog, and host-native codes', () => {
+    const expected = [...STRUCTURAL_CODES, ...SYSTEM_CATALOG_CODES, ...HOST_NATIVE_CODES].sort();
     const actual = [...MODE_DEPENDENT_CODES].sort();
     expect(actual).toEqual(expected);
   });

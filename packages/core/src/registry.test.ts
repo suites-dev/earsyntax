@@ -34,6 +34,9 @@ const EXPECTED: readonly { id: string; oldCode: DiagnosticCode }[] = [
   { id: 'EARS-E011', oldCode: 'expr.empty_subexpression' },
   { id: 'EARS-E012', oldCode: 'expr.invalid_operator_sequence' },
   { id: 'EARS-E013', oldCode: 'expr.unbalanced_parentheses' },
+  { id: 'EARS-E014', oldCode: 'ears.keyword_case' },
+  { id: 'EARS-E015', oldCode: 'ears.missing_leading_comma' },
+  { id: 'EARS-E016', oldCode: 'ears.prohibition_not_allowed' },
   { id: 'EARS-W001', oldCode: 'catalog.event_ambiguous' },
   { id: 'EARS-W002', oldCode: 'catalog.event_unresolved' },
   { id: 'EARS-W003', oldCode: 'catalog.feature_ambiguous' },
@@ -66,10 +69,10 @@ function loadMigrationFixture(): MigrationTableFixture {
 }
 
 describe('diagnostic registry', () => {
-  it('has 29 entries, one per old code', () => {
-    expect(DIAGNOSTIC_REGISTRY).toHaveLength(29);
-    expect(EXPECTED).toHaveLength(29);
-    expect(ALL_CODES).toHaveLength(29);
+  it('has 32 entries, one per old code', () => {
+    expect(DIAGNOSTIC_REGISTRY).toHaveLength(32);
+    expect(EXPECTED).toHaveLength(32);
+    expect(ALL_CODES).toHaveLength(32);
   });
 
   it('assigns unique ids', () => {
@@ -97,7 +100,7 @@ describe('diagnostic registry', () => {
     expect(actual).toEqual(fixture.rows);
   });
 
-  it('maps every one of the 29 old codes to a current id', () => {
+  it('maps every one of the 32 old codes to a current id', () => {
     for (const code of ALL_CODES) {
       const id = resolveDiagnosticId(code);
       expect(id, `no id for old code ${code}`).toBeDefined();

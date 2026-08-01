@@ -85,6 +85,12 @@ export const MODE_DEPENDENT_CODES = new Set<DiagnosticCode>([
   // System-role catalog failures (non-system roles stay warnings).
   'catalog.system_unresolved',
   'catalog.system_ambiguous',
+  // Host-native grammar failures. Errors under the strict dialect; a relaxing
+  // dialect suppresses them at parse time (keyword case and leading comma) or
+  // legalizes the construct (prohibition), so they never reach this map there.
+  'ears.keyword_case',
+  'ears.missing_leading_comma',
+  'ears.prohibition_not_allowed',
 ]);
 
 /**
@@ -220,6 +226,18 @@ const MESSAGE_BUILDERS = {
     return 'A catalog alias matched; prefer the canonical name.';
   },
   'lint.suspicious_text_shape': () => 'The sentence shape is likely accidental or malformed.',
+
+  // Host-native grammar diagnostics.
+  'ears.keyword_case': (ctx) =>
+    ctx.term
+      ? `The keyword "${ctx.term}" does not match its required canonical casing.`
+      : 'A keyword does not match its required canonical casing.',
+  'ears.missing_leading_comma': (ctx) =>
+    ctx.clause
+      ? `The leading '${ctx.clause}' clause is not followed by the required comma.`
+      : 'A leading clause is not followed by the required comma.',
+  'ears.prohibition_not_allowed': () =>
+    "The 'shall not' prohibition form is not allowed by this dialect.",
 } satisfies Record<DiagnosticCode, (ctx: DiagnosticContext) => string>;
 
 /**

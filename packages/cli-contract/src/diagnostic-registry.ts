@@ -54,6 +54,10 @@ export const DIAGNOSTIC_DESCRIPTIONS: Readonly<Record<DiagnosticCode, string>> =
   'lint.unparsed_tail': 'Trailing text after the requirement could not be parsed.',
   'lint.alias_used': 'A term was matched via an alias rather than its canonical name.',
   'lint.suspicious_text_shape': 'Requirement text has a suspicious shape.',
+  // Host-native grammar diagnostics.
+  'ears.keyword_case': 'A keyword violates strict canonical casing.',
+  'ears.missing_leading_comma': 'A leading clause is not comma-delimited where required.',
+  'ears.prohibition_not_allowed': 'A shall not prohibition is used where the dialect forbids it.',
 });
 
 /**

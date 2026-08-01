@@ -71,7 +71,7 @@ const WARNING_PROFILE_NOTE =
  * severity, errors `E001+`, warnings `W001+`.
  */
 const ENTRIES: DiagnosticRegistryEntry[] = [
-  // Errors: EARS-E001 - EARS-E013.
+  // Errors: EARS-E001 - EARS-E016.
   {
     id: 'EARS-E001',
     oldCode: 'catalog.system_ambiguous',
@@ -227,6 +227,46 @@ const ENTRIES: DiagnosticRegistryEntry[] = [
     badExample: 'When (A and B, the system shall reset the timer.',
     goodExample: 'When (A and B), the system shall reset the timer.',
     profileNotes: ERROR_PROFILE_NOTE,
+  },
+  {
+    id: 'EARS-E014',
+    oldCode: 'ears.keyword_case',
+    title: 'Non-canonical keyword casing',
+    defaultSeverity: 'error',
+    meaning: 'A keyword violates strict canonical casing.',
+    rationale:
+      'Strict core follows the Mavin templates: keyword-initial capitalization for While, Where, When, and If, and a lowercase shall. Off-canonical casing signals text that was not written to the strict dialect.',
+    badExample: 'when the timer fires, the system Shall reset the timer.',
+    goodExample: 'When the timer fires, the system shall reset the timer.',
+    profileNotes:
+      'Error by default. The kiro profile sets keywordCase to case-insensitive, which suppresses this diagnostic at parse time; strict, ears-x, speckit, and openspec keep it an error. --strict has no further effect on an error.',
+  },
+  {
+    id: 'EARS-E015',
+    oldCode: 'ears.missing_leading_comma',
+    title: 'Missing leading-clause comma',
+    defaultSeverity: 'error',
+    meaning:
+      'A leading While, Where, When, or If clause is not comma-delimited where the dialect requires it.',
+    rationale:
+      'A required comma marks the boundary between a leading clause and the main clause. Without it the two run together, so the clause boundary is not delimited as the dialect requires.',
+    badExample: 'When the timer fires the system shall reset the timer.',
+    goodExample: 'When the timer fires, the system shall reset the timer.',
+    profileNotes:
+      'Error by default. The kiro profile sets commaAfterLeadingClause to optional, which suppresses this diagnostic at parse time; strict, ears-x, speckit, and openspec keep it an error. --strict has no further effect on an error.',
+  },
+  {
+    id: 'EARS-E016',
+    oldCode: 'ears.prohibition_not_allowed',
+    title: 'Prohibition not allowed',
+    defaultSeverity: 'error',
+    meaning: 'A shall not prohibition is used where the dialect forbids it.',
+    rationale:
+      'Canonical Mavin EARS has no prohibition template because a negative requirement is not conventionally verifiable: a tester cannot confirm that a system never does something across all inputs and all time. Dialects that forbid prohibition reject shall not for that reason.',
+    badExample: 'The system shall not log the payment token.',
+    goodExample: 'The system shall redact the payment token before logging.',
+    profileNotes:
+      'Error by default. The ears-x profile sets allowProhibition to true, which legalizes shall not so this diagnostic is never raised; strict, kiro, speckit, and openspec keep it an error. --strict has no further effect on an error.',
   },
 
   // Warnings: EARS-W001 - EARS-W016.
