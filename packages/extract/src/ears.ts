@@ -14,16 +14,17 @@
 import type { RequirementInput } from '@earsyntax/core';
 import type { ExtractResult } from './types.js';
 import { splitId } from './internal.js';
+import { stripBom } from './normalize.js';
 
 /**
  * Extract requirements from `.ears` content.
  *
- * @param content Raw file contents.
+ * @param rawContent Raw file contents.
  * @param file Optional source path, echoed onto each item's source location.
  */
-export function extractEars(content: string, file?: string): ExtractResult {
+export function extractEars(rawContent: string, file?: string): ExtractResult {
   const items: RequirementInput[] = [];
-  const lines = content.split('\n');
+  const lines = stripBom(rawContent).split('\n');
 
   for (let i = 0; i < lines.length; i++) {
     const raw = lines[i];

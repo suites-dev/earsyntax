@@ -238,3 +238,75 @@ const result = extractFromContent(content, 'requirements.md');
 // the file system; a read failure is reported in `errors`, not thrown.
 const fromDisk = extractFromFile('specs/requirements.yaml');
 ```
+
+## Host-native pipeline
+
+The `extractEars`/`extractMarkdown`/`extractYaml`/`extractJson` functions above
+are the non-profile surface: they read every list item, table row, and structured
+entry regardless of context. The host-native commands (`validate`, `extract`)
+use a profile-driven pipeline instead, so a profile controls which regions of a
+host document become requirement candidates.
+
+Two entry points cover the pipeline:
+
+```ts
+import { extractCandidates, runPipeline } from '@earsyntax/extract';
+import { BUILTIN_PROFILES } from '@earsyntax/core';
+
+// Stage 1-2 only: locate candidates (what `extract` prints).
+const { candidates, notices } = extractCandidates({
+  files: [{ path: '.kiro/specs/checkout/requirements.md', content }],
+  profile: BUILTIN_PROFILES.kiro,
+});
+
+// The whole pipeline: locate, extract, parse, lint, assemble findings.
+const { findings, notices: pipelineNotices } = runPipeline({
+  files: [{ path: '-', content, kind: 'text' }],
+  profile: BUILTIN_PROFILES.strict,
+  strict: false,
+});
+```
+
+A `PipelineFile` is `{ path, content, kind? }`. When `kind` is omitted it is
+inferred from the path extension (`.ears`, `.md`/`.markdown`, `.yaml`/`.yml`,
+`.json`, anything else `text`). Pass `path: '-'` for stdin content.
+
+### Candidates and positions
+
+Each `Candidate` is `{ file, line, col?, text, id?, locatorRuleId, profile }`.
+`line` and `col` are 1-based and point at the original host document: `col` is
+the column of the requirement text's first character, past any list marker or
+lifted metadata prefix. `locatorRuleId` is the id of the profile `LocatorRule`
+that selected the candidate, so `extract` output can be traced back to the
+profile.
+
+### Document-kind gating
+
+For the text-family kinds (`ears`, `text`, `markdown`) a file produces
+candidates only when its kind is listed in the profile's
+`locator.documentKinds`. Validating a Markdown file under `strict` (which locates
+over `ears`/`text`) yields no candidates rather than a parse error. YAML and
+JSON are structured requirement lists: no built-in profile declares them in
+`documentKinds`, so they are extracted profile-agnostically and their candidates
+carry a synthetic `locatorRuleId` of `structured.yaml` or `structured.json`. The
+active dialect still applies when their text is linted.
+
+### Frame metadata under the pipeline
+
+Under the pipeline, a `REQ-001:` id prefix and a `[source: path:line]` tag are
+lifted from a line only when the profile's dialect sets `allowFrameMetadata`
+(the `ears-x` profile does; `strict`, `kiro`, `speckit`, and `openspec` do not).
+Under a profile that does not allow frame metadata, the prefix is kept as part of
+the requirement text, and the linter reports it. A lifted `[source: ...]` tag is
+stripped from the text but does not move the reported position: findings point at
+the physical line and column where the text sits, so an agent can edit it in
+place. This differs from the non-profile `extractEars`, where a `[source: ...]`
+reference overrides the item's source location.
+
+### Never throws
+
+The pipeline never throws on malformed input. A bad YAML/JSON document or an
+unsupported kind produces zero candidates plus a `PipelineNotice`
+(`{ code, severity, message, file?, line? }`). Notices are the environment
+channel, distinct from lint findings; the CLI surfaces them as facade-level
+diagnostics, never inside the frozen Findings model.

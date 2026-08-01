@@ -16,3 +16,22 @@ export { extractMarkdown } from './markdown.js';
 export { extractYaml } from './yaml.js';
 export { extractJson } from './json.js';
 export { extractFromContent, extractFromFile } from './dispatch.js';
+
+// --- Host-native pipeline (Agent W2). Locate + extract stages plus the full
+// pipeline composed with @earsyntax/core's findings assembly. ---
+export {
+  extractCandidates,
+  runPipeline,
+  inferKind,
+} from './pipeline.js';
+export type {
+  DocumentKind,
+  PipelineFile,
+  ExtractCandidatesInput,
+  ExtractCandidatesResult,
+  RunPipelineInput,
+  RunPipelineResult,
+} from './pipeline.js';
+// Re-exported from @earsyntax/core so callers get the candidate/notice shapes
+// without a separate core import.
+export type { Candidate, PipelineNotice } from '@earsyntax/core';

@@ -1,27 +1,33 @@
 /**
- * Markdown extractor.
+ * Markdown extractor (legacy, non-profile surface).
  *
  * Extracts requirements from three Markdown structures:
  *
- * - bullet lists (`-`, `*`, `+`)
- * - numbered lists (`1.`, `1)`)
+ * - bullet lists (`-`, `*`, `+`), including indented continuation lines
+ * - numbered lists (`1.`, `1)`), including indented continuation lines
  * - GFM pipe tables (`| ID | Requirement |` and single-column requirement
- *   tables)
+ *   tables), with or without leading and trailing pipes
  *
- * Everything else is ignored: prose paragraphs, headings, and fenced code
- * blocks (both ``` ``` ``` and `~~~`). A metadata prefix inside a bullet, list
- * item, or single-column table cell (`REQ-001:` or
- * `REQ-001 [source: path:line]:`) is lifted into the item's `id`, and a
- * `[source: ...]` reference becomes the item's source location. Tables with an
- * explicit `ID` column take the id from that column instead.
+ * Everything else is ignored: prose paragraphs, headings, and fenced code blocks
+ * (both ` ``` ` and `~~~`, tracked by opening marker character and length). A
+ * metadata prefix inside a bullet, list item, or single-column table cell
+ * (`REQ-001:` or `REQ-001 [source: path:line]:`) is lifted into the item's `id`,
+ * and a `[source: ...]` reference becomes the item's source location. Tables with
+ * an explicit `ID` column take the id from that column instead.
+ *
+ * This is the non-profile extraction surface consumed by callers that want every
+ * list item and table row. The profile-driven host-native locator lives in
+ * `./locator.ts` and does not do table extraction (see `docs/input-formats.md`).
  */
 
 import type { RequirementInput } from '@earsyntax/core';
 import type { ExtractResult } from './types.js';
 import { splitId, type SourceRef } from './internal.js';
+import { classifyFences, splitTableRow } from './markdown-scan.js';
+import { stripBom } from './normalize.js';
 
-const BULLET = /^\s*[-*+]\s+(.+)$/;
-const NUMBERED = /^\s*\d+[.)]\s+(.+)$/;
+const BULLET = /^(\s*)[-*+](\s+)(.+)$/;
+const NUMBERED = /^(\s*)\d+[.)](\s+)(.+)$/;
 const SEPARATOR_CELL = /^:?-{1,}:?$/;
 const REQUIREMENT_HEADERS = new Set(['requirement', 'requirements', 'text', 'statement']);
 
@@ -33,13 +39,13 @@ interface TableRow {
 /**
  * Extract requirements from Markdown content.
  *
- * @param content Raw file contents.
+ * @param rawContent Raw file contents.
  * @param file Optional source path, echoed onto each item's source location.
  */
-export function extractMarkdown(content: string, file?: string): ExtractResult {
+export function extractMarkdown(rawContent: string, file?: string): ExtractResult {
   const items: RequirementInput[] = [];
-  const lines = content.split('\n');
-  let inFence = false;
+  const lines = stripBom(rawContent).split('\n');
+  const fenceStates = classifyFences(lines);
 
   const push = (
     id: string | undefined,
@@ -61,43 +67,54 @@ export function extractMarkdown(content: string, file?: string): ExtractResult {
   let i = 0;
   while (i < lines.length) {
     const raw = lines[i];
-    const trimmed = raw.trim();
-
-    if (trimmed.startsWith('```') || trimmed.startsWith('~~~')) {
-      inFence = !inFence;
+    if (fenceStates[i] !== 'outside') {
+      // A fence delimiter or a fenced-code line: never a requirement.
       i++;
       continue;
     }
-    if (inFence || trimmed === '' || trimmed.startsWith('#')) {
+
+    const trimmed = raw.trim();
+    if (trimmed === '' || trimmed.startsWith('#')) {
       i++;
       continue;
     }
 
     const bullet = BULLET.exec(raw);
     if (bullet) {
-      const { id, ref, text } = splitId(bullet[1]);
+      const { text: itemText, next } = gatherListItem(lines, fenceStates, i, bullet[1].length);
+      const { id, ref, text } = splitId(itemText);
       push(id, text, i + 1, ref);
-      i++;
+      i = next;
       continue;
     }
 
     const numbered = NUMBERED.exec(raw);
     if (numbered) {
-      const { id, ref, text } = splitId(numbered[1]);
+      const { text: itemText, next } = gatherListItem(lines, fenceStates, i, numbered[1].length);
+      const { id, ref, text } = splitId(itemText);
       push(id, text, i + 1, ref);
-      i++;
+      i = next;
       continue;
     }
 
-    if (trimmed.startsWith('|')) {
+    if (trimmed.includes('|')) {
       const block: TableRow[] = [];
       let j = i;
-      while (j < lines.length && lines[j].trim().startsWith('|')) {
-        block.push({ line: j + 1, cells: splitRow(lines[j].trim()) });
+      while (j < lines.length && fenceStates[j] === 'outside') {
+        const rowTrimmed = lines[j].trim();
+        if (!rowTrimmed.includes('|') || rowTrimmed.startsWith('#') || rowTrimmed === '') {
+          break;
+        }
+        block.push({ line: j + 1, cells: splitTableRow(rowTrimmed) });
         j++;
       }
-      extractTable(block, push);
-      i = j;
+      if (block.length >= 2) {
+        extractTable(block, push);
+        i = j;
+        continue;
+      }
+      // Not a table (single pipe line): treat as prose and skip just this line.
+      i++;
       continue;
     }
 
@@ -109,18 +126,41 @@ export function extractMarkdown(content: string, file?: string): ExtractResult {
 }
 
 /**
- * Split a pipe-delimited table row into trimmed cells, dropping the empty
- * segments produced by leading and trailing pipes.
+ * Gather a list item's text starting at `start`, absorbing indented continuation
+ * lines that are more indented than the marker and are not themselves a new list
+ * item, heading, blank line, or fenced-code delimiter. Continuation lines are
+ * joined to the first line with single spaces.
+ *
+ * @returns The joined item text and the index of the first unconsumed line.
  */
-function splitRow(trimmed: string): string[] {
-  let body = trimmed;
-  if (body.startsWith('|')) {
-    body = body.slice(1);
+function gatherListItem(
+  lines: string[],
+  fenceStates: readonly string[],
+  start: number,
+  markerIndent: number,
+): { text: string; next: number } {
+  const first = lines[start];
+  const firstBody = (BULLET.exec(first) ?? NUMBERED.exec(first))?.[3] ?? first.trim();
+  const parts = [firstBody.trim()];
+
+  let j = start + 1;
+  while (j < lines.length) {
+    const line = lines[j];
+    if (line.trim() === '' || fenceStates[j] !== 'outside') {
+      break;
+    }
+    const indent = line.length - line.trimStart().length;
+    if (indent <= markerIndent) {
+      break;
+    }
+    if (BULLET.test(line) || NUMBERED.test(line) || line.trim().startsWith('#')) {
+      break;
+    }
+    parts.push(line.trim());
+    j++;
   }
-  if (body.endsWith('|')) {
-    body = body.slice(0, -1);
-  }
-  return body.split('|').map((cell) => cell.trim());
+
+  return { text: parts.join(' '), next: j };
 }
 
 /**

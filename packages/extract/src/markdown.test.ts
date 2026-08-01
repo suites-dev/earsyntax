@@ -195,4 +195,33 @@ describe('extractMarkdown', () => {
   it('returns no items for an empty document', () => {
     expect(extractMarkdown('')).toEqual({ items: [], errors: [] });
   });
+
+  it('joins indented continuation lines of a list item', () => {
+    const content = [
+      '- When a payment webhook is received, the billing service',
+      '  shall verify the HMAC signature.',
+      '- The billing service shall retain receipts.',
+    ].join('\n');
+    const { items } = extractMarkdown(content, 'requirements.md');
+    expect(items.map((item) => item.text)).toEqual([
+      'When a payment webhook is received, the billing service shall verify the HMAC signature.',
+      'The billing service shall retain receipts.',
+    ]);
+  });
+
+  it('accepts a GFM table without leading or trailing pipes', () => {
+    const content = [
+      'ID | Requirement',
+      '--- | ---',
+      'REQ-001 | The billing service shall verify the HMAC signature.',
+    ].join('\n');
+    const { items } = extractMarkdown(content, 'requirements.md');
+    expect(items).toEqual([
+      {
+        id: 'REQ-001',
+        text: 'The billing service shall verify the HMAC signature.',
+        source: { file: 'requirements.md', line: 3 },
+      },
+    ]);
+  });
 });

@@ -1,0 +1,18 @@
+[
+  {
+    "file": "speckit-spec.md",
+    "line": 5,
+    "col": 1,
+    "text": "The billing service shall verify the signature.",
+    "locatorRuleId": "speckit.requirements-section",
+    "profile": "speckit"
+  },
+  {
+    "file": "speckit-spec.md",
+    "line": 6,
+    "col": 1,
+    "text": "When a payment webhook arrives, the billing service shall record the attempt.",
+    "locatorRuleId": "speckit.requirements-section",
+    "profile": "speckit"
+  }
+]

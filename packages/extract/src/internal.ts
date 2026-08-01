@@ -39,8 +39,13 @@ export interface SplitId {
  * - `REQ-001 [source: path:line]: <text>`
  * - `REQ-001 [source: path:line-line]: <text>`
  *
- * Group 1 is the identifier (a letter followed by letters, digits, underscores,
- * dots, or hyphens). Group 2 is the optional bracketed segment, captured as an
+ * Group 1 is the identifier, tightened to a requirement-ID shape rather than any
+ * word: an uppercase letter followed by uppercase letters, digits, dots,
+ * underscores, or hyphens, with a leading lookahead requiring at least one digit
+ * or hyphen somewhere in the token. This admits `REQ-001`, `US-3`, and `ABC001`
+ * while rejecting Title-case or all-caps prose labels: `Note:` and `Summary:`
+ * are not ids (lowercase letters), and `THE SYSTEM SHALL:` never reaches the
+ * colon as one token. Group 2 is the optional bracketed segment, captured as an
  * opaque blob and validated separately by {@link SOURCE_REF}; a malformed
  * bracket is still stripped from the text. Group 3 is the requirement text.
  *
@@ -48,7 +53,7 @@ export interface SplitId {
  * `When a payment ...` never matches: the first token `When` is followed by
  * neither a bracket nor a colon.
  */
-const ID_PREFIX = /^([A-Za-z][A-Za-z0-9_.-]*)(?:\s*(\[[^\]]*\]))?\s*:\s*(\S.*)$/;
+const ID_PREFIX = /^((?=[A-Z0-9._-]*[0-9-])[A-Z][A-Z0-9._-]*)(?:\s*(\[[^\]]*\]))?\s*:\s*(\S.*)$/;
 
 /**
  * Parses the bracketed metadata blob into a {@link SourceRef}. Matches
@@ -91,25 +96,20 @@ export function splitId(raw: string): SplitId {
 }
 
 /**
- * Find the 1-based line number of the first occurrence of `needle` in
- * `content`. Returns `undefined` when the needle is absent or empty.
+ * Read the `requirements` array from a parsed structured document.
  *
- * Used to give structured formats (YAML, JSON) a best-effort source line by
- * locating an item's id or text in the raw document.
+ * Shared by the YAML and JSON extractors: both expect a top-level object/mapping
+ * with a `requirements` array/sequence. Returns the array when present, or
+ * `undefined` when the top level is not an object or `requirements` is not an
+ * array. This is the single definition of the accepted top-level shape.
+ *
+ * @param parsed The value returned by `JSON.parse` or `jsYaml.load`.
+ * @returns The requirements array, or `undefined` when the shape is wrong.
  */
-export function findLine(content: string, needle: string | undefined): number | undefined {
-  if (!needle) {
+export function readRequirementsArray(parsed: unknown): unknown[] | undefined {
+  if (typeof parsed !== 'object' || parsed === null) {
     return undefined;
   }
-  const index = content.indexOf(needle);
-  if (index === -1) {
-    return undefined;
-  }
-  let line = 1;
-  for (let i = 0; i < index; i++) {
-    if (content[i] === '\n') {
-      line++;
-    }
-  }
-  return line;
+  const requirements = (parsed as Record<string, unknown>).requirements;
+  return Array.isArray(requirements) ? requirements : undefined;
 }

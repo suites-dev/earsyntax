@@ -15,15 +15,17 @@
 
 import type { RequirementInput } from '@earsyntax/core';
 import type { ExtractError, ExtractResult } from './types.js';
-import { findLine } from './internal.js';
+import { readRequirementsArray } from './internal.js';
+import { LineFinder, stripBom } from './normalize.js';
 
 /**
  * Extract requirements from JSON content.
  *
- * @param content Raw file contents.
+ * @param rawContent Raw file contents.
  * @param file Optional source path, echoed onto each item and error.
  */
-export function extractJson(content: string, file?: string): ExtractResult {
+export function extractJson(rawContent: string, file?: string): ExtractResult {
+  const content = stripBom(rawContent);
   const items: RequirementInput[] = [];
   const errors: ExtractError[] = [];
 
@@ -47,6 +49,7 @@ export function extractJson(content: string, file?: string): ExtractResult {
     return { items, errors };
   }
 
+  const finder = new LineFinder(content);
   for (let index = 0; index < requirements.length; index++) {
     const entry = requirements[index];
     if (typeof entry !== 'object' || entry === null) {
@@ -66,7 +69,7 @@ export function extractJson(content: string, file?: string): ExtractResult {
       continue;
     }
     const id = typeof record.id === 'string' ? record.id : undefined;
-    const line = findLine(content, id) ?? findLine(content, text);
+    const line = finder.locate(id) ?? finder.locate(text);
     items.push({
       ...(id === undefined ? {} : { id }),
       text: text.trim(),
@@ -78,12 +81,4 @@ export function extractJson(content: string, file?: string): ExtractResult {
   }
 
   return { items, errors };
-}
-
-function readRequirementsArray(parsed: unknown): unknown[] | undefined {
-  if (typeof parsed !== 'object' || parsed === null) {
-    return undefined;
-  }
-  const requirements = (parsed as Record<string, unknown>).requirements;
-  return Array.isArray(requirements) ? requirements : undefined;
 }

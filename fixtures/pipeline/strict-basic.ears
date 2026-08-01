@@ -1,0 +1,4 @@
+# Billing requirements
+
+The billing service shall verify the signature.
+When a payment webhook arrives, the billing service shall record the attempt.

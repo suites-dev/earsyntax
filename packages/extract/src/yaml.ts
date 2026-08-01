@@ -18,15 +18,17 @@
 import jsYaml from 'js-yaml';
 import type { RequirementInput } from '@earsyntax/core';
 import type { ExtractError, ExtractResult } from './types.js';
-import { findLine } from './internal.js';
+import { readRequirementsArray } from './internal.js';
+import { LineFinder, stripBom } from './normalize.js';
 
 /**
  * Extract requirements from YAML content.
  *
- * @param content Raw file contents.
+ * @param rawContent Raw file contents.
  * @param file Optional source path, echoed onto each item and error.
  */
-export function extractYaml(content: string, file?: string): ExtractResult {
+export function extractYaml(rawContent: string, file?: string): ExtractResult {
+  const content = stripBom(rawContent);
   const items: RequirementInput[] = [];
   const errors: ExtractError[] = [];
 
@@ -35,11 +37,15 @@ export function extractYaml(content: string, file?: string): ExtractResult {
     parsed = jsYaml.load(content);
   } catch (error) {
     if (error instanceof jsYaml.YAMLException) {
+      // `@types/js-yaml` types `mark` as always present, but a YAMLException can
+      // be constructed without one; read it through an optional-property view so
+      // the guard is honest and control-flow does not narrow it away.
+      const mark = (error as { mark?: jsYaml.Mark }).mark;
       errors.push({
         message: `Malformed YAML: ${error.reason}`,
         ...(file === undefined ? {} : { file }),
         // `mark.line` is 0-based; present it as a 1-based line number.
-        line: error.mark.line + 1,
+        ...(mark ? { line: mark.line + 1 } : {}),
       });
     } else {
       errors.push({
@@ -59,6 +65,7 @@ export function extractYaml(content: string, file?: string): ExtractResult {
     return { items, errors };
   }
 
+  const finder = new LineFinder(content);
   for (let index = 0; index < requirements.length; index++) {
     const entry = requirements[index];
     if (typeof entry !== 'object' || entry === null) {
@@ -78,19 +85,11 @@ export function extractYaml(content: string, file?: string): ExtractResult {
       continue;
     }
     const id = typeof record.id === 'string' ? record.id : undefined;
-    const line = findLine(content, id) ?? findLine(content, text);
+    const line = finder.locate(id) ?? finder.locate(text);
     items.push(buildInput(id, text.trim(), file, line));
   }
 
   return { items, errors };
-}
-
-function readRequirementsArray(parsed: unknown): unknown[] | undefined {
-  if (typeof parsed !== 'object' || parsed === null) {
-    return undefined;
-  }
-  const requirements = (parsed as Record<string, unknown>).requirements;
-  return Array.isArray(requirements) ? requirements : undefined;
 }
 
 function buildInput(

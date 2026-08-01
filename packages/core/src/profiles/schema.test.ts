@@ -32,8 +32,18 @@ function baseProfile(): Profile {
   };
 }
 
-function errorAt(errors: ProfileValidationError[], path: string): ProfileValidationError | undefined {
+function errorAt(
+  errors: ProfileValidationError[],
+  path: string,
+): ProfileValidationError | undefined {
   return errors.find((error) => error.path === path);
+}
+
+// A typed profile sub-object has no index signature, so writing an out-of-schema
+// key onto it (to exercise closed-schema rejection) needs a widening view. This
+// is a single, deliberate assertion to `Record`, not a data-shape claim.
+function mutable(obj: object): Record<string, unknown> {
+  return obj as Record<string, unknown>;
 }
 
 describe('validateProfile', () => {
@@ -63,7 +73,7 @@ describe('validateProfile', () => {
 
   test('rejects an unknown key inside dialect', () => {
     const input = baseProfile();
-    (input.dialect as Record<string, unknown>).surprise = 1;
+    mutable(input.dialect).surprise = 1;
     const result = validateProfile(input);
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -73,7 +83,7 @@ describe('validateProfile', () => {
 
   test('rejects an unknown key inside a nested locator rule (recursive)', () => {
     const input = baseProfile();
-    (input.locator.include[0] as Record<string, unknown>).bogus = 'x';
+    mutable(input.locator.include[0]).bogus = 'x';
     const result = validateProfile(input);
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -83,7 +93,7 @@ describe('validateProfile', () => {
 
   test('rejects an unknown key inside idFormat', () => {
     const input = baseProfile();
-    (input.idFormat as Record<string, unknown>).flavor = 'x';
+    mutable(input.idFormat).flavor = 'x';
     const result = validateProfile(input);
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -111,7 +121,7 @@ describe('validateProfile', () => {
 
   test('rejects a bad locator-rule kind', () => {
     const input = baseProfile();
-    (input.locator.include[0] as Record<string, unknown>).kind = 'paragraph';
+    mutable(input.locator.include[0]).kind = 'paragraph';
     const result = validateProfile(input);
     expect(result.ok).toBe(false);
     if (!result.ok) {
@@ -162,7 +172,9 @@ describe('validateProfile', () => {
     const result = validateProfile(input);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(errorAt(result.errors, 'locator.include[0].headingPattern')?.code).toBe('invalid-pattern');
+      expect(errorAt(result.errors, 'locator.include[0].headingPattern')?.code).toBe(
+        'invalid-pattern',
+      );
     }
   });
 
@@ -177,7 +189,7 @@ describe('validateProfile', () => {
 
   test('rejects a non-string entry in allowLiteralSystemName', () => {
     const input = baseProfile();
-    (input.dialect as Record<string, unknown>).allowLiteralSystemName = ['THE SYSTEM', 3];
+    mutable(input.dialect).allowLiteralSystemName = ['THE SYSTEM', 3];
     const result = validateProfile(input);
     expect(result.ok).toBe(false);
     if (!result.ok) {
