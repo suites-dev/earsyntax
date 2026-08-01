@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { lintCatalogCoverage, lintEars, lintEarsBatch, parseEars } from './index.js';
-import { DEFAULT_VAGUE_TERMS, withDefaults } from './options.js';
+import {
+  isStoryWrapperLine,
+  lintCatalogCoverage,
+  lintEars,
+  lintEarsBatch,
+  parseEars,
+} from './index.js';
+import { DEFAULT_VAGUE_TERMS, STRICT_DIALECT, withDefaults } from './options.js';
 import type { Catalog, Diagnostic, DiagnosticCode } from './types.js';
 
 /** Collect the set of diagnostic codes present on a result. */
@@ -326,6 +332,7 @@ describe('withDefaults', () => {
       mode: 'strict',
       commaAsAnd: false,
       vagueTerms: [...DEFAULT_VAGUE_TERMS],
+      dialect: { ...STRICT_DIALECT },
     });
   });
 
@@ -335,5 +342,34 @@ describe('withDefaults', () => {
 
   it('keeps a supplied non-empty vague-term list', () => {
     expect(withDefaults({ vagueTerms: ['quickly'] }).vagueTerms).toEqual(['quickly']);
+  });
+
+  it('defaults the dialect to the strict dialect', () => {
+    expect(withDefaults().dialect).toEqual({ ...STRICT_DIALECT });
+  });
+
+  it('merges a partial dialect over the strict defaults', () => {
+    const resolved = withDefaults({ dialect: { keywordCase: 'case-insensitive' } }).dialect;
+    expect(resolved.keywordCase).toBe('case-insensitive');
+    expect(resolved.commaAfterLeadingClause).toBe('required');
+    expect(resolved.allowProhibition).toBe(false);
+  });
+});
+
+describe('isStoryWrapperLine', () => {
+  it('recognizes a user-story wrapper line', () => {
+    expect(isStoryWrapperLine('As a user, I want to reset my password so that I can log in')).toBe(
+      true,
+    );
+    expect(isStoryWrapperLine('As an admin I want fast reports')).toBe(true);
+  });
+
+  it('does not treat an EARS requirement as a story wrapper', () => {
+    expect(
+      isStoryWrapperLine(
+        'When a payment webhook is received, the billing service shall verify it.',
+      ),
+    ).toBe(false);
+    expect(isStoryWrapperLine('The billing service shall retain the audit log.')).toBe(false);
   });
 });

@@ -1,0 +1,85 @@
+{
+  "note": "Expected `extract --profile speckit --json` candidates for spec.md. Snapshot authored ahead of the extractor implementation (plan Agents 05-08); marked pending-verification. Assumptions: (1) the heading-section include rule collects the body lines of the `## Requirements` / `### Functional Requirements` section; (2) the extractor strips the leading markdown list marker `- ` and the bold requirement label `**FR-###**: `, so the candidate `text` is the bare EARS sentence and `col` is the 1-based column where that sentence begins (15 for a 3-digit FR label); (3) the exclude rule removes the `### Key Entities` subsection, so its `- **[Entity]**: ...` bullets never appear here. `plan.md` is a separate zero-candidate fixture (see plan.candidates.json).",
+  "pendingVerification": true,
+  "file": "fixtures/profiles/speckit/spec.md",
+  "profile": "speckit",
+  "candidates": [
+    {
+      "file": "fixtures/profiles/speckit/spec.md",
+      "line": 55,
+      "col": 15,
+      "text": "The system shall allow a workspace owner to invite a teammate by email address.",
+      "profile": "speckit",
+      "locatorRuleId": "speckit.requirements-section",
+      "requirementId": "FR-001"
+    },
+    {
+      "file": "fixtures/profiles/speckit/spec.md",
+      "line": 56,
+      "col": 15,
+      "text": "When a teammate accepts an invitation, the system shall grant them the role recorded on that invitation.",
+      "profile": "speckit",
+      "locatorRuleId": "speckit.requirements-section",
+      "requirementId": "FR-002"
+    },
+    {
+      "file": "fixtures/profiles/speckit/spec.md",
+      "line": 57,
+      "col": 15,
+      "text": "While an invitation is pending, the system shall allow the owner to revoke it.",
+      "profile": "speckit",
+      "locatorRuleId": "speckit.requirements-section",
+      "requirementId": "FR-003"
+    },
+    {
+      "file": "fixtures/profiles/speckit/spec.md",
+      "line": 58,
+      "col": 15,
+      "text": "Where the workspace has audit logging enabled, the system shall record every member role change.",
+      "profile": "speckit",
+      "locatorRuleId": "speckit.requirements-section",
+      "requirementId": "FR-004"
+    },
+    {
+      "file": "fixtures/profiles/speckit/spec.md",
+      "line": 59,
+      "col": 15,
+      "text": "If an owner attempts to demote the last remaining owner, then the system shall reject the change.",
+      "profile": "speckit",
+      "locatorRuleId": "speckit.requirements-section",
+      "requirementId": "FR-005"
+    }
+  ],
+  "skippedButKeywordOpening": [
+    {
+      "line": 16,
+      "reason": "User Scenarios prose opening with 'When'; outside any Requirements heading, so the include rule never matches it.",
+      "text": "When the teammate accepts, they gain access at the role the owner chose."
+    },
+    {
+      "line": 17,
+      "reason": "User Scenarios prose opening with 'While'; outside any Requirements heading.",
+      "text": "While the invitation is pending, the owner can revoke it at any time."
+    },
+    {
+      "line": 32,
+      "reason": "User Story 2 prose opening with 'If'; outside any Requirements heading.",
+      "text": "If a teammate needs broader access, the owner promotes them from viewer to editor."
+    },
+    {
+      "line": 33,
+      "reason": "User Story 2 prose opening with 'Where'; outside any Requirements heading.",
+      "text": "Where the workspace has audit logging turned on, every role change is recorded for later review."
+    },
+    {
+      "line": 48,
+      "reason": "Edge Cases bullet opening with 'When'; outside any Requirements heading.",
+      "text": "When the last owner tries to demote themselves, the panel blocks the change to keep the workspace owned."
+    },
+    {
+      "line": 63,
+      "reason": "Key Entities bullet inside the Requirements block; removed by the speckit.non-requirement-section exclude rule.",
+      "text": "Workspace: The shared container that members belong to; owns projects and the member roster."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "fixture": "strict/valid.ears",
+  "profile": "strict",
+  "description": "One clean document exercising all six EARS patterns in canonical Mavin style over the strict every-line locator. Every line is valid with zero diagnostics under strict, and unchanged under ears-x (see matrix.json for the superset proof).",
+  "findings": { "ok": true, "errors": 0, "warnings": 0 },
+  "verification": "verified-core-api",
+  "lines": [
+    { "line": 1, "pattern": "ubiquitous", "expect": [] },
+    { "line": 2, "pattern": "state-driven", "expect": [] },
+    { "line": 3, "pattern": "event-driven", "expect": [] },
+    { "line": 4, "pattern": "optional-feature", "expect": [] },
+    { "line": 5, "pattern": "unwanted-behaviour", "expect": [] },
+    { "line": 6, "pattern": "complex", "note": "While + When combination", "expect": [] },
+    { "line": 7, "pattern": "complex", "note": "Where + If-then combination", "expect": [] }
+  ]
+}

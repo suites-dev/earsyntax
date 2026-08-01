@@ -1,0 +1,3 @@
+REQ-001: The billing service shall verify the HMAC signature of every incoming webhook.
+REQ-002: When a payment webhook is received, the billing service shall verify the HMAC signature. [source: billing/webhook.ts:42]
+REQ-003: If the HMAC signature is invalid, then the billing service shall reject the webhook. [source: billing/verify.ts:88]

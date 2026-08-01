@@ -13,7 +13,19 @@
 
 export type * from './types.js';
 
-export { lintEars, lintEarsBatch, parseEars, lintCatalogCoverage } from './lint.js';
+export {
+  lintEars,
+  lintEarsBatch,
+  parseEars,
+  lintCatalogCoverage,
+  isStoryWrapperLine,
+} from './lint.js';
+
+// Dialect resolution (Agent C4b). The strict dialect is the default applied by
+// `lintEars`/`parseEars`; `resolveDialect` merges a partial `dialect` block over
+// it so the pipeline and profile layers share one defaulting step.
+export { STRICT_DIALECT, resolveDialect } from './options.js';
+export type { ResolvedDialect } from './options.js';
 
 // The diagnostic registry (Agent C1) is the single source of truth for the
 // id/alias/severity migration table. `idForCode` is exported here from
@@ -74,3 +86,13 @@ export type {
   ToFindingsOptions,
 } from './findings.js';
 export { defaultSeverityForId, toFindings } from './findings.js';
+
+// --- Host-native pipeline (Agent W2). Findings-assembly stage (locate/extract
+// live in @earsyntax/extract). Appended as a distinct block. ---
+export type {
+  Candidate,
+  CandidateFile,
+  PipelineNotice,
+  LintCandidatesOptions,
+} from './pipeline.js';
+export { candidatesToFindings } from './pipeline.js';

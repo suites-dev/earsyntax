@@ -1,0 +1,49 @@
+{
+  "fixture": "openspec/spec.md",
+  "profile": "openspec",
+  "locatorRuleId": "openspec.requirement",
+  "description": "Expected `extract --profile openspec --json` candidates for spec.md. Snapshot authored ahead of the extractor implementation; marked pending-verification. A block's candidate is its first EARS-shaped body line: the single requirement statement OpenSpec places directly under each `### Requirement:` heading (col 1). `#### Scenario:` blocks hold only Gherkin WHEN/THEN/AND steps, which are frame content and yield no candidate. Field shape mirrors the Candidate contract (file, line, col, text, profile, locatorRuleId).",
+  "pendingVerification": true,
+  "candidates": [
+    {
+      "file": "openspec/spec.md",
+      "line": 25,
+      "col": 1,
+      "text": "The system shall retain build artifacts for the configured retention window.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    },
+    {
+      "file": "openspec/spec.md",
+      "line": 34,
+      "col": 1,
+      "text": "When a build completes, the system shall record the artifact retention deadline.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    },
+    {
+      "file": "openspec/spec.md",
+      "line": 44,
+      "col": 1,
+      "text": "While a retention hold is active, the system shall exempt held artifacts from deletion.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    },
+    {
+      "file": "openspec/spec.md",
+      "line": 54,
+      "col": 1,
+      "text": "Where remote storage is configured, the system shall replicate retained artifacts to the remote bucket.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    },
+    {
+      "file": "openspec/spec.md",
+      "line": 64,
+      "col": 1,
+      "text": "If an artifact exceeds its retention deadline, then the system shall schedule the artifact for deletion.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    }
+  ]
+}

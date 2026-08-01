@@ -13,7 +13,9 @@
     },
     "locator": {
       "documentKinds": ["markdown"],
-      "include": [{ "id": "kiro.item", "kind": "list-item", "underHeading": "^acceptance criteria$" }],
+      "include": [
+        { "id": "kiro.item", "kind": "list-item", "underHeading": "^acceptance criteria$" }
+      ],
       "exclude": [],
       "codeFences": "ignore"
     },

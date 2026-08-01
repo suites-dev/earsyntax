@@ -1,0 +1,29 @@
+{
+  "note": "Locator skip fixture. `extract --profile speckit --json` over plan.md must report ZERO candidates. plan.md contains no heading matching the include pattern `^(functional )?requirements$`, so no region is ever a candidate, even though several narrative lines open with EARS keywords (`When`, `While`, `Where`, `If`) and one sentence is a fully formed strict-EARS requirement ('The system shall reuse the existing email-identity provider.'). Snapshot authored ahead of the extractor implementation; marked pending-verification.",
+  "pendingVerification": true,
+  "file": "fixtures/profiles/speckit/plan.md",
+  "profile": "speckit",
+  "candidates": [],
+  "keywordOpeningDecoys": [
+    {
+      "line": 18,
+      "text": "While the constitution requires every feature to stay testable in isolation,",
+      "reason": "Constitution Check prose opening with 'While'; not under a Requirements heading."
+    },
+    {
+      "line": 20,
+      "text": "Where a gate would otherwise block the slice, the plan notes the exception here.",
+      "reason": "Constitution Check prose opening with 'Where'; not under a Requirements heading."
+    },
+    {
+      "line": 33,
+      "text": "The system shall reuse the existing email-identity provider.",
+      "reason": "Strict-valid EARS sentence, but it sits in Phase 0 - Research narrative, not a Requirements section, so it is never located."
+    },
+    {
+      "line": 39,
+      "text": "When the design is settled, the team promotes these notes into the spec.",
+      "reason": "Phase 1 prose opening with 'When'; not under a Requirements heading."
+    }
+  ]
+}

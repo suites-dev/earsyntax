@@ -1,0 +1,35 @@
+{
+  "fixture": "openspec/project.md",
+  "profile": "openspec",
+  "locatorRuleId": "openspec.requirement",
+  "description": "Locator skip fixture. `extract --profile openspec --json` over project.md must report ZERO candidates. No `### Requirement:` or `#### Scenario:` heading opens a block, so the block locator never targets a region, even though several narrative lines open with EARS keywords (`When`, `If`, `While`, `Where`) and one prose sentence contains 'The system shall'. Snapshot authored ahead of the extractor implementation; marked pending-verification.",
+  "pendingVerification": true,
+  "candidates": [],
+  "keywordOpeningDecoys": [
+    {
+      "line": 11,
+      "text": "When the team plans a change, they write a proposal under `openspec/changes/`.",
+      "reason": "Overview prose opening with 'When'; not inside a ### Requirement: or #### Scenario: block."
+    },
+    {
+      "line": 12,
+      "text": "If a reviewer requests edits, the author revises the delta before archiving.",
+      "reason": "Overview prose opening with 'If'; not inside a located block."
+    },
+    {
+      "line": 13,
+      "text": "The system shall remain the source of truth for retention behavior; this",
+      "reason": "Narrative sentence containing 'The system shall', explicitly labeled non-requirement; not inside a located block."
+    },
+    {
+      "line": 18,
+      "text": "- While a change is in review, keep its delta small and focused.",
+      "reason": "Conventions bullet opening with 'While'; no requirement/scenario block opens here."
+    },
+    {
+      "line": 19,
+      "text": "- Where a capability already exists, extend its spec rather than duplicating it.",
+      "reason": "Conventions bullet opening with 'Where'; no requirement/scenario block opens here."
+    }
+  ]
+}

@@ -1,10 +1,18 @@
 import { describe, expect, it } from 'vitest';
+import { resolveDialect, type ResolvedDialect } from '../src/options.js';
 import { parseShell, type ShellFinding } from '../src/shell-parser.js';
-import type { AndExpr, DiagnosticCode, FreeTextExpr } from '../src/types.js';
+import type { AndExpr, DialectOptions, DiagnosticCode, FreeTextExpr } from '../src/types.js';
 
 function codes(findings: ShellFinding[]): DiagnosticCode[] {
   return findings.map((f) => f.code);
 }
+
+/** A resolved dialect built from a partial override, for readable test setup. */
+function dialect(overrides: DialectOptions): ResolvedDialect {
+  return resolveDialect({ dialect: overrides });
+}
+
+const CASE_INSENSITIVE = dialect({ keywordCase: 'case-insensitive' });
 
 describe('parseShell: valid shell patterns', () => {
   it('parses a ubiquitous requirement (no clauses)', () => {
@@ -65,12 +73,135 @@ describe('parseShell: valid shell patterns', () => {
 });
 
 describe('parseShell: case-insensitive keywords', () => {
-  it('accepts upper-case and mixed-case keywords', () => {
-    const { ast, findings } = parseShell('WHILE the door is open, THE system SHALL respond.');
+  it('accepts upper-case and mixed-case keywords under a case-insensitive dialect', () => {
+    const { ast, findings } = parseShell('WHILE the door is open, THE system SHALL respond.', {
+      dialect: CASE_INSENSITIVE,
+    });
     expect(findings).toEqual([]);
     expect(ast!.pattern).toBe('state-driven');
     expect(ast!.system.raw).toBe('system');
     expect(ast!.responses).toEqual(['respond']);
+  });
+});
+
+describe('parseShell: strict keyword casing (ES-D-007)', () => {
+  it('flags a lower-case sentence-initial keyword', () => {
+    const { ast, findings } = parseShell('when the door is open, the system shall respond.');
+    expect(codes(findings)).toContain('ears.keyword_case');
+    expect(ast!.pattern).toBe('event-driven');
+  });
+
+  it('flags an upper-case shall', () => {
+    const { findings } = parseShell('When the door is open, the system SHALL respond.');
+    expect(codes(findings)).toContain('ears.keyword_case');
+  });
+
+  it('accepts canonical casing with no finding', () => {
+    const { findings } = parseShell('When the door is open, the system shall respond.');
+    expect(codes(findings)).not.toContain('ears.keyword_case');
+  });
+
+  it('treats a mid-sentence clause keyword as lowercase', () => {
+    const { findings } = parseShell(
+      'While the door is open, when the user acts, the system shall respond.',
+    );
+    expect(codes(findings)).not.toContain('ears.keyword_case');
+  });
+
+  it('flags a capitalized mid-sentence clause keyword', () => {
+    const { findings } = parseShell(
+      'While the door is open, When the user acts, the system shall respond.',
+    );
+    expect(codes(findings)).toContain('ears.keyword_case');
+  });
+});
+
+describe('parseShell: leading comma (ES-D-001)', () => {
+  it('flags a missing leading comma under a strict dialect and still recovers', () => {
+    const { ast, findings } = parseShell('When the timer fires the system shall reset the timer.');
+    expect(codes(findings)).toContain('ears.missing_leading_comma');
+    expect(ast!.pattern).toBe('event-driven');
+    expect((ast!.trigger as FreeTextExpr).text).toBe('the timer fires');
+    expect(ast!.system.raw).toBe('system');
+    expect(ast!.responses).toEqual(['reset the timer']);
+  });
+
+  it('accepts a missing leading comma under an optional-comma dialect', () => {
+    const { ast, findings } = parseShell('When the timer fires the system shall reset the timer.', {
+      dialect: dialect({ commaAfterLeadingClause: 'optional' }),
+    });
+    expect(codes(findings)).not.toContain('ears.missing_leading_comma');
+    expect(ast!.system.raw).toBe('system');
+  });
+});
+
+describe('parseShell: then discriminator (ES-D-002)', () => {
+  it('flags a then used outside an If requirement', () => {
+    const { findings } = parseShell('When the timer fires, the system shall then reset the timer.');
+    expect(codes(findings)).toContain('ears.invalid_if_then_form');
+  });
+
+  it('accepts then inside a valid If ... then requirement', () => {
+    const { findings } = parseShell(
+      'If the timer is stale, then the system shall reset the timer.',
+    );
+    expect(codes(findings)).not.toContain('ears.invalid_if_then_form');
+  });
+});
+
+describe('parseShell: prohibition (ES-D-004)', () => {
+  it('rejects shall not under a strict dialect', () => {
+    const { ast, findings } = parseShell('The system shall not log the payment token.');
+    expect(codes(findings)).toContain('ears.prohibition_not_allowed');
+    expect(ast!.prohibition).toBeUndefined();
+  });
+
+  it('accepts shall not and marks the AST under a prohibition dialect', () => {
+    const { ast, findings } = parseShell('The system shall not log the payment token.', {
+      dialect: dialect({ allowProhibition: true }),
+    });
+    expect(codes(findings)).not.toContain('ears.prohibition_not_allowed');
+    expect(ast!.prohibition).toBe(true);
+    expect(ast!.responses).toEqual(['not log the payment token']);
+  });
+});
+
+describe('parseShell: system name (ES-D-005)', () => {
+  it('rejects a pronoun system reference', () => {
+    const { findings } = parseShell('When the timer fires, it shall reset the timer.');
+    expect(codes(findings)).toContain('ears.missing_system');
+  });
+
+  it('accepts a literal system name when the dialect allows it', () => {
+    const { ast, findings } = parseShell('When a webhook arrives, THE SYSTEM shall verify it.', {
+      dialect: dialect({
+        keywordCase: 'case-insensitive',
+        allowLiteralSystemName: ['THE SYSTEM'],
+      }),
+    });
+    expect(findings).toEqual([]);
+    expect(ast!.system.raw).toBe('THE SYSTEM');
+  });
+});
+
+describe('parseShell: frame metadata', () => {
+  it('accepts a REQ id prefix and a trailing source tag when the dialect allows it', () => {
+    const { ast, findings } = parseShell(
+      'REQ-014 When the timer fires, the system shall reset the timer. [source: spec.md:12]',
+      { dialect: dialect({ allowFrameMetadata: true }) },
+    );
+    expect(findings).toEqual([]);
+    expect(ast!.pattern).toBe('event-driven');
+    expect(ast!.system.raw).toBe('system');
+    expect(ast!.responses).toEqual(['reset the timer']);
+  });
+
+  it('does not recognize a REQ id prefix under a strict dialect', () => {
+    const { ast, findings } = parseShell(
+      'REQ-014 When the timer fires, the system shall reset the timer.',
+    );
+    expect(ast).toBeUndefined();
+    expect(codes(findings)).toContain('ears.no_match');
   });
 });
 

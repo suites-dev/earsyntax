@@ -1,0 +1,16 @@
+{
+  "id": "VAL-D004",
+  "text": "The billing service shall not log the payment token.",
+  "options": { "dialect": { "allowProhibition": true } },
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "ubiquitous",
+      "prohibition": true,
+      "system": { "raw": "billing service", "role": "system" }
+    },
+    "responses": ["not log the payment token"]
+  }
+}

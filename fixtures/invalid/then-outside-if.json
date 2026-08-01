@@ -1,0 +1,9 @@
+{
+  "id": "INV-D002",
+  "text": "When a payment webhook is received, the billing service shall then reject the webhook.",
+  "expected": {
+    "valid": false,
+    "pattern": "event-driven",
+    "diagnostics": [{ "code": "ears.invalid_if_then_form", "severity": "error" }]
+  }
+}

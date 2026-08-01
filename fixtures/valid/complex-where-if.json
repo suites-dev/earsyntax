@@ -1,0 +1,11 @@
+{
+  "id": "VAL-CWIF",
+  "text": "Where dunning management is enabled, if the payment is declined, then the billing service shall retry the charge.",
+  "expected": {
+    "valid": true,
+    "pattern": "complex",
+    "diagnostics": [],
+    "ast": { "pattern": "complex", "system": { "raw": "billing service", "role": "system" } },
+    "responses": ["retry the charge"]
+  }
+}

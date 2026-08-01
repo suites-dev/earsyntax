@@ -1,0 +1,41 @@
+{
+  "fixture": "openspec/change.md",
+  "profile": "openspec",
+  "locatorRuleId": "openspec.requirement",
+  "description": "Expected `extract --profile openspec --json` candidates for change.md. Snapshot authored ahead of the extractor implementation; marked pending-verification. Extraction is delta-section-agnostic: the `openspec.requirement` block rule fires on every `### Requirement:` block whether it sits under `## ADDED`, `## MODIFIED`, or `## REMOVED` (those H2 headers are organizational, not locator targets). Candidates below: 2 ADDED, 1 MODIFIED, 1 REMOVED. Field shape mirrors the Candidate contract.",
+  "pendingVerification": true,
+  "candidates": [
+    {
+      "file": "openspec/change.md",
+      "line": 13,
+      "col": 1,
+      "text": "The system shall retain build artifacts for the retention window of their assigned tier.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    },
+    {
+      "file": "openspec/change.md",
+      "line": 22,
+      "col": 1,
+      "text": "When an operator pins an artifact, the system shall retain the artifact until the pin is removed.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    },
+    {
+      "file": "openspec/change.md",
+      "line": 34,
+      "col": 1,
+      "text": "If an artifact exceeds its tier retention window and is unpinned, then the system shall schedule the artifact for deletion.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    },
+    {
+      "file": "openspec/change.md",
+      "line": 46,
+      "col": 1,
+      "text": "The system shall retain build artifacts for the configured retention window.",
+      "profile": "openspec",
+      "locatorRuleId": "openspec.requirement"
+    }
+  ]
+}

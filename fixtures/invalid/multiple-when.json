@@ -1,0 +1,9 @@
+{
+  "id": "INV-D003",
+  "text": "When a payment webhook is received, when a refund is requested, the billing service shall open a dispute case.",
+  "expected": {
+    "valid": false,
+    "pattern": "complex",
+    "diagnostics": [{ "code": "ears.invalid_clause_order", "severity": "error" }]
+  }
+}

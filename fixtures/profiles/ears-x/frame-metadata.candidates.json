@@ -1,0 +1,35 @@
+{
+  "fixture": "ears-x/frame-metadata.ears",
+  "profile": "ears-x",
+  "locatorRuleId": "ears-x.every-line",
+  "description": "Expected extract output under the ears-x every-line locator. text is the raw line including the REQ-### prefix and [source:] tag. requirementId is populated from the frame id once frame-metadata parsing lands (pending C4b); the every-line locator itself yields one candidate per non-empty line unconditionally.",
+  "candidates": [
+    {
+      "file": "ears-x/frame-metadata.ears",
+      "line": 1,
+      "col": 1,
+      "text": "REQ-001: The billing service shall verify the HMAC signature of every incoming webhook.",
+      "profile": "ears-x",
+      "locatorRuleId": "ears-x.every-line",
+      "requirementId": "REQ-001"
+    },
+    {
+      "file": "ears-x/frame-metadata.ears",
+      "line": 2,
+      "col": 1,
+      "text": "REQ-002: When a payment webhook is received, the billing service shall verify the HMAC signature. [source: billing/webhook.ts:42]",
+      "profile": "ears-x",
+      "locatorRuleId": "ears-x.every-line",
+      "requirementId": "REQ-002"
+    },
+    {
+      "file": "ears-x/frame-metadata.ears",
+      "line": 3,
+      "col": 1,
+      "text": "REQ-003: If the HMAC signature is invalid, then the billing service shall reject the webhook. [source: billing/verify.ts:88]",
+      "profile": "ears-x",
+      "locatorRuleId": "ears-x.every-line",
+      "requirementId": "REQ-003"
+    }
+  ]
+}

@@ -23,6 +23,7 @@
  * matching. The same input always yields the same result.
  */
 
+import { STRICT_DIALECT, type ResolvedDialect } from './options.js';
 import type {
   ClauseExpr,
   DiagnosticCode,
@@ -86,6 +87,12 @@ export interface ShellParseOptions {
    * a comma followed by any shell keyword (including `the`) ends the clause.
    */
   commaAsAnd?: boolean;
+  /**
+   * The resolved dialect tolerances the parser applies. When absent the parser
+   * uses {@link STRICT_DIALECT}: canonical keyword casing, a required leading
+   * comma, no literal system names, no frame metadata, and no prohibition.
+   */
+  dialect?: ResolvedDialect;
 }
 
 /**
@@ -96,27 +103,43 @@ export interface ShellParseOptions {
  * @param options Optional shell tokenization options.
  */
 export function parseShell(input: string, options?: ShellParseOptions): ShellParseResult {
-  const parser = new ShellParser(input, options?.commaAsAnd ?? false);
+  const parser = new ShellParser(
+    input,
+    options?.commaAsAnd ?? false,
+    options?.dialect ?? STRICT_DIALECT,
+  );
   return parser.run();
 }
 
 class ShellParser {
   private readonly text: string;
   private readonly commaAsAnd: boolean;
+  private readonly dialect: ResolvedDialect;
   private readonly findings: ShellFinding[] = [];
   private readonly clauses: ClauseSlot[] = [];
   private pos = 0;
+  /** Effective start of the EARS sentence, after any stripped frame-metadata prefix. */
+  private start = 0;
 
-  constructor(input: string, commaAsAnd: boolean) {
+  constructor(input: string, commaAsAnd: boolean, dialect: ResolvedDialect) {
     this.text = input;
     this.commaAsAnd = commaAsAnd;
+    this.dialect = dialect;
   }
 
   run(): ShellParseResult {
-    const firstNonWs = skipWS(this.text, 0);
+    let firstNonWs = skipWS(this.text, 0);
     if (firstNonWs >= this.text.length) {
       this.add('ears.no_match');
       return { findings: this.findings };
+    }
+
+    // A frame-metadata `REQ-###` id prefix is not part of the EARS sentence.
+    // When the dialect accepts frame metadata, skip it so the sentence that
+    // follows parses on its own terms; otherwise it flows through as ordinary
+    // leading text and surfaces whatever diagnostic naturally results.
+    if (this.dialect.allowFrameMetadata) {
+      firstNonWs = skipFrameMetadataPrefix(this.text, firstNonWs);
     }
 
     const shallCount = countShall(this.text);
@@ -126,6 +149,7 @@ class ShellParser {
       this.add('ears.multiple_shall');
     }
 
+    this.start = firstNonWs;
     this.pos = firstNonWs;
     const ast = this.parse();
     return ast ? { ast, findings: this.findings } : { findings: this.findings };
@@ -137,16 +161,16 @@ class ShellParser {
     for (;;) {
       this.pos = skipWS(this.text, this.pos);
       if (this.peekKeyword('while')) {
-        this.consumeKeyword('while');
+        this.consumeClauseKeyword('while');
         this.pushClause(this.scanCommaClause('while'));
       } else if (this.peekKeyword('when')) {
-        this.consumeKeyword('when');
+        this.consumeClauseKeyword('when');
         this.pushClause(this.scanCommaClause('when'));
       } else if (this.peekKeyword('where')) {
-        this.consumeKeyword('where');
+        this.consumeClauseKeyword('where');
         this.pushClause(this.scanCommaClause('where'));
       } else if (this.peekKeyword('if')) {
-        this.consumeKeyword('if');
+        this.consumeClauseKeyword('if');
         const ifClause = this.scanIfClause();
         if (!ifClause) {
           return undefined;
@@ -157,18 +181,26 @@ class ShellParser {
       }
     }
 
-    // Mandatory tail: the <system> shall <response>.
-    if (!this.consumeKeyword('the')) {
+    // Mandatory tail: the <system> shall <response>. A dialect that accepts a
+    // literal system name (for example `THE SYSTEM`) may substitute it for the
+    // canonical `the <system>` form.
+    let systemStart: number;
+    const literalLen = this.matchLiteralSystemName();
+    if (literalLen > 0) {
+      systemStart = this.pos;
+    } else if (this.consumeKeyword('the')) {
+      systemStart = this.pos;
+    } else {
       this.add(this.clauses.length === 0 ? 'ears.no_match' : 'ears.missing_system');
       return undefined;
     }
 
-    const systemStart = this.pos;
-    const shallIdx = findWordFrom(this.text, this.pos, 'shall');
+    const shallIdx = findWordFrom(this.text, systemStart, 'shall');
     if (shallIdx < 0) {
       this.add('ears.missing_shall');
       return undefined;
     }
+    this.checkKeywordCase('shall', shallIdx, false);
 
     const systemSpan = trimmedSpan(this.text, systemStart, shallIdx);
     const systemRaw = this.text.slice(systemSpan.start, systemSpan.end);
@@ -178,9 +210,28 @@ class ShellParser {
 
     this.pos = shallIdx + 'shall'.length;
     let responseRaw = this.text.slice(this.pos).trim();
+    // A trailing `[source: path:line]` tag is frame metadata, not part of the
+    // response; strip it when the dialect accepts frame metadata.
+    if (this.dialect.allowFrameMetadata) {
+      responseRaw = stripTrailingSourceTag(responseRaw);
+    }
     if (responseRaw.endsWith('.')) {
       responseRaw = responseRaw.slice(0, -1).trimEnd();
     }
+
+    // A `shall not` response is a prohibition. Canonical EARS has no prohibition
+    // template, so a strict dialect rejects it; a dialect that permits it marks
+    // the requirement so downstream verification can treat it as an absence.
+    let prohibition = false;
+    if (/^not\b/i.test(responseRaw)) {
+      if (this.dialect.allowProhibition) {
+        prohibition = true;
+      } else {
+        const notStart = skipWS(this.text, this.pos);
+        this.add('ears.prohibition_not_allowed', { start: shallIdx, end: notStart + 'not'.length });
+      }
+    }
+
     if (responseRaw === '') {
       const responseSpan = trimmedSpan(this.text, this.pos, this.text.length);
       this.add('ears.empty_response', responseSpan);
@@ -192,19 +243,53 @@ class ShellParser {
     }
     this.validateCardinality();
 
+    // `then` is the discriminator for the unwanted-behaviour form; outside an
+    // `If ... then` requirement it is not part of the EARS grammar.
+    if (
+      !this.clauses.some((clause) => clause.kind === 'if') &&
+      hasTopLevelThen(this.text, this.start)
+    ) {
+      this.add('ears.invalid_if_then_form');
+    }
+
     return {
       pattern: classifyPattern(this.clauses),
       ...buildClauseFields(this.clauses),
       system: { raw: systemRaw, role: 'system' } satisfies TermMatch,
       responses: [responseRaw],
       raw: this.text,
+      ...(prohibition ? { prohibition: true } : {}),
     };
   }
 
-  /** Extract a comma-delimited clause body, tracking parenthesis depth. */
+  /**
+   * Extract a leading clause body, tracking parenthesis depth.
+   *
+   * A leading clause is delimited from the main clause by a comma. When the
+   * comma is absent the clause runs into the system tail; this method locates
+   * that tail so it can still recover a clause and, when the dialect requires
+   * the comma, report `ears.missing_leading_comma`.
+   */
   private scanCommaClause(kind: ClauseKind): ClauseSlot {
     const start = this.pos;
-    const { end, next } = scanUntilClauseBoundary(this.text, this.pos, this.commaAsAnd);
+    const { end, next, comma } = scanUntilClauseBoundary(this.text, this.pos, this.commaAsAnd);
+    if (comma) {
+      this.pos = next;
+      return this.makeClause(kind, start, end);
+    }
+
+    // No comma delimiter was found. Recover the clause boundary at the system
+    // tail (`the <system> shall`) when one is present, so a missing comma still
+    // yields a parseable requirement rather than a swallowed tail.
+    const tail = findSystemTailThe(this.text, start);
+    if (tail > start) {
+      if (this.dialect.commaAfterLeadingClause === 'required') {
+        this.add('ears.missing_leading_comma', { start, end: tail });
+      }
+      this.pos = tail;
+      return this.makeClause(kind, start, tail);
+    }
+
     this.pos = next;
     return this.makeClause(kind, start, end);
   }
@@ -226,6 +311,7 @@ class ShellParser {
       return this.makeClause('if', start, end);
     }
 
+    this.checkKeywordCase('then', thenIdx, false);
     let end = thenIdx;
     // Drop a trailing comma before `then`, if present.
     const beforeThen = this.text.slice(start, thenIdx).trimEnd();
@@ -286,6 +372,47 @@ class ShellParser {
     }
     this.pos = skipWS(this.text, this.pos + keyword.length);
     return true;
+  }
+
+  /**
+   * Consume a leading clause keyword, checking its casing first. The first
+   * keyword of the sentence is sentence-initial (capitalized in Mavin's
+   * templates); a later clause keyword is mid-sentence and lowercase.
+   */
+  private consumeClauseKeyword(keyword: ClauseKind): void {
+    this.checkKeywordCase(keyword, this.pos, this.pos === this.start);
+    this.pos = skipWS(this.text, this.pos + keyword.length);
+  }
+
+  /**
+   * Report `ears.keyword_case` when a keyword at `pos` does not match its
+   * canonical casing under a strict dialect. Clause keywords are capitalized
+   * sentence-initially and lowercase mid-sentence; `shall` and `then` are always
+   * lowercase. A case-insensitive dialect performs no check.
+   */
+  private checkKeywordCase(keyword: string, pos: number, sentenceInitial: boolean): void {
+    if (this.dialect.keywordCase !== 'strict') {
+      return;
+    }
+    const actual = this.text.slice(pos, pos + keyword.length);
+    const expected = expectedKeywordCasing(keyword, sentenceInitial);
+    if (actual !== expected) {
+      this.add('ears.keyword_case', { start: pos, end: pos + keyword.length }, actual);
+    }
+  }
+
+  /**
+   * When the current position begins a literal system phrase the dialect
+   * accepts (for example `THE SYSTEM`), return its length so the tail parser can
+   * take it in place of the canonical `the <system>` form. Returns `0` otherwise.
+   */
+  private matchLiteralSystemName(): number {
+    for (const name of this.dialect.allowLiteralSystemName) {
+      if (name !== '' && hasPhraseAt(this.text, this.pos, name)) {
+        return name.length;
+      }
+    }
+    return 0;
   }
 }
 
@@ -418,6 +545,56 @@ function hasAnyKeywordAt(text: string, pos: number, keywords: readonly string[])
   return keywords.some((kw) => hasWordAt(text, pos, kw));
 }
 
+/** Case-insensitive whole-phrase match of `phrase` at `pos` (word-bounded). */
+function hasPhraseAt(text: string, pos: number, phrase: string): boolean {
+  if (pos + phrase.length > text.length) {
+    return false;
+  }
+  if (text.slice(pos, pos + phrase.length).toLowerCase() !== phrase.toLowerCase()) {
+    return false;
+  }
+  const beforeOk = pos === 0 || !isWordChar(text.charCodeAt(pos - 1));
+  const afterPos = pos + phrase.length;
+  const afterOk = afterPos >= text.length || !isWordChar(text.charCodeAt(afterPos));
+  return beforeOk && afterOk;
+}
+
+/**
+ * The canonical casing a keyword must carry under a strict dialect. Clause
+ * keywords (`while`, `when`, `where`, `if`) are capitalized when they open the
+ * sentence and lowercase when they appear mid-sentence; `shall` and `then` are
+ * always lowercase.
+ */
+function expectedKeywordCasing(keyword: string, sentenceInitial: boolean): string {
+  if (keyword === 'shall' || keyword === 'then') {
+    return keyword;
+  }
+  return sentenceInitial ? keyword[0].toUpperCase() + keyword.slice(1) : keyword;
+}
+
+const FRAME_ID_PREFIX_RE = /^REQ-\d+[.:)\]]?\s+/i;
+
+/**
+ * Skip a leading `REQ-###` frame-metadata id prefix starting at `from`, returning
+ * the offset of the first character after it. When no such prefix is present the
+ * input offset is returned unchanged.
+ */
+function skipFrameMetadataPrefix(text: string, from: number): number {
+  const match = FRAME_ID_PREFIX_RE.exec(text.slice(from));
+  return match ? skipWS(text, from + match[0].length) : from;
+}
+
+const TRAILING_SOURCE_TAG_RE = /\s*\[source:[^\]]*\]\s*\.?\s*$/i;
+
+/**
+ * Strip a trailing `[source: path:line]` frame-metadata tag (and any trailing
+ * period it precedes) from a response string. Returns the response unchanged
+ * when no such tag is present.
+ */
+function stripTrailingSourceTag(response: string): string {
+  return response.replace(TRAILING_SOURCE_TAG_RE, '').trimEnd();
+}
+
 function findWordFrom(text: string, pos: number, word: string): number {
   for (let i = pos; i < text.length; i++) {
     if (hasWordAt(text, i, word)) {
@@ -463,7 +640,7 @@ function scanUntilClauseBoundary(
   text: string,
   start: number,
   commaAsAnd: boolean,
-): { end: number; next: number } {
+): { end: number; next: number; comma: boolean } {
   let depth = 0;
   for (let i = start; i < text.length; i++) {
     const ch = text[i];
@@ -473,10 +650,42 @@ function scanUntilClauseBoundary(
       depth--;
     }
     if (depth === 0 && ch === ',' && isClauseBoundaryAfterComma(text, i + 1, commaAsAnd)) {
-      return { end: i, next: skipWS(text, i + 1) };
+      return { end: i, next: skipWS(text, i + 1), comma: true };
     }
   }
-  return { end: text.length, next: text.length };
+  return { end: text.length, next: text.length, comma: false };
+}
+
+/**
+ * Find the `the` that opens the system tail (`the <system> shall`) at or after
+ * `from`, tracking parenthesis depth. This is the last top-level `the` before
+ * the shell `shall`, so a comma-less leading clause can still be split from the
+ * tail it ran into. Returns `-1` when no such `the` precedes a `shall`.
+ */
+function findSystemTailThe(text: string, from: number): number {
+  const shallIdx = findWordFrom(text, from, 'shall');
+  if (shallIdx < 0) {
+    return -1;
+  }
+  let depth = 0;
+  let last = -1;
+  for (let i = from; i < shallIdx; i++) {
+    const ch = text[i];
+    if (ch === '(') {
+      depth++;
+    } else if (ch === ')' && depth > 0) {
+      depth--;
+    }
+    if (depth === 0 && hasWordAt(text, i, 'the')) {
+      last = i;
+    }
+  }
+  return last;
+}
+
+/** Whether a top-level (paren-depth-0) `then` keyword appears from `start`. */
+function hasTopLevelThen(text: string, start: number): boolean {
+  return findThenBoundary(text, start) >= 0;
 }
 
 /** Whether a comma at position `commaEnd - 1` marks a clause boundary. */

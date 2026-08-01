@@ -109,10 +109,23 @@ const KIRO: Profile = {
 };
 
 /**
- * `speckit`: EARS in Spec Kit `specs/**\/spec.md`. Near-strict dialect. Differs
- * from strict mainly in its markdown locator: requirement sections are targeted
- * and design/background prose is excluded so narrative that merely opens with an
- * EARS keyword does not become a candidate.
+ * `speckit`: EARS in Spec Kit `specs/**\/spec.md`. Near-strict dialect. The
+ * grammar is identical to strict; the profile differs only in its markdown
+ * locator. The include rule targets the `## Requirements` /
+ * `### Functional Requirements` section, whose Spec Kit body is a bullet list of
+ * `- **FR-###**: <requirement>` items. The exclude rule drops sibling prose
+ * subsections (`### Key Entities`, design, background, and similar) that Spec Kit
+ * nests inside or beside the Requirements section, so a `- **[Entity]**: ...`
+ * bullet or a narrative sentence that merely opens with an EARS keyword never
+ * becomes a candidate. Narrative sections such as `## User Scenarios & Testing`
+ * are skipped simply by not matching the include heading.
+ *
+ * FR-### interplay: the `FR-###` label is markdown list-item structure that the
+ * extractor strips, not a grammar tolerance. `speckit` therefore keeps
+ * `allowFrameMetadata: false` (the `REQ-###` / `[source:]` frame-metadata form
+ * stays a strict error) and sets no `idFormat.pattern`; a malformed FR label is
+ * a locator/extractor concern, not a dialect one. See
+ * `fixtures/profiles/speckit/NOTES.md`.
  */
 const SPECKIT: Profile = {
   name: 'speckit',
@@ -132,15 +145,15 @@ const SPECKIT: Profile = {
         id: 'speckit.requirements-section',
         kind: 'heading-section',
         headingPattern: '^(functional )?requirements$',
-        note: 'Body lines of Requirements sections in specs/**/spec.md.',
+        note: 'Body lines of Requirements / Functional Requirements sections in specs/**/spec.md.',
       },
     ],
     exclude: [
       {
         id: 'speckit.non-requirement-section',
         kind: 'heading-section',
-        headingPattern: '^(design|background|context|overview|non-goals?)$',
-        note: 'Narrative sections that must not produce candidates.',
+        headingPattern: '^(design|background|context|overview|non-goals?|key entities|success criteria|assumptions)$',
+        note: 'Prose subsections nested in or beside Requirements that must not produce candidates (notably Spec Kit Key Entities).',
       },
     ],
     codeFences: 'ignore',
@@ -150,10 +163,18 @@ const SPECKIT: Profile = {
 };
 
 /**
- * `openspec`: EARS in OpenSpec specs and changes. Near-strict dialect. Locates
- * `### Requirement:` bodies and `#### Scenario:` blocks inside
- * `openspec/specs/**` and `openspec/changes/**`; non-requirement prose is
- * skipped by the block locator.
+ * `openspec`: EARS in OpenSpec specs and changes. Near-strict dialect (identical
+ * grammar to strict; the only differences are the markdown locator and
+ * `documentKinds`). Locates `### Requirement:` bodies and `#### Scenario:`
+ * blocks inside `openspec/specs/**` and `openspec/changes/**`. The candidate a
+ * block contributes is its first EARS-shaped body line: an OpenSpec requirement
+ * declares one statement (`The <system> shall ...` or a `When`/`While`/`Where`/
+ * `If` line) directly under its `### Requirement:` heading, while `#### Scenario:`
+ * blocks hold only Gherkin WHEN, THEN, and AND steps, which are frame
+ * content and contribute no candidates. Extraction is delta-section-agnostic:
+ * `## ADDED`/`## MODIFIED`/`## REMOVED` are H2 organizational headers, not
+ * locator targets, so a `### Requirement:` block is a candidate under any of
+ * them. See `fixtures/profiles/openspec/NOTES.md`.
  */
 const OPENSPEC: Profile = {
   name: 'openspec',
@@ -173,13 +194,13 @@ const OPENSPEC: Profile = {
         id: 'openspec.requirement',
         kind: 'block',
         blockPrefix: '### Requirement:',
-        note: 'Body lines of a ### Requirement: heading block.',
+        note: 'First EARS-shaped body line under a ### Requirement: heading: the single requirement statement OpenSpec places directly beneath the heading.',
       },
       {
         id: 'openspec.scenario',
         kind: 'block',
         blockPrefix: '#### Scenario:',
-        note: 'Body lines of a #### Scenario: heading block.',
+        note: 'A #### Scenario: block if it carries a stray EARS-shaped line; standard Gherkin WHEN / THEN / AND steps are frame content and yield no candidate.',
       },
     ],
     exclude: [],

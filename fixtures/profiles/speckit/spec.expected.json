@@ -1,0 +1,24 @@
+{
+  "note": "Expected `validate` diagnostics for the speckit fixtures. Authored ahead of the extractor and linter wiring for markdown profiles; marked pending-verification. The speckit dialect is byte-for-byte strict (keywordCase strict, allowLiteralSystemName [], commaAfterLeadingClause required, allowStoryWrapper false, allowFrameMetadata false, allowProhibition false), so every located candidate is judged by the same grammar strict uses.",
+  "pendingVerification": true,
+  "cases": [
+    {
+      "file": "fixtures/profiles/speckit/spec.md",
+      "profile": "speckit",
+      "expect": "clean",
+      "diagnostics": [],
+      "rationale": "All five located candidates (FR-001..FR-005) are canonical strict-EARS sentences, one per template: ubiquitous, event-driven (When ..., comma), state-driven (While ..., comma), optional-feature (Where ..., comma), and unwanted-behavior (If ..., then). Narrative that opens with EARS keywords lives outside the Requirements section and Key Entities bullets are excluded, so neither reaches the linter."
+    },
+    {
+      "file": "fixtures/profiles/speckit/plan.md",
+      "profile": "speckit",
+      "expect": "clean",
+      "diagnostics": [],
+      "rationale": "Zero candidates located (no Requirements heading), so there is nothing to lint. This is the locator skip case, not a grammar-clean case."
+    }
+  ],
+  "strictDelta": {
+    "applicable": false,
+    "explanation": "No strict-fail pair is provided, and per the plan's 'if Spec Kit syntax needs relaxation' conditional this is intentional. speckit does not relax any grammar field relative to strict; it differs only in the markdown locator. The extracted candidate text (bare EARS sentences, FR label and list marker stripped by the extractor) is identical to what strict would judge, so spec.md validates the same under strict and speckit. The two profiles diverge only in what the locator hands the parser, not in the verdict on a given requirement sentence. Because there is no dialect delta, there is no line that is clean under speckit yet fails under strict."
+  }
+}

@@ -1,0 +1,7 @@
+The billing service shall verify the HMAC signature of every incoming webhook.
+While the payment provider is unavailable, the billing service shall queue retryable webhook events.
+When a payment webhook is received, the billing service shall verify the HMAC signature.
+Where tax calculation is enabled, the billing service shall add sales tax to each invoice.
+If the HMAC signature is invalid, then the billing service shall reject the webhook.
+While the payment provider is unavailable, when a payment webhook is received, the billing service shall queue the event for retry.
+Where dunning management is enabled, if a charge is declined, then the billing service shall schedule a retry.

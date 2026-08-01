@@ -1,0 +1,14 @@
+{
+  "id": "VAL-D005",
+  "text": "WHEN a payment webhook is received, THE SYSTEM shall verify the HMAC signature.",
+  "options": {
+    "dialect": { "keywordCase": "case-insensitive", "allowLiteralSystemName": ["THE SYSTEM"] }
+  },
+  "expected": {
+    "valid": true,
+    "pattern": "event-driven",
+    "diagnostics": [],
+    "ast": { "pattern": "event-driven", "system": { "raw": "THE SYSTEM", "role": "system" } },
+    "responses": ["verify the HMAC signature"]
+  }
+}

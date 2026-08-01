@@ -1,6 +1,11 @@
 {
   "id": "VAL-018",
   "text": "IF the HMAC signature is invalid, THEN the billing service shall reject the webhook.",
+  "options": {
+    "dialect": {
+      "keywordCase": "case-insensitive"
+    }
+  },
   "expected": {
     "valid": true,
     "pattern": "unwanted-behaviour",

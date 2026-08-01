@@ -1,0 +1,80 @@
+{
+  "fixture": "kiro/requirements.md",
+  "profile": "kiro",
+  "locatorRuleId": "kiro.acceptance-criteria-item",
+  "description": "Expected extract output under the kiro locator: numbered list items under a #### Acceptance Criteria heading. Snapshot target for the future `extract` command; the extraction engine (plan Agent 08 / W2-pipeline) is not wired yet, so this is the intended output pending verification. Field shape mirrors the Candidate contract (file, line, col, text, profile, locatorRuleId). Convention: `col` is the 1-based column of the first character of the requirement text after the ordered-list marker and its trailing space are stripped (column 4 for a single-digit `N. ` marker); `text` is the requirement sentence only, without the marker. Reconcile the marker-stripping and col convention with W2 once the extractor exists.",
+  "candidates": [
+    {
+      "file": "kiro/requirements.md",
+      "line": 20,
+      "col": 4,
+      "text": "WHEN a user submits valid credentials THE SYSTEM SHALL establish an authenticated session.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 21,
+      "col": 4,
+      "text": "WHEN a user submits an unrecognized email THE SYSTEM SHALL display a sign-in error that does not reveal which field was wrong.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 22,
+      "col": 4,
+      "text": "IF five consecutive sign-in attempts fail THEN THE SYSTEM SHALL lock the account for fifteen minutes.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 31,
+      "col": 4,
+      "text": "WHILE a background sync is in progress THE SYSTEM SHALL disable the manual save control.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 32,
+      "col": 4,
+      "text": "WHERE offline mode is enabled THE SYSTEM SHALL queue outbound changes on the local device.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 33,
+      "col": 4,
+      "text": "THE SYSTEM SHALL persist the working draft every thirty seconds.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 42,
+      "col": 4,
+      "text": "WHEN a sync request returns a network error THE SYSTEM SHALL show a retry banner above the editor.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 43,
+      "col": 4,
+      "text": "IF the retry banner is dismissed THEN THE SYSTEM SHALL schedule a silent retry after two minutes.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    },
+    {
+      "file": "kiro/requirements.md",
+      "line": 44,
+      "col": 4,
+      "text": "WHEN the access token expires THE SYSTEM SHALL redirect the author to the sign-in page.",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    }
+  ]
+}

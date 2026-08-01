@@ -158,7 +158,7 @@ function runPipeline(
   catalog: Catalog | undefined,
   opts: ResolvedOptions,
 ): PipelineResult {
-  const shell = parseShell(text, { commaAsAnd: opts.commaAsAnd });
+  const shell = parseShell(text, { commaAsAnd: opts.commaAsAnd, dialect: opts.dialect });
   const structural: Diagnostic[] = [];
 
   if (!shell.ast) {
@@ -209,7 +209,13 @@ function runPipeline(
     resolvedAst.responses,
     opts,
   );
-  const ast: EarsAst = { ...resolvedAst, responses };
+  // Re-attach the prohibition flag: catalog resolution rebuilds the AST and does
+  // not carry it, but it is a shell-level classification decided during parsing.
+  const ast: EarsAst = {
+    ...resolvedAst,
+    responses,
+    ...(parsedAst.prohibition ? { prohibition: true } : {}),
+  };
 
   const semantic: Diagnostic[] = [...catalogDiagnostics, ...responseDiagnostics];
 
@@ -382,6 +388,29 @@ function parseClauseNode(
     return { ...node, item: parseClauseNode(node.item, opts, findings) };
   }
   return node;
+}
+
+/**
+ * Matches a user-story wrapper line, for example `As a user, I want to reset my
+ * password` or `As an admin I want fast reports so that ...`. The role phrase
+ * after `As a`/`As an` and the `I want` goal are the load-bearing markers.
+ */
+const STORY_WRAPPER_RE = /^\s*as\s+an?\s+.+\bi\s+want\b/i;
+
+/**
+ * Whether a line is a user-story frame wrapper rather than an EARS requirement.
+ *
+ * Story wrappers (`As a <role>, I want <goal> [so that <benefit>]`) are frame
+ * content a host document carries around its requirements. A dialect with
+ * `allowStoryWrapper` treats such lines as non-requirement content to skip; this
+ * predicate is the deterministic test the extraction pipeline uses to skip them.
+ * It never parses or lints, and it is independent of any dialect setting.
+ *
+ * @param text A single candidate line.
+ * @returns `true` when the line is shaped as a user-story wrapper.
+ */
+export function isStoryWrapperLine(text: string): boolean {
+  return STORY_WRAPPER_RE.test(text);
 }
 
 /** Project a pipeline result onto the public {@link LintResult} shape. */

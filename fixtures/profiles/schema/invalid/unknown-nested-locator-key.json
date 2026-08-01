@@ -14,7 +14,12 @@
     "locator": {
       "documentKinds": ["markdown"],
       "include": [
-        { "id": "speckit.req", "kind": "heading-section", "headingPattern": "^requirements$", "regex": true }
+        {
+          "id": "speckit.req",
+          "kind": "heading-section",
+          "headingPattern": "^requirements$",
+          "regex": true
+        }
       ],
       "exclude": [],
       "codeFences": "ignore"

@@ -1,0 +1,32 @@
+{
+  "fixture": "ears-x/prohibition.ears",
+  "profile": "ears-x",
+  "locatorRuleId": "ears-x.every-line",
+  "description": "Expected extract output under the ears-x every-line locator. Same locator as strict; the ears-x tolerances are a parse-layer concern, not an extraction concern.",
+  "candidates": [
+    {
+      "file": "ears-x/prohibition.ears",
+      "line": 1,
+      "col": 1,
+      "text": "The billing service shall not store raw card numbers.",
+      "profile": "ears-x",
+      "locatorRuleId": "ears-x.every-line"
+    },
+    {
+      "file": "ears-x/prohibition.ears",
+      "line": 2,
+      "col": 1,
+      "text": "While the account is delinquent, the billing service shall not issue new invoices.",
+      "profile": "ears-x",
+      "locatorRuleId": "ears-x.every-line"
+    },
+    {
+      "file": "ears-x/prohibition.ears",
+      "line": 3,
+      "col": 1,
+      "text": "When a chargeback is received, the billing service shall not retry the payment.",
+      "profile": "ears-x",
+      "locatorRuleId": "ears-x.every-line"
+    }
+  ]
+}

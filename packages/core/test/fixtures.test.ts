@@ -15,6 +15,7 @@ import { describe, expect, test } from 'vitest';
 import { lintEars } from '../src/index.js';
 import type {
   Catalog,
+  DialectOptions,
   DiagnosticCode,
   LintResult,
   Options,
@@ -67,10 +68,34 @@ function loadGroup(group: string): LoadedFixture[] {
     });
 }
 
+/**
+ * The dialect the Go reference (`ears-lint-go`) implements: keywords match
+ * case-insensitively, a leading comma is not separately required, and `shall not`
+ * is not treated as a prohibition. The parity corpus pins Go behavior, so it runs
+ * under this dialect while the strict `valid`/`invalid` corpora assert the new
+ * strict defaults. A parity fixture that sets its own `dialect` overrides this.
+ */
+const GO_PARITY_DIALECT: DialectOptions = {
+  keywordCase: 'case-insensitive',
+  commaAfterLeadingClause: 'optional',
+  allowProhibition: true,
+};
+
+/** Resolve the options a fixture runs under, injecting the parity dialect. */
+function fixtureOptions(loaded: LoadedFixture): Options | undefined {
+  const { group, fixture } = loaded;
+  if (group !== 'ears-lint-go-parity') {
+    return fixture.options;
+  }
+  const options: Options = { ...fixture.options };
+  options.dialect = { ...GO_PARITY_DIALECT, ...fixture.options?.dialect };
+  return options;
+}
+
 function runFixture(loaded: LoadedFixture): void {
   const { fixture } = loaded;
   const { expected } = fixture;
-  const result: LintResult = lintEars(fixture.text, fixture.catalog, fixture.options);
+  const result: LintResult = lintEars(fixture.text, fixture.catalog, fixtureOptions(loaded));
 
   expect(result.valid, 'valid mismatch').toBe(expected.valid);
 

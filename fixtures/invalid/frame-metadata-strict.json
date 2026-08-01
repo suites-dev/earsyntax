@@ -1,0 +1,8 @@
+{
+  "id": "INV-FRAME",
+  "text": "REQ-001 When a payment webhook is received, the billing service shall verify the HMAC signature.",
+  "expected": {
+    "valid": false,
+    "diagnostics": [{ "code": "ears.no_match", "severity": "error" }]
+  }
+}
