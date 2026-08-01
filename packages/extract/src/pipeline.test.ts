@@ -54,7 +54,7 @@ describe('extractCandidates', () => {
     expect(candidates).toHaveLength(1);
     expect(candidates[0]).toMatchObject({
       file: 'r.yaml',
-      id: 'REQ-001',
+      requirementId: 'REQ-001',
       text: 'The system shall stop.',
       locatorRuleId: 'structured.yaml',
       profile: 'strict',
@@ -67,7 +67,7 @@ describe('extractCandidates', () => {
     const { candidates, notices } = extractCandidates({ files: [{ path: 'r.json', content: json }], profile: strict });
     expect(notices).toHaveLength(0);
     expect(candidates).toHaveLength(1);
-    expect(candidates[0].id).toBe('REQ-001');
+    expect(candidates[0].requirementId).toBe('REQ-001');
   });
 
   it('flattens candidates across multiple files in order', () => {

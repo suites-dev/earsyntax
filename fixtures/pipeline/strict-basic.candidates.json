@@ -4,15 +4,15 @@
     "line": 3,
     "col": 1,
     "text": "The billing service shall verify the signature.",
-    "locatorRuleId": "strict.every-line",
-    "profile": "strict"
+    "profile": "strict",
+    "locatorRuleId": "strict.every-line"
   },
   {
     "file": "strict-basic.ears",
     "line": 4,
     "col": 1,
     "text": "When a payment webhook arrives, the billing service shall record the attempt.",
-    "locatorRuleId": "strict.every-line",
-    "profile": "strict"
+    "profile": "strict",
+    "locatorRuleId": "strict.every-line"
   }
 ]

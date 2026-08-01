@@ -16,8 +16,8 @@ function candidate(over: Partial<Candidate> & Pick<Candidate, 'text' | 'line'>):
   return {
     file: 'requirements.ears',
     col: 1,
-    locatorRuleId: 'strict.every-line',
     profile: 'strict',
+    locatorRuleId: 'strict.every-line',
     ...over,
   };
 }
@@ -98,7 +98,7 @@ describe('candidatesToFindings', () => {
     const files: CandidateFile[] = [
       {
         file: 'a.ears',
-        candidates: [candidate({ id: 'REQ-007', text: 'Bad requirement text.', line: 2 })],
+        candidates: [candidate({ requirementId: 'REQ-007', text: 'Bad requirement text.', line: 2 })],
       },
     ];
     const findings = candidatesToFindings(files, STRICT);

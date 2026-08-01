@@ -2,7 +2,7 @@
   "fixture": "ears-x/frame-metadata.ears",
   "profile": "ears-x",
   "locatorRuleId": "ears-x.every-line",
-  "description": "Expected extract output under the ears-x every-line locator. text is the raw line including the REQ-### prefix and [source:] tag. requirementId is populated from the frame id once frame-metadata parsing lands (pending C4b); the every-line locator itself yields one candidate per non-empty line unconditionally.",
+  "description": "Expected extract output under the ears-x every-line locator. The extractor does not move positions: text is the whole raw line including the REQ-### prefix and [source:] tag, and col stays 1. The REQ-### frame id is lifted into requirementId; the linter strips the frame at parse time, not the extractor.",
   "candidates": [
     {
       "file": "ears-x/frame-metadata.ears",

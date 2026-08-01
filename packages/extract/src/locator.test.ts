@@ -28,18 +28,19 @@ describe('every-line locator (strict, ears-x)', () => {
     expect(result[0].locatorRuleId).toBe('strict.every-line');
   });
 
-  it('does not strip a REQ- prefix under strict (allowFrameMetadata false)', () => {
+  it('does not lift a REQ- prefix under strict (allowFrameMetadata false)', () => {
     const result = candidates('r.ears', 'REQ-001: The system shall stop.');
     expect(result[0].text).toBe('REQ-001: The system shall stop.');
-    expect(result[0].id).toBeUndefined();
+    expect(result[0].requirementId).toBeUndefined();
   });
 
-  it('lifts a REQ- prefix under ears-x and advances the column to the text', () => {
+  it('lifts a REQ- id under ears-x but keeps the prefix in the text at col 1', () => {
+    // The linter strips the frame prefix at parse time under allowFrameMetadata,
+    // so the extractor retains the raw line and reports col 1.
     const result = candidates('r.ears', 'REQ-001: The system shall stop.', earsX);
-    expect(result[0].id).toBe('REQ-001');
-    expect(result[0].text).toBe('The system shall stop.');
-    // 'REQ-001: ' is 9 characters, so the text starts at column 10.
-    expect(result[0].col).toBe(10);
+    expect(result[0].requirementId).toBe('REQ-001');
+    expect(result[0].text).toBe('REQ-001: The system shall stop.');
+    expect(result[0].col).toBe(1);
   });
 });
 
@@ -102,6 +103,21 @@ describe('markdown heading-section locator (speckit)', () => {
     expect(result.map((c) => c.text)).toEqual(['The service shall verify the signature.']);
     expect(result[0].locatorRuleId).toBe('speckit.requirements-section');
   });
+
+  it('strips a bold FR label, lifts requirementId, and reports col at the sentence', () => {
+    const doc = [
+      '## Requirements',
+      '',
+      '- **FR-001**: The system shall invite a teammate by email address.',
+    ].join('\n');
+    const result = candidates('spec.md', doc, speckit);
+    expect(result[0]).toMatchObject({
+      line: 3,
+      col: 15,
+      text: 'The system shall invite a teammate by email address.',
+      requirementId: 'FR-001',
+    });
+  });
 });
 
 describe('markdown block locator (openspec)', () => {
@@ -125,6 +141,26 @@ describe('markdown block locator (openspec)', () => {
       'If the signature is invalid, then the service shall reject the webhook.',
       'The service shall log every attempt.',
     ]);
+  });
+
+  it('captures only the first EARS-shaped line per block and skips Gherkin steps', () => {
+    const doc = [
+      '### Requirement: Retention window',
+      '',
+      'The system shall retain build artifacts for the configured retention window.',
+      '',
+      '#### Scenario: Artifact within the window',
+      '',
+      '- **WHEN** an artifact is younger than the retention window',
+      '- **THEN** the system retains the artifact and its metadata',
+    ].join('\n');
+    const result = candidates('spec.md', doc, openspec);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      line: 3,
+      text: 'The system shall retain build artifacts for the configured retention window.',
+      locatorRuleId: 'openspec.requirement',
+    });
   });
 });
 

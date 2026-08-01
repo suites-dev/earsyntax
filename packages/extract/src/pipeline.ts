@@ -186,9 +186,9 @@ function structuredCandidates(
       line: item.source?.line ?? 1,
       ...(item.source?.column === undefined ? {} : { col: item.source.column }),
       text: item.text,
-      ...(item.id === undefined ? {} : { id: item.id }),
-      locatorRuleId,
       profile: profile.name,
+      locatorRuleId,
+      ...(item.id === undefined ? {} : { requirementId: item.id }),
     };
     return candidate;
   });

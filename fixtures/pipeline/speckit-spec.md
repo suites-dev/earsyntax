@@ -2,8 +2,8 @@
 
 ## Requirements
 
-The billing service shall verify the signature.
-When a payment webhook arrives, the billing service shall record the attempt.
+- **FR-001**: The billing service shall verify the signature.
+- **FR-002**: When a payment webhook arrives, the billing service shall record the attempt.
 
 ## Design
 

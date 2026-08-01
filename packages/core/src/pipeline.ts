@@ -36,7 +36,8 @@ import type { Catalog, RequirementInput } from './types.js';
  * position (`line`, optional `col`) is 1-based and refers to the ORIGINAL host
  * document, preserved through every stage so a diagnostic points at the text the
  * agent edits. Object keys follow the fixed facade order `file`, `line`, `col?`,
- * `text`, `id?`, `locatorRuleId`, `profile` when serialized by the CLI.
+ * `text`, `profile`, `locatorRuleId`, `requirementId?` when serialized by the
+ * CLI (see `docs/refactor/host-native-facade.md`).
  */
 export interface Candidate {
   /** Source file path, relative to `--cwd` (POSIX), or `-` for stdin. */
@@ -45,14 +46,14 @@ export interface Candidate {
   line: number;
   /** 1-based column of the candidate text's first character, when known. */
   col?: number;
-  /** The candidate requirement text, with any located marker or metadata prefix removed. */
+  /** The candidate requirement text. A markdown bold id label is removed; an ears-x frame prefix is retained (the linter strips it at parse time). */
   text: string;
-  /** The requirement's own id (for example `REQ-001`), when the locator found one. */
-  id?: string;
-  /** The id of the {@link import('./profiles/index.js').LocatorRule} that selected this candidate. */
-  locatorRuleId: string;
   /** The active profile's name. */
   profile: ProfileName;
+  /** The id of the {@link import('./profiles/index.js').LocatorRule} that selected this candidate. */
+  locatorRuleId: string;
+  /** The requirement's own id (for example `REQ-001` or `FR-001`), when the locator found one. */
+  requirementId?: string;
 }
 
 /**
@@ -141,7 +142,7 @@ function candidateToRequirementInput(file: string, candidate: Candidate): Requir
     source.column = candidate.col;
   }
   return {
-    ...(candidate.id === undefined ? {} : { id: candidate.id }),
+    ...(candidate.requirementId === undefined ? {} : { id: candidate.requirementId }),
     text: candidate.text,
     source,
   };

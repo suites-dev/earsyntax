@@ -203,7 +203,17 @@ function headingSectionCandidates(
   );
 }
 
-/** Candidates from `blockPrefix` blocks: body lines until the next same/higher heading. */
+/**
+ * Candidates from `blockPrefix` blocks.
+ *
+ * A block opens at a line whose trimmed form starts with `blockPrefix` and runs
+ * until the next heading of equal or higher level. Per the openspec profile
+ * decision (`fixtures/profiles/openspec/NOTES.md`), a block contributes exactly
+ * one candidate: the FIRST EARS-shaped body line under the block heading. Gherkin
+ * scenario steps (`- **WHEN**`, `- **THEN**`, `- **AND**`) are not EARS-shaped,
+ * so a standard scenario block yields no candidate; a `### Requirement:` block
+ * yields its single statement line and never the nested scenario content.
+ */
 function blockCandidates(
   rule: LocatorRule,
   model: MarkdownModel,
@@ -216,21 +226,51 @@ function blockCandidates(
   }
   const prefix = rule.blockPrefix.trim();
   const prefixLevel = leadingHashes(prefix);
-  const inBlock = new Array<boolean>(model.lines.length).fill(false);
+  const allowFrameMetadata = profile.dialect.allowFrameMetadata;
+  const candidates: Candidate[] = [];
 
-  let open = false;
+  let inside = false;
+  let claimed = false; // whether this block already contributed its one candidate
   for (let i = 0; i < model.lines.length; i++) {
     if (model.fenceStates[i] === 'outside' && model.lines[i].trim().startsWith(prefix)) {
-      open = true;
+      inside = true;
+      claimed = false;
       continue; // the prefix heading line itself is not a candidate
     }
-    if (open && model.headingLevels[i] > 0 && model.headingLevels[i] <= prefixLevel) {
-      open = false;
+    if (inside && model.headingLevels[i] > 0 && model.headingLevels[i] <= prefixLevel) {
+      inside = false;
     }
-    inBlock[i] = open;
+    if (!inside || claimed || !lineEligible(model, i, includeCode)) {
+      continue;
+    }
+    const contentStart = markerContentStart(model.lines[i]);
+    if (!isEarsShaped(model.lines[i].slice(contentStart))) {
+      continue;
+    }
+    const candidate = buildCandidate(model.lines[i], contentStart, i + 1, rule.id, profile, file, allowFrameMetadata);
+    claimed = true;
+    if (candidate !== undefined) {
+      candidates.push(candidate);
+    }
   }
+  return candidates;
+}
 
-  return bodyLineCandidates(model, profile, file, includeCode, rule.id, (i) => inBlock[i]);
+/** The 0-based index where a line's content begins, past any list marker. */
+function markerContentStart(raw: string): number {
+  const marker = matchListItem(raw, 'any');
+  return marker === undefined ? 0 : marker.contentStart;
+}
+
+/**
+ * Whether a line (with any list marker already removed) reads as an EARS
+ * statement: a leading `When`/`While`/`Where`/`If` clause keyword, or the
+ * ubiquitous `The <system> shall ...` form. A bold Gherkin keyword such as
+ * `**WHEN**` is not matched, because the leading `**` is not a clause keyword.
+ */
+function isEarsShaped(content: string): boolean {
+  const text = content.trim();
+  return /^(when|while|where|if)\b/i.test(text) || /^the\b[\s\S]*\bshall\b/i.test(text);
 }
 
 /** Candidates from list items, optionally under a heading and filtered by marker. */
@@ -390,8 +430,26 @@ function gatherContinuations(
 }
 
 /**
+ * A bold markdown requirement label, for example `**FR-001**:` or `**REQ-12**`.
+ * The id shape requires an uppercase letter and at least one digit or hyphen, so
+ * `**Note**:` is not a label. A trailing colon and surrounding whitespace are
+ * consumed so the retained text starts at the requirement sentence.
+ */
+const BOLD_ID_LABEL = /^\*\*\s*((?=[A-Z0-9._-]*[0-9-])[A-Z][A-Z0-9._-]*)\s*\*\*\s*:?\s*/;
+
+/**
  * Build one {@link Candidate}, computing the 1-based column of the text's first
- * character in the raw line and lifting a frame-metadata prefix when allowed.
+ * character in the raw line.
+ *
+ * Two id conventions are reconciled here (see the profile fixtures):
+ *
+ * - A markdown bold requirement label (`**FR-001**:`) is a host formatting
+ *   device, not part of the EARS sentence: it is stripped, the column advances
+ *   past it, and its id becomes `requirementId`.
+ * - An ears-x frame prefix (`REQ-001:` / `[source: ...]`) is retained in the
+ *   text and the column stays at the line start; only `requirementId` is lifted.
+ *   The linter strips the frame prefix at parse time under `allowFrameMetadata`,
+ *   so the extractor must not move the reported position.
  *
  * Returns `undefined` when the resulting text is empty (nothing to lint).
  */
@@ -409,18 +467,19 @@ function buildCandidate(
   const leadingWs = region.length - region.trimStart().length;
   let textStart = contentStart + leadingWs;
   let text = region.trim();
-  let id: string | undefined;
+  let requirementId: string | undefined;
 
-  if (allowFrameMetadata) {
+  const boldLabel = BOLD_ID_LABEL.exec(text);
+  if (boldLabel) {
+    requirementId = boldLabel[1];
+    textStart += boldLabel[0].length;
+    text = text.slice(boldLabel[0].length);
+  } else if (allowFrameMetadata) {
+    // Capture the frame id without removing it from the text; the linter strips
+    // the prefix during parsing, and the reported position stays at the text.
     const split = splitId(text);
-    if (split.id !== undefined || split.ref !== undefined) {
-      // The stripped prefix is the removed leading run; advance the column past
-      // it so the reported position points at the requirement text. A declared
-      // `[source: ...]` reference is stripped from the text but does not move the
-      // physical position (the finding must point where the text actually is).
-      textStart += text.length - split.text.length;
-      text = split.text;
-      id = split.id;
+    if (split.id !== undefined) {
+      requirementId = split.id;
     }
   }
 
@@ -436,9 +495,9 @@ function buildCandidate(
     line,
     col: textStart + 1,
     text,
-    ...(id === undefined ? {} : { id }),
-    locatorRuleId,
     profile: profile.name,
+    locatorRuleId,
+    ...(requirementId === undefined ? {} : { requirementId }),
   };
   return candidate;
 }

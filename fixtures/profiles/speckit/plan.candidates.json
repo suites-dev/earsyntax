@@ -1,7 +1,7 @@
 {
   "note": "Locator skip fixture. `extract --profile speckit --json` over plan.md must report ZERO candidates. plan.md contains no heading matching the include pattern `^(functional )?requirements$`, so no region is ever a candidate, even though several narrative lines open with EARS keywords (`When`, `While`, `Where`, `If`) and one sentence is a fully formed strict-EARS requirement ('The system shall reuse the existing email-identity provider.'). Snapshot authored ahead of the extractor implementation; marked pending-verification.",
   "pendingVerification": true,
-  "file": "fixtures/profiles/speckit/plan.md",
+  "file": "speckit/plan.md",
   "profile": "speckit",
   "candidates": [],
   "keywordOpeningDecoys": [

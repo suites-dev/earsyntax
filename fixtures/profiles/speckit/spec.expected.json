@@ -3,14 +3,14 @@
   "pendingVerification": true,
   "cases": [
     {
-      "file": "fixtures/profiles/speckit/spec.md",
+      "file": "speckit/spec.md",
       "profile": "speckit",
       "expect": "clean",
       "diagnostics": [],
       "rationale": "All five located candidates (FR-001..FR-005) are canonical strict-EARS sentences, one per template: ubiquitous, event-driven (When ..., comma), state-driven (While ..., comma), optional-feature (Where ..., comma), and unwanted-behavior (If ..., then). Narrative that opens with EARS keywords lives outside the Requirements section and Key Entities bullets are excluded, so neither reaches the linter."
     },
     {
-      "file": "fixtures/profiles/speckit/plan.md",
+      "file": "speckit/plan.md",
       "profile": "speckit",
       "expect": "clean",
       "diagnostics": [],

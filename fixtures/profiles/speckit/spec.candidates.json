@@ -1,11 +1,11 @@
 {
   "note": "Expected `extract --profile speckit --json` candidates for spec.md. Snapshot authored ahead of the extractor implementation (plan Agents 05-08); marked pending-verification. Assumptions: (1) the heading-section include rule collects the body lines of the `## Requirements` / `### Functional Requirements` section; (2) the extractor strips the leading markdown list marker `- ` and the bold requirement label `**FR-###**: `, so the candidate `text` is the bare EARS sentence and `col` is the 1-based column where that sentence begins (15 for a 3-digit FR label); (3) the exclude rule removes the `### Key Entities` subsection, so its `- **[Entity]**: ...` bullets never appear here. `plan.md` is a separate zero-candidate fixture (see plan.candidates.json).",
   "pendingVerification": true,
-  "file": "fixtures/profiles/speckit/spec.md",
+  "file": "speckit/spec.md",
   "profile": "speckit",
   "candidates": [
     {
-      "file": "fixtures/profiles/speckit/spec.md",
+      "file": "speckit/spec.md",
       "line": 55,
       "col": 15,
       "text": "The system shall allow a workspace owner to invite a teammate by email address.",
@@ -14,7 +14,7 @@
       "requirementId": "FR-001"
     },
     {
-      "file": "fixtures/profiles/speckit/spec.md",
+      "file": "speckit/spec.md",
       "line": 56,
       "col": 15,
       "text": "When a teammate accepts an invitation, the system shall grant them the role recorded on that invitation.",
@@ -23,7 +23,7 @@
       "requirementId": "FR-002"
     },
     {
-      "file": "fixtures/profiles/speckit/spec.md",
+      "file": "speckit/spec.md",
       "line": 57,
       "col": 15,
       "text": "While an invitation is pending, the system shall allow the owner to revoke it.",
@@ -32,7 +32,7 @@
       "requirementId": "FR-003"
     },
     {
-      "file": "fixtures/profiles/speckit/spec.md",
+      "file": "speckit/spec.md",
       "line": 58,
       "col": 15,
       "text": "Where the workspace has audit logging enabled, the system shall record every member role change.",
@@ -41,7 +41,7 @@
       "requirementId": "FR-004"
     },
     {
-      "file": "fixtures/profiles/speckit/spec.md",
+      "file": "speckit/spec.md",
       "line": 59,
       "col": 15,
       "text": "If an owner attempts to demote the last remaining owner, then the system shall reject the change.",
