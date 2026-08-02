@@ -18,6 +18,7 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
     "test": "pnpm -r --filter './packages/**' test",
+    "conformance": "pnpm build && pnpm typecheck && pnpm typecheck:tests && pnpm lint && pnpm test && vitest run --config vitest.conformance.config.ts",
     "prepare": "husky",
     "version:alpha": "lerna version --conventional-commits --conventional-prerelease --preid alpha --no-private",
     "version:graduate": "lerna version --conventional-graduate --no-private",
