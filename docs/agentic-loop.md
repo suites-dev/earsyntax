@@ -1,152 +1,179 @@
 # Agentic loop
 
-This document describes how any coding agent derives `.ears` files from source specifications using the `earsyntax` facade. The loop is tool-agnostic: it works with Claude Code, Cursor, Codex, Kiro, or a plain shell script, because the durable contract is files plus CLI JSON, not any one agent's command names.
+This document describes how any coding agent uses the `earsyntax` facade to write,
+convert, and repair EARS requirements inside host documents. The loop is
+tool-agnostic: it works with Claude Code, Cursor, Codex, Kiro, or a plain shell
+script, because the durable contract is the host files plus the CLI's JSON, not
+any one agent's command names. There is no `earsyntax` workspace, no work item,
+and no acceptance record; the agent edits the host's own requirement files in
+place.
 
 Three parties have separate responsibilities, and the loop keeps them separate.
 
-| Party        | Responsibility                                                                                                                           |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| CLI facade   | Resolve paths, scaffold work directories, return instructions, validate `.ears`, report status, record acceptance, detect stale sources. |
-| Coding agent | Read the source, decide which behaviors are requirements, write and repair `.ears`, and raise questions when the source is unclear.      |
-| Human        | Approve behavior, answer questions, and accept or reject the generated `.ears`.                                                          |
+| Party        | Responsibility                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| CLI facade   | Locate requirements in host files, return instructions, validate deterministically, report findings and next actions. Never edits, never calls an LLM. |
+| Coding agent | Read the source, decide which behaviors are requirements, write and repair EARS in the host file, and flag ambiguity for a human.                      |
+| Human        | Review the resulting requirements in the host workflow (pull request, Kiro, Spec Kit, or OpenSpec review) and decide whether they are ready.           |
 
-The CLI never interprets the source semantically. The agent never accepts its own work. Validation success and human acceptance are two different events.
+The CLI never interprets a source spec semantically. The agent never approves,
+accepts, or merges its own work. Validation success and human approval are two
+different events, and the CLI produces only the first.
 
 ## The loop at a glance
 
 ```text
-earsyntax new        -> scaffold a work item (choose author or convert mode)
-earsyntax instructions -> get the rules for the current step
-   (agent writes or repairs the .ears file)
-earsyntax validate   -> check the .ears file, deterministically
-   (repeat instructions repair + validate until clean)
-earsyntax status     -> confirm state and next steps
-earsyntax instructions review -> build a human review summary
-   (human reviews)
-earsyntax accept     -> record human acceptance
+earsyntax instructions <mode> --file <path>  -> get the rules for this step
+   (agent edits the host file in place)
+earsyntax validate <path>                    -> check the file, deterministically
+   (repeat instructions repair + validate until no error-severity finding remains)
 ```
 
-Every JSON response ends with a `next` array, so an agent can walk the loop by following `next[].command` without hard-coding the sequence. Actions with `forAgent: true` are safe for the agent to run; actions with `blocking: true` require a human.
+Every JSON response ends with a `next` array, so an agent walks the loop by
+following `next[].command` without hard-coding the sequence. Actions marked
+`forAgent: true` are safe for the agent to run on its own. The response never
+tells the agent to approve, accept, or merge, and never references a workspace.
 
-## Work-item state machine
+## The four modes
 
-A work item moves through these states. The state lives in `manifest.json` as `status`.
+Each `instructions` mode covers one kind of step against a host file. Pick the
+mode that matches the task.
+
+| Mode      | When to use it                                                       | Reads findings |
+| --------- | -------------------------------------------------------------------- | -------------- |
+| `author`  | Write new EARS requirements into a host file's requirements region.  | no             |
+| `convert` | Rewrite natural-language requirements already in the file into EARS. | no             |
+| `repair`  | Fix the findings a `validate` run reported.                          | yes            |
+| `review`  | Summarize the located requirements for a human. Never approves.      | yes            |
+
+`author` and `convert` also accept `--from <source>`, naming a natural-language
+spec the agent reads as input while writing EARS into `--file`. The CLI points at
+the source; it never reads or transforms it. See
+[the CLI reference](cli.md#--from-source).
+
+## The repair loop, step by step
+
+The most common loop is repair: something failed validation, and the agent fixes
+it. The example uses a Kiro `requirements.md`, but the shape holds for any
+profile.
+
+### 1. Validate and read the findings
+
+```bash
+earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro --json
+```
+
+```json
+{
+  "command": "validate",
+  "ok": false,
+  "findings": {
+    "ok": false,
+    "summary": { "files": 1, "requirements": 3, "valid": 2, "errors": 2, "warnings": 0 },
+    "diagnostics": [
+      {
+        "id": "EARS-E006",
+        "severity": "error",
+        "file": ".kiro/specs/checkout/requirements.md",
+        "line": 10,
+        "col": 4,
+        "message": "The 'If' clause is missing the required 'then' boundary."
+      }
+    ]
+  },
+  "next": [
+    {
+      "command": "earsyntax instructions repair --file .kiro/specs/checkout/requirements.md --profile kiro --json",
+      "reason": "Get repair rules for the reported diagnostics.",
+      "forAgent": true
+    }
+  ]
+}
+```
+
+The `next` action tells the agent exactly which command to run.
+
+### 2. Get the repair rules
+
+```bash
+earsyntax instructions repair --file ".kiro/specs/checkout/requirements.md" --profile kiro --json
+```
+
+The response embeds the same findings plus a `rules` array with one entry per
+reported id, drawn from the diagnostic-to-fix guidance in
+[agent-rules.md](agent-rules.md):
+
+```json
+{
+  "mode": "repair",
+  "rules": [
+    "Change only what the reported findings justify; leave passing requirements untouched.",
+    "EARS-E006: Add the missing then: If <condition>, then the <system> shall <response>.",
+    "Edit only the host file, in place, and preserve the surrounding document structure."
+  ],
+  "editPolicy": {
+    "editableFile": ".kiro/specs/checkout/requirements.md",
+    "preserveStructure": true
+  },
+  "outputPolicy": "edit-in-place"
+}
+```
+
+### 3. Edit the host file in place
+
+The agent changes only what the findings justify, in the file `editPolicy`
+names, preserving the surrounding document structure. It does not delete a failing
+requirement to make validation pass, and does not weaken a requirement because it
+is harder to parse.
+
+### 4. Re-validate until clean
+
+```bash
+earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro
+```
 
 ```text
-missing -> scaffolded -> drafted -> invalid -> valid -> accepted
-                            ^          |         |          |
-                            |          v         |          |
-                            +---------- (repair) |          |
-                                                 v          v
-                                              stale <----- stale
+3/3 valid across 1 file(s), 0 error(s), 0 warning(s)
 ```
 
-### States
+Exit code `0`. The loop repeats step 1 through step 4 until `validate` reports no
+error-severity finding. Warnings do not block a clean exit, but a `review` pass
+surfaces them so a human can decide whether they matter.
 
-| State        | Meaning                                                                                                           |
-| ------------ | ----------------------------------------------------------------------------------------------------------------- |
-| `missing`    | No manifest exists for the queried id. Reported by `status`; never stored.                                        |
-| `scaffolded` | `earsyntax new` created the directory and empty artifacts. No requirements written yet.                           |
-| `drafted`    | The `.ears` file has content but has not passed a clean validation.                                               |
-| `invalid`    | The last `validate` produced at least one error-severity diagnostic.                                              |
-| `valid`      | The last `validate` produced no error diagnostics. Eligible for review and acceptance.                            |
-| `accepted`   | A human accepted the `.ears` file. `accepted` metadata and hashes are recorded.                                   |
-| `stale`      | The source hash changed after the last `valid` or `accepted` state. The `.ears` may no longer reflect the source. |
+## Authoring and converting
 
-### Transitions
-
-Each transition names the command or event that triggers it.
-
-| From         | To           | Trigger                                                                                                                                                  |
-| ------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `missing`    | `scaffolded` | `earsyntax new <slug>` creates the manifest and artifact files.                                                                                          |
-| `scaffolded` | `drafted`    | The next `validate` observes a non-empty `.ears` output. (The agent writing the file is not a CLI event; the state advances when the CLI next reads it.) |
-| `drafted`    | `invalid`    | `earsyntax validate` produces at least one error-severity diagnostic.                                                                                    |
-| `drafted`    | `valid`      | `earsyntax validate` produces no error-severity diagnostic.                                                                                              |
-| `invalid`    | `invalid`    | `earsyntax validate` still finds error diagnostics after a repair pass.                                                                                  |
-| `invalid`    | `valid`      | `earsyntax validate` finds no error diagnostics after a repair pass.                                                                                     |
-| `valid`      | `invalid`    | A later `validate` (for example after an edit) finds error diagnostics again.                                                                            |
-| `valid`      | `accepted`   | `earsyntax accept <slug>` after a human approves. Refused unless status is `valid` and the source is not stale.                                          |
-| `valid`      | `stale`      | The source content hash no longer matches the hash recorded at the `valid` transition.                                                                   |
-| `accepted`   | `stale`      | The source content hash no longer matches `accepted.sourceHash`.                                                                                         |
-| `stale`      | `drafted`    | Re-running the loop (`instructions convert`, rewrite, `validate`) against the changed source.                                                            |
-
-[DECIDED] `drafted` is CLI-observed, not agent-signaled. The CLI has no hook that fires when the agent writes the file, so `scaffolded` advances to `drafted`, `valid`, or `invalid` at the next `validate`. `status` reports `scaffolded` until then. Rationale: the CLI only changes state on its own commands; it does not watch the filesystem.
-
-### Staleness
-
-`stale` is computed, not stored as a terminal decision. On every `status`, `doctor`, and work-item `validate`, the CLI hashes the current source content and compares it to the hash recorded at the last `valid` or `accepted` transition:
-
-- If the item is `valid` and the source hash differs from the valid-time hash, the reported status is `stale`.
-- If the item is `accepted` and the source hash differs from `accepted.sourceHash`, the reported status is `stale`.
-- A `stale` item is not silently repaired. The agent re-enters the loop against the new source; a human accepts again.
-
-Staleness does not block `validate` from linting the `.ears` file, but it does block `accept`, which refuses stale work with exit `3`.
-
-## Mode one: convert from an existing source
-
-Use `convert` when a Markdown spec, PRD, issue, or requirements document already exists.
+`author` and `convert` follow the same shape without a preceding findings run: get
+the rules, edit the host file, then validate. In `author` mode the agent writes
+new EARS requirements into the requirements region the profile's locator
+describes. In `convert` mode it rewrites natural-language requirements already in
+the file into EARS in place, preserving each requirement's intent.
 
 ```bash
-# 1. Scaffold. Hashes the source, reserves the output path.
-earsyntax new checkout-webhooks --source specs/checkout.md --mode convert --json
-# -> status: scaffolded
-
-# 2. Get the convert rules and source excerpts.
-earsyntax instructions convert --work checkout-webhooks --json
-
-# 3. The agent reads specs/checkout.md in full, then writes:
-#    .earsyntax/work/checkout-webhooks/requirements.ears
-#    and maintains questions.md and traceability.json.
-
-# 4. Validate.
-earsyntax validate .earsyntax/work/checkout-webhooks/requirements.ears --source specs/checkout.md --json
-# -> status: invalid or valid
-
-# 5. If invalid, get targeted repair rules, fix, and re-validate.
-earsyntax instructions repair --work checkout-webhooks --json
-earsyntax validate .earsyntax/work/checkout-webhooks/requirements.ears --source specs/checkout.md --json
-# repeat until no error diagnostics -> status: valid
-
-# 6. Confirm state.
-earsyntax status checkout-webhooks --json
-
-# 7. Build the human review summary.
-earsyntax instructions review --work checkout-webhooks --json
-
-# 8. Human gate. A person reviews and, if satisfied, accepts.
-earsyntax accept checkout-webhooks --by "omer"
-# -> status: accepted
+# Write new requirements, reading a PRD as input.
+earsyntax instructions author --file ".kiro/specs/checkout/requirements.md" --from prd.md --profile kiro --json
+# agent reads prd.md, writes EARS into requirements.md, leaves prd.md unchanged
+earsyntax validate ".kiro/specs/checkout/requirements.md" --profile kiro
 ```
 
-## Mode two: author from a prompt
+Both modes carry the shared authoring rules: choose the narrowest EARS pattern,
+write one obligation per requirement, split compounds, and do not invent behavior
+the source does not state. Those rules are documented in full in
+[agent-rules.md](agent-rules.md).
 
-Use `author` when there is no source document, only a brief or prompt. The loop is identical except that step 1 supplies a prompt and step 2 requests author rules. There is no `source` block in the instructions and no source excerpts; traceability records requirements without source lines.
+## What the loop does not do
 
-```bash
-earsyntax new checkout-webhooks \
-  --prompt "Checkout webhooks must validate signatures and record successful payments." \
-  --mode author --json
-# -> status: scaffolded
-
-earsyntax instructions author --work checkout-webhooks --json
-# agent writes requirements.ears from the prompt only
-
-earsyntax validate .earsyntax/work/checkout-webhooks/requirements.ears --json
-# repair loop, status, review, accept as in convert mode
-```
-
-Because there is no source file, an author-mode item never becomes `stale` from source drift. It can still move `valid -> invalid` if the `.ears` file is edited and re-validated.
-
-## Human gates
-
-Two points in the loop require a human, and the CLI enforces both.
-
-1. Answering questions. When the agent writes questions to `questions.md`, those questions block the requirements listed in `traceability.json` under `blocksRequirements`. The review summary surfaces them. A human answers before acceptance.
-2. Acceptance. `earsyntax accept` refuses unless the status is `valid`, the source is not stale, and the `.ears` file is unchanged since validation. The agent may recommend acceptance, but only a human runs it. Every `next` action that leads to acceptance is marked `blocking: true` and never `forAgent: true`.
-
-The CLI never accepts on the agent's behalf and never edits the source spec.
+- It does not maintain a workspace, work item, manifest, or acceptance record.
+- It does not track source staleness or hash sources; the host's own version
+  control does that.
+- It does not accept, approve, or merge. The `review` mode produces a summary for
+  a human and stops there.
+- It does not call an LLM from the CLI. The agent calls `earsyntax`, never the
+  reverse.
 
 ## Convergence
 
-The repair sub-loop (`instructions repair` then `validate`) repeats until `validate` reports no error-severity diagnostics. The agent must not force convergence by deleting failing requirements or weakening wording; if the intended behavior is unclear, it writes a question and leaves a clear placeholder. The rules for this are in `docs/agent-rules.md`. Warnings (for example `lint.vague_response`) do not block a `valid` state, but the review summary reports them so the human can decide whether they matter.
+The repair sub-loop (`instructions repair`, then `validate`) repeats until
+`validate` reports no error-severity finding. The agent must not force convergence
+by deleting failing requirements or weakening wording; when the intended behavior
+is unclear, it leaves the requirement out and flags the gap for a human rather
+than guessing. The rules for this are in [agent-rules.md](agent-rules.md).

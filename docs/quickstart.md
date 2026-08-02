@@ -1,186 +1,209 @@
 # Quickstart
 
-This page takes you from an empty directory to a clean `earsyntax validate` in about five minutes, then shows the same result through the work-item loop a coding agent uses. Every command and its output below was captured from a real run.
+This page takes you from zero to a clean `earsyntax validate` two ways: a
+guest-mode check that needs no setup, and the host-native loop that validates and
+repairs requirements inside a Kiro spec. Every command and its output below was
+captured from a real run.
 
-You need Node 22 or newer. No global install is required; `npx` fetches the CLI on first use.
+You need Node 22 or newer. No global install is required; `npx` fetches the CLI on
+first use.
 
-## Validate a file in five minutes
+## Guest mode: validate a requirement with zero setup
 
-### 1. Write three requirements
-
-Create `requirements.ears` with one requirement per line:
-
-```text
-When a payment webhook is received, the billing service shall verify the HMAC signature.
-If the HMAC signature is invalid, the billing service shall reject the webhook.
-While the payment provider is unavailable, the billing service shall queue retryable events.
-```
-
-### 2. Validate
+You do not need a project, a config file, or an install to validate EARS. Pipe a
+line into `validate -` and the CLI reads stdin as plain text:
 
 ```bash
-npx @earsyntax/cli validate requirements.ears
+printf 'The billing service shall verify the HMAC signature of every incoming webhook.\n' \
+  | npx @earsyntax/cli validate - --profile strict
 ```
 
-Line 2 is missing the `then` boundary that an `If ... then` requirement needs, so validation reports one error and exits `1`:
-
 ```text
-requirements.ears:2 error ears.invalid_if_then_form  The 'If' clause is missing the required 'then' boundary.
-
-2/3 valid, 1 errors, 0 warnings
+1/1 valid across 1 file(s), 0 error(s), 0 warning(s)
 ```
 
-### 3. Read the diagnostic
+The exit code is `0`. Now feed it a broken requirement, an `If` clause with no
+`then`:
 
-The line format is `file:line severity code message`. Here the code is `ears.invalid_if_then_form`, and the message names the fix: an `If` clause needs a `then` before the system response. The [diagnostics reference](diagnostics.md) documents every code and its severity.
-
-### 4. Fix and re-validate
-
-Add `then` to line 2:
+```bash
+printf 'If the HMAC signature is invalid, the billing service shall reject the webhook.\n' \
+  | npx @earsyntax/cli validate - --profile strict
+```
 
 ```text
-If the HMAC signature is invalid, then the billing service shall reject the webhook.
+-:1:1 EARS-E006 error The 'If' clause is missing the required 'then' boundary.
+0/1 valid across 1 file(s), 0 error(s), 0 warning(s)
+```
+
+The line format is `path:line:col id severity message`; here `-` is stdin. The
+exit code is `1`, the signal CI branches on: `0` means every requirement is clean,
+`1` means at least one error diagnostic remains. Run `earsyntax explain EARS-E006`
+for the rationale and a corrected example.
+
+The same guest check works on a file:
+
+```bash
+npx @earsyntax/cli validate requirements.ears --profile strict
+```
+
+## Host-native loop: validate and repair a Kiro spec
+
+The guest check validates one line. The host-native loop is the fuller path: point
+`earsyntax` at the specification files a team already keeps, let it locate the EARS
+requirements inside them, and repair what fails. The example below uses a Kiro
+`requirements.md`, but the shape is the same for Spec Kit and OpenSpec with their
+own profiles.
+
+### 1. Detect what is in the repo
+
+`doctor` reads the working directory and reports the hosts and agents it finds,
+with the exact commands to run next. It never writes.
+
+```bash
+earsyntax doctor
+```
+
+```text
+Repo: /repo
+
+Hosts:
+  kiro       .kiro/specs/             (profile kiro)
+
+Recommended commands:
+  earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro
+  earsyntax init --agent claude --host kiro
+```
+
+### 2. Install integration files
+
+`init` renders thin wrapper files that point coding agents and host hooks back at
+the CLI. It does not create a workspace or edit any spec.
+
+```bash
+earsyntax init --agent claude --host kiro
+```
+
+It writes files such as `.claude/commands/earsyntax-repair.md` and
+`.kiro/steering/earsyntax.md`. Running it again produces no diff; see
+[init in the CLI reference](cli.md#init---agent-agents---host-hosts) for the full
+`written`/`updated`/`skipped` report.
+
+### 3. See what the profile locates
+
+Before validating, `extract` shows exactly which lines the `kiro` profile treats
+as requirements. This is the debugging surface when a file does not validate the
+way you expect.
+
+```bash
+earsyntax extract ".kiro/specs/**/requirements.md" --profile kiro --json
+```
+
+```json
+{
+  "version": "0.0.1-alpha.0",
+  "command": "extract",
+  "ok": true,
+  "summary": { "files": 1, "candidates": 3 },
+  "candidates": [
+    {
+      "file": ".kiro/specs/checkout/requirements.md",
+      "line": 9,
+      "col": 4,
+      "text": "WHEN a payment webhook arrives THE SYSTEM SHALL verify the signature",
+      "profile": "kiro",
+      "locatorRuleId": "kiro.acceptance-criteria-item"
+    }
+  ]
+}
+```
+
+The `kiro` profile located the acceptance-criteria list items and ignored the
+heading, the user story, and the surrounding prose.
+
+### 4. Validate
+
+```bash
+earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro
+```
+
+For a spec whose second criterion is written `IF the signature is invalid THE
+SYSTEM SHALL reject the webhook` (no `then`), validation reports:
+
+```text
+.kiro/specs/checkout/requirements.md:10:4 EARS-E006 error The 'If' clause is missing the required 'then' boundary.
+.kiro/specs/checkout/requirements.md:10:4 EARS-E008 error The requirement is missing the system name before 'shall'.
+2/3 valid across 1 file(s), 2 error(s), 0 warning(s)
+```
+
+Exit code `1`. The `kiro` profile relaxes keyword case and the literal `THE
+SYSTEM`, so those are accepted; the missing `then` is not, because it breaks the
+unwanted-behaviour form.
+
+### 5. Get the repair rules
+
+`instructions repair` returns the deterministic rules for fixing exactly the
+reported findings, keyed by id. It reads the file and returns rules; it never
+edits.
+
+```bash
+earsyntax instructions repair --file ".kiro/specs/checkout/requirements.md" --profile kiro --json
+```
+
+The `rules` array includes one entry per reported id:
+
+```json
+{
+  "mode": "repair",
+  "rules": [
+    "Change only what the reported findings justify; leave passing requirements untouched.",
+    "EARS-E006: Add the missing then: If <condition>, then the <system> shall <response>.",
+    "EARS-E008: Insert the system name before shall: the <system> shall <response>.",
+    "Edit only the host file, in place, and preserve the surrounding document structure."
+  ],
+  "next": [
+    {
+      "command": "earsyntax validate .kiro/specs/checkout/requirements.md --profile kiro --json",
+      "reason": "Validate the host file after editing and repeat until no error-severity finding remains.",
+      "forAgent": true
+    }
+  ]
+}
+```
+
+### 6. Edit the host file and re-validate
+
+Apply the fix in the spec. Adding `, then` to the second criterion resolves both
+findings at once, because the corrected line parses as a well-formed
+unwanted-behaviour requirement:
+
+```diff
+-2. IF the signature is invalid THE SYSTEM SHALL reject the webhook
++2. IF the signature is invalid, THEN THE SYSTEM SHALL reject the webhook
 ```
 
 Validate again:
 
 ```bash
-npx @earsyntax/cli validate requirements.ears
+earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro
 ```
 
 ```text
-
-3/3 valid, 0 errors, 0 warnings
+3/3 valid across 1 file(s), 0 error(s), 0 warning(s)
 ```
 
-The exit code is now `0`. That is the CI signal: `0` means every requirement is clean, `1` means at least one error diagnostic remains.
-
-### Strict and guided modes
-
-By default `validate` runs in `strict` mode, where structural defects are errors. In `guided` mode the same defects are downgraded to warnings, so a partly-formed file still exits `0`:
-
-```bash
-npx @earsyntax/cli validate requirements.ears --mode guided
-```
-
-Guided mode is useful while drafting; keep strict mode in CI.
-
-## The work-item loop
-
-The commands above validate a file you already wrote. The work-item loop is the fuller path a coding agent follows to convert a source specification into a validated `.ears` file. The CLI scaffolds and validates, the agent writes requirements, and a human accepts. See [the agentic loop](agentic-loop.md) for the state machine and [the agent rules](agent-rules.md) for what the agent is told to do.
-
-The run below uses [`specs/checkout.md`](../specs/checkout.md) as the source.
-
-### 1. Initialize the workspace
-
-```bash
-earsyntax init --tools none
-```
-
-```text
-Initialized earsyntax in .earsyntax
-  wrote .earsyntax/config.json
-  wrote .earsyntax/work/.gitkeep
-  tools: none
-```
-
-### 2. Create a work item
-
-```bash
-earsyntax new checkout-webhooks --source specs/checkout.md --mode convert
-```
-
-```text
-Created work item "checkout-webhooks" (convert, scaffolded).
-  wrote .earsyntax/work/checkout-webhooks/requirements.ears
-  wrote .earsyntax/work/checkout-webhooks/questions.md
-  wrote .earsyntax/work/checkout-webhooks/traceability.json
-  wrote .earsyntax/work/checkout-webhooks/manifest.json
-```
-
-`new` does not generate requirements. It hashes the source, reserves the output path, and writes empty artifacts. The status is `scaffolded`.
-
-### 3. Get the conversion rules
-
-```bash
-earsyntax instructions convert --work checkout-webhooks
-```
-
-```text
-instructions convert for "checkout-webhooks"
-  - Read the full source before writing requirements.
-  - Write only EARS requirements in the .ears output file.
-  - Use one requirement per non-empty line.
-  - Give every requirement a stable ID such as REQ-001.
-  - Preserve source traceability with a [source: path:line] prefix when the source line is known.
-  - Use the narrowest EARS pattern that fits the source behavior.
-  - Do not invent behavior that is not stated in the source.
-  - Do not hide ambiguity inside vague wording.
-  - Split compound behavior into separate requirements when the response holds more than one observable obligation.
-  - Write unclear behavior to questions.md instead of guessing a precise requirement.
-  - Maintain traceability.json for every generated requirement and question.
-  - Do not edit the source spec unless the user explicitly asks.
-```
-
-With `--json` the same response carries source excerpts and a `next` action pointing at `validate`. The JSON contract is in [the facade API reference](facade-api.md).
-
-### 4. Write the requirements
-
-The agent reads the source and writes `.earsyntax/work/checkout-webhooks/requirements.ears`. Converting `specs/checkout.md` gives:
-
-```text
-REQ-001 [source: specs/checkout.md:7]: When a payment webhook is received, the billing service shall verify the HMAC signature.
-REQ-002 [source: specs/checkout.md:10]: If the HMAC signature is invalid, then the billing service shall reject the webhook.
-REQ-003 [source: specs/checkout.md:12]: When a webhook arrives, the billing service shall validate the signature.
-REQ-004 [source: specs/checkout.md:12]: When a webhook arrives, the billing service shall persist the event.
-REQ-005 [source: specs/checkout.md:12]: When a webhook arrives, the billing service shall enqueue a processing job.
-REQ-006 [source: specs/checkout.md:15]: While the payment provider is unavailable, the billing service shall retry queued events.
-REQ-007 [source: specs/checkout.md:17]: Where dunning management is enabled, the billing service shall retry declined charges.
-```
-
-The compound sentence on lines 12 to 13 of the source ("validate the signature, persist the event, and enqueue a processing job") became three separate requirements, REQ-003 through REQ-005. The declined-payment behavior on line 19 uses the vague term "quickly", so the agent raises a question in `questions.md` rather than inventing a channel and a time bound.
-
-### 5. Validate the work item
-
-```bash
-earsyntax validate .earsyntax/work/checkout-webhooks/requirements.ears --source specs/checkout.md --work checkout-webhooks
-```
-
-```text
-
-7/7 valid, 0 errors, 0 warnings
-```
-
-Because the target is a work item, `validate` records the result on the manifest and moves the status to `valid`. Had it reported errors, `earsyntax instructions repair --work checkout-webhooks` would return the diagnostics to fix, and you would repair and re-validate until clean.
-
-### 6. Confirm the state
-
-```bash
-earsyntax status checkout-webhooks
-```
-
-```text
-checkout-webhooks: valid (convert)
-  source: specs/checkout.md
-  output: .earsyntax/work/checkout-webhooks/requirements.ears
-```
-
-### 7. Accept
-
-Acceptance is a human decision, and the CLI enforces it: `accept` refuses unless the status is `valid`, the source is unchanged since validation, and the `.ears` file is unchanged since validation.
-
-```bash
-earsyntax accept checkout-webhooks --by "omer"
-```
-
-```text
-Accepted "checkout-webhooks" by omer.
-```
-
-The work item is now `accepted`, with the accepting user and the source and output hashes recorded in the manifest. If the source later changes, `status` reports the item as `stale`, and the loop runs again against the new source.
+Exit code `0`. That is the loop: `validate`, read `instructions repair`, edit the
+host file, re-validate until clean. A coding agent runs the same steps by
+following each response's `next` action. The CLI never approves or merges; human
+review stays in the host workflow (pull request, Kiro, Spec Kit, or OpenSpec
+review).
 
 ## Next steps
 
-- [Author EARS by hand](authoring-ears.md): the six patterns, clause order, and common diagnostics.
-- [API reference](api.md): `lintEars`, `lintEarsBatch`, `parseEars`, and `lintCatalogCoverage`.
-- [CLI reference](cli.md): every command, its flags, and its output.
+- [Author EARS by hand](authoring-ears.md): the six patterns, clause order, and
+  the diagnostics you are most likely to hit.
+- [The agentic loop](agentic-loop.md): the full validate-and-repair loop and how
+  the CLI, agent, and human stay separate.
+- [CLI reference](cli.md): every command, its flags, exit codes, and JSON
+  envelope.
+- [Profiles and input formats](input-formats.md): what each profile locates in a
+  host document.

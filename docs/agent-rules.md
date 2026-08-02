@@ -1,237 +1,202 @@
-# Spec-to-EARS agent rules
+# Agent rules
 
-This document is the canonical instruction body for coding agents that turn source specifications into `.ears` files. The `earsyntax instructions author|convert|repair|review --json` command returns these rules; the CLI JSON is the source of truth at runtime, and this file is the human-readable version of the same content.
+This document is the human-readable mirror of the rules the
+`earsyntax instructions <author|convert|repair|review> --file <path> --json`
+command returns. The CLI JSON is the source of truth at runtime; this page is the
+same content in prose so a person can read it without running the command. The
+rules are deterministic data: no clock, no file system, no network, no LLM. The
+same mode, profile, and findings always yield the same rule text.
 
-Per-agent wrappers (a Claude Code command, a Cursor rule, an `AGENTS.md` section, a Kiro steering file) are thin pointers to the CLI commands. They must not fork or paraphrase these rules; they call `earsyntax instructions` and follow whatever it returns, so there is one place to change the rules.
+The rules are agent-agnostic. Per-agent wrappers (a Claude Code command, a Cursor
+rule, an `AGENTS.md` section, a Kiro steering file) are thin pointers that call
+`earsyntax instructions` and follow whatever it returns, so the rules live in one
+place and never fork.
 
-The rules split cleanly by step: read the source, write only requirements, classify, split compounds, do not invent, raise questions, preserve traceability, repair from diagnostics, and review before accept.
+Every mode edits the host document in place, at the region the active profile's
+locator describes. There is no workspace, no `.ears` side file, no traceability
+file, and no acceptance step. Human review happens in the host workflow.
 
-## Read the source first
+## What each mode tells you to do
 
-Before writing any `.ears`, read the full source artifact. Sources include a Spec Kit `spec.md`, an OpenSpec `proposal.md` or delta spec, a Kiro `requirements.md`, a PRD, an issue description, a design brief, or any user-supplied Markdown, YAML, JSON, or plain text.
+The `instructions` response opens with mode-specific rules.
 
-While reading, identify:
+### `author`
 
-- actors and users
-- systems or components under requirement
-- events that trigger behavior
-- states during which behavior applies
-- optional features or feature flags that gate behavior
-- unwanted or error conditions
-- observable system responses
-- constraints that are genuinely requirements
-- ambiguous statements that need human clarification
+Write new EARS requirements into a host file that has none yet, or add to the ones
+it has.
 
-In `convert` mode the `instructions` response includes source excerpts with line numbers. Read the whole file anyway; the excerpts are a starting point, not the full source.
+- Write new EARS requirements into the requirements region of the host file that
+  the locator describes, and nowhere else.
+- If that region does not exist yet, create it following the host document
+  convention; add no prose or headings beyond it.
 
-## Write only requirements
+### `convert`
 
-The `.ears` file contains one requirement per non-empty line and nothing else. No headings, no explanatory paragraphs, no prose. Explanation belongs in `traceability.json` and open items belong in `questions.md`.
+Rewrite natural-language requirements already present in the host file.
 
-Line format:
+- Rewrite the natural-language requirements already in the host file requirements
+  region into EARS form, in place.
+- Preserve each requirement's original intent; change wording only to reach a
+  canonical EARS shape.
 
-```text
-REQ-001 [source: specs/checkout.md:7]: When a payment webhook is received, the billing service shall verify the HMAC signature.
-```
+### `repair`
 
-Allowed metadata prefixes:
+Fix the findings a `validate` run reported.
 
-```text
-REQ-001:
-REQ-001 [source: path:line]:
-REQ-001 [source: path:line-line]:
-```
+- Change only what the reported findings justify; leave passing requirements
+  untouched.
+- Work through the findings by id using the guidance below, then re-run validation
+  and repeat until no error-severity finding remains.
+- Do not delete a failing requirement to make validation pass, and do not weaken a
+  requirement because it is harder to parse.
 
-Give every requirement a stable ID such as `REQ-001`. Include a `[source: path:line]` reference whenever the source line is known; in `author` mode, where there is no source, use the bare `REQ-001:` prefix. The parser accepts bare requirement lines without any prefix, but agent-generated files should carry IDs and, in convert mode, source references.
+### `review`
 
-## Classify each requirement
+Summarize the located requirements for a human. This mode never changes the file.
 
-Use the narrowest EARS pattern that fits the source behavior. Do not force everything into `When`.
+- This review is read-only: describe the state of the located requirements and
+  make no change to the host file.
+- Summarize how many requirements were reviewed, how they distribute across the
+  EARS patterns, and every finding grouped by severity.
+- Report the validation status and what a human must resolve before the
+  requirements are ready, and leave that decision to the human.
 
-| Source shape                                                   | EARS pattern       | Template                                              |
-| -------------------------------------------------------------- | ------------------ | ----------------------------------------------------- |
-| Always-true system behavior                                    | Ubiquitous         | `The <system> shall <response>.`                      |
-| Triggered by an event                                          | Event-driven       | `When <trigger>, the <system> shall <response>.`      |
-| Applies only during a state                                    | State-driven       | `While <state>, the <system> shall <response>.`       |
-| Applies only when a feature exists or is enabled               | Optional feature   | `Where <feature>, the <system> shall <response>.`     |
-| Handles an error, invalid input, threat, or unwanted condition | Unwanted behaviour | `If <condition>, then the <system> shall <response>.` |
-| Requires more than one shell clause                            | Complex            | `While ..., when ..., the <system> shall <response>.` |
+## Reading a `--from` source
 
-Guidance:
+`author` and `convert` accept `--from <source>`, a natural-language spec the agent
+reads as input while writing EARS into the host file. When it is present, three
+more rules apply:
 
-- If behavior applies during maintenance mode, use `While`, not `When`.
-- If behavior applies only with a feature enabled (for example enterprise SSO), use `Where`.
-- If the source describes an invalid or exceptional condition, use `If ..., then ...`.
-- Accepted clause order for complex requirements is `While* -> Where* -> When* -> If* -> the <system> shall <response>`.
+- Read the requirement content from the source file; it is your input to
+  understand, not something to modify.
+- Write the resulting EARS requirements into the host file at the region the
+  locator describes.
+- Leave the source file unchanged.
 
-## Split compound source text
+The CLI never reads or transforms the source itself. Reading and understanding it
+is the agent's job.
 
-Split a compound source requirement into separate EARS requirements when the response holds more than one observable obligation.
+## Choosing a pattern
 
-Source:
+The writing modes (`author` and `convert`) share the EARS authoring guidance
+below. Start by choosing the narrowest pattern that fits the behavior.
 
-```text
-When a webhook arrives, validate the signature, persist the event, and enqueue a job.
-```
+- Choose the narrowest EARS pattern that fits the behaviour; do not force
+  everything into When.
+- Use While for behaviour active during a state, Where for behaviour gated by an
+  optional feature, and If ..., then ... for behaviour handling an error or other
+  unwanted condition.
+- Use the ubiquitous form for behaviour that is always active with no trigger or
+  state.
 
-Generated:
+| Behavior in the source                  | Pattern            | Template                                                                                        |
+| --------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------- |
+| Always active, no trigger or state      | Ubiquitous         | `The <system> shall <response>.`                                                                |
+| Triggered by an event                   | Event-driven       | `When <trigger>, the <system> shall <response>.`                                                |
+| Active during a state                   | State-driven       | `While <state>, the <system> shall <response>.`                                                 |
+| Gated by an optional feature            | Optional feature   | `Where <feature>, the <system> shall <response>.`                                               |
+| Handling an error or unwanted condition | Unwanted behaviour | `If <condition>, then the <system> shall <response>.`                                           |
+| Needs more than one leading clause      | Complex            | order clauses as While, then Where, then When, then If, before `the <system> shall <response>`. |
 
-```text
-REQ-003 [source: specs/checkout.md:12]: When a webhook arrives, the billing service shall validate the signature.
-REQ-004 [source: specs/checkout.md:12]: When a webhook arrives, the billing service shall persist the event.
-REQ-005 [source: specs/checkout.md:12]: When a webhook arrives, the billing service shall enqueue a processing job.
-```
+## One obligation per requirement
 
-Do not split when the second phrase only qualifies the first response (for example "reject the webhook with a 400 status" is one obligation, not two). When you split, record all resulting IDs against the same source line in `traceability.json`.
+- Write one requirement per statement, each with exactly one shall stating a
+  single obligation.
+- When a statement carries several obligations, split it into separate
+  requirements; do not split a phrase that only qualifies the response.
+
+For example, "validate the signature, persist the event, and enqueue a job"
+becomes three requirements, but "reject the webhook with a 400 status" stays one,
+because the status only qualifies the single obligation.
 
 ## Do not invent behavior
 
-Do not add behavior because it seems reasonable, common, secure, scalable, or useful. If the source does not state the behavior, the `.ears` file must not contain it.
+- Write only behaviour the source states; do not add logging, retries, rate
+  limits, persistence, or permissions it does not require.
+- When behaviour is missing, vague, or conflicting, leave it out and flag it for a
+  human rather than guessing a precise requirement.
 
-Forbidden inventions:
+If missing behavior matters, note the gap for a human. Do not fill it with a
+plausible-sounding requirement the source never stated.
 
-- adding audit logging because security is mentioned
-- adding retry behavior because webhooks are involved
-- adding rate limits because the endpoint is public
-- adding admin permissions because a dashboard is mentioned
-- adding database persistence because a UI displays data
+## Edit policy
 
-If missing behavior matters, write a question instead.
+The writing modes close with one rule, and every mode carries an `editPolicy`
+naming the single editable file:
 
-## Put ambiguity in questions
+- Edit only the host file, in place, and preserve the surrounding document
+  structure.
 
-When source text is vague, conflicting, or underspecified, write a question to `questions.md` and record it in `traceability.json`. Do not invent a precise requirement to fill the gap.
+The `editPolicy` object is `{ editableFile, preserveStructure: true }`, and
+`outputPolicy` is always `"edit-in-place"`. When `--from` is set, the source file
+is explicitly not editable.
 
-Question format in `questions.md`:
+## Diagnostic-to-fix guidance
 
-```md
-- [REQ?] Source `specs/checkout.md:19` says "notify the customer quickly." What channel should be used, and what is the time bound?
-```
+In `repair` mode the response appends one fix rule per reported diagnostic id, in
+first-seen order. The full mapping the CLI draws from is below; only the ids
+present in a run are emitted. Each finding may also carry its own `fix` string.
 
-Ambiguity triggers:
+### Structural errors (`EARS-E###`)
 
-- vague terms such as `fast`, `quickly`, `appropriate`, `user-friendly`, `robust`, `as needed`
-- a missing actor or system
-- a missing trigger
-- a missing error response
-- conflicting source statements
-- an implementation detail with no observable behavior
-- behavior that depends on product judgment
+| Id          | Fix                                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------------------- |
+| `EARS-E001` | Use the specific canonical system name so it matches exactly one catalog entry.                         |
+| `EARS-E002` | Use the catalog canonical system name, or confirm the system with the catalog owner.                    |
+| `EARS-E003` | Fill the empty leading clause body, or remove the clause if it was accidental.                          |
+| `EARS-E004` | Add the response after shall, or flag a question if the source states none.                             |
+| `EARS-E005` | Reorder the leading clauses to While, then Where, then When, then If, before the system shall response. |
+| `EARS-E006` | Add the missing then: `If <condition>, then the <system> shall <response>.`                             |
+| `EARS-E007` | Add a single shall response boundary stating one obligation.                                            |
+| `EARS-E008` | Insert the system name before shall: `the <system> shall <response>.`                                   |
+| `EARS-E009` | Split into separate requirements, one shall each.                                                       |
+| `EARS-E010` | Rewrite the line into a canonical EARS template, or move it out of the requirements region.             |
+| `EARS-E011` | Remove the empty group or supply the missing operand in the clause expression.                          |
+| `EARS-E012` | Fix the malformed operator run (for example a trailing and or a leading or).                            |
+| `EARS-E013` | Balance the parentheses in the clause expression.                                                       |
+| `EARS-E014` | Match the EARS keyword casing the profile requires.                                                     |
+| `EARS-E015` | Add the comma after the leading clause: `When <trigger>, the <system> shall <response>.`                |
+| `EARS-E016` | Restate the prohibition as a positive obligation, or use a profile that allows shall not.               |
 
-A question that blocks a requirement lists that requirement id under `blocksRequirements` in `traceability.json`. Blocking questions must be resolved by a human before acceptance.
+### Warnings (`EARS-W###`)
 
-## Preserve traceability
+| Id          | Fix                                                                                                                             |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `EARS-W001` | Use the specific canonical event name.                                                                                          |
+| `EARS-W002` | Use the canonical event name, or add the event to the catalog if it is correct.                                                 |
+| `EARS-W003` | Use the specific canonical feature name.                                                                                        |
+| `EARS-W004` | Use the canonical feature name, or add the feature to the catalog if it is correct.                                             |
+| `EARS-W005` | Use the specific canonical state name.                                                                                          |
+| `EARS-W006` | Use the canonical state name, or add the state to the catalog if it is correct.                                                 |
+| `EARS-W007` | Add a requirement that uses the cataloged term if one is missing, or note the gap; do not invent behaviour to satisfy coverage. |
+| `EARS-W008` | Disambiguate the term so it matches one catalog entry, or use the canonical name.                                               |
+| `EARS-W009` | Align the unresolved term in the clause with the catalog.                                                                       |
+| `EARS-W010` | Add parentheses to the mixed and/or expression to make grouping explicit.                                                       |
+| `EARS-W011` | Align the clause term with a catalog entry, or add the term to the catalog if it is correct.                                    |
+| `EARS-W012` | Prefer the canonical catalog name over the matched alias.                                                                       |
+| `EARS-W013` | Split the semicolon-joined responses into separate requirements.                                                                |
+| `EARS-W014` | Rewrite the sentence into a clean EARS template.                                                                                |
+| `EARS-W015` | Move the trailing text into the requirement or remove it.                                                                       |
+| `EARS-W016` | Replace the vague term with an observable, bounded response, or flag a question if the bound is unknown.                        |
 
-Maintain `traceability.json` for every generated requirement and question. It gives the human reviewer a way to judge whether the source was translated faithfully; it is not a substitute for validation.
+Every id resolves in `earsyntax explain <id>`, which gives the meaning, rationale,
+and a corrected example. The full registry, including severity by profile, is in
+[the diagnostics reference](diagnostics.md).
 
-```json
-{
-  "requirements": [
-    {
-      "id": "REQ-001",
-      "source": {
-        "path": "specs/checkout.md",
-        "startLine": 7,
-        "endLine": 8,
-        "quote": "When a payment webhook is received, the billing service must verify the HMAC signature..."
-      },
-      "pattern": "event-driven",
-      "confidence": "high",
-      "notes": []
-    }
-  ],
-  "questions": [
-    {
-      "source": { "path": "specs/checkout.md", "startLine": 19 },
-      "question": "What notification channel should be used?",
-      "blocksRequirements": ["REQ-008"]
-    }
-  ]
-}
-```
+## The dialect the rules assume
 
-Rules:
+Each `instructions` response also carries the active profile's `dialect`: the
+grammar tolerances the agent may rely on. For the `kiro` profile, for example,
+keyword case is case-insensitive, a comma after a leading clause is optional, the
+literal `THE SYSTEM` is an allowed system name, and user-story wrappers are
+allowed. Write to the dialect the response reports, not to a fixed assumption; a
+stricter profile allows less. See [profiles](input-formats.md#profiles) for what
+each profile relaxes.
 
-- Every requirement id in the `.ears` file has a matching entry in `traceability.json`.
-- Set `confidence` to `high`, `medium`, or `low`. Use `medium` or `low` for a translation the human should double-check (for example a source that used "should" rather than a firm obligation), and call those out in the review summary.
-- In `author` mode leave the `source` object off requirement entries; there is no source line to cite.
+## No approval, ever
 
-## Repair from diagnostics
-
-When `earsyntax validate --json` reports diagnostics, repair the `.ears` file by changing only what the diagnostics justify. The `instructions repair` response includes the exact diagnostics to address.
-
-General repair rules:
-
-- Preserve requirement IDs unless a duplicate-ID diagnostic requires a change.
-- Preserve `[source: path:line]` references.
-- Preserve the intended behavior.
-- Do not delete a failing requirement to make validation pass.
-- Do not weaken a requirement because its wording is harder to parse.
-- If the intended behavior is unclear, write a question and leave a clear placeholder instead of guessing.
-- Re-run `validate` after each repair pass and repeat until no error-severity diagnostics remain.
-
-The table below maps every diagnostic code in the registry (see `docs/diagnostics.md`) to what to change. Error-severity codes must be fixed to reach a `valid` state; warning-severity codes do not block validity but the review summary reports them.
-
-### `ears.*` shell structure
-
-| Code                        | What to change                                                                                                               |
-| --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `ears.no_match`             | The line is not an EARS requirement. Rewrite it into one of the allowed templates, or move the text out of the `.ears` file. |
-| `ears.invalid_clause_order` | Reorder shell clauses to `While -> Where -> When -> If -> the <system> shall <response>`.                                    |
-| `ears.missing_system`       | Insert the system name before `shall`: `the <system> shall ...`.                                                             |
-| `ears.missing_shall`        | Add a single `shall` response boundary. A requirement must state one obligation with `shall`.                                |
-| `ears.multiple_shall`       | Split into separate requirements, one `shall` each, following the compound-splitting rule.                                   |
-| `ears.invalid_if_then_form` | Add the missing `then`: `If <condition>, then the <system> shall <response>.`                                                |
-| `ears.empty_clause`         | Fill the empty `While`/`Where`/`When`/`If` clause body, or remove the clause if it was accidental.                           |
-| `ears.empty_response`       | Add the response after `shall`, or raise a question if the source does not state one.                                        |
-
-### `expr.*` clause expressions
-
-| Code                               | What to change                                                                                            |
-| ---------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `expr.unbalanced_parentheses`      | Balance the parentheses in the clause expression.                                                         |
-| `expr.invalid_operator_sequence`   | Fix the malformed operator run (for example `A or or B`, a trailing `and`, a leading `or`).               |
-| `expr.empty_subexpression`         | Remove the empty group or supply the missing operand (for example `A and ()`).                            |
-| `expr.operator_precedence_warning` | Warning. Add parentheses to a mixed `and`/`or` expression to make grouping explicit if intent is unclear. |
-| `expr.unknown_term`                | Warning. Align the clause term with a catalog entry, or add the term to the catalog if it is correct.     |
-| `expr.ambiguous_term`              | Warning. Disambiguate the term so it matches one catalog entry, or use the canonical name.                |
-| `expr.mixed_unresolved_terms`      | Warning. One clause mixes resolved and unresolved terms; align the unresolved term with the catalog.      |
-
-### `catalog.*` term matching
-
-| Code                         | What to change                                                                                                                                                           |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `catalog.system_unresolved`  | Error in strict mode. Use the catalog's canonical system name, or confirm the system with the catalog owner.                                                             |
-| `catalog.system_ambiguous`   | Error in strict mode. Use the specific canonical system name so it matches exactly one entry.                                                                            |
-| `catalog.state_unresolved`   | Warning. Use the canonical state name, or add the state to the catalog if it is correct.                                                                                 |
-| `catalog.state_ambiguous`    | Warning. Use the specific canonical state name.                                                                                                                          |
-| `catalog.event_unresolved`   | Warning. Use the canonical event name, or add the event to the catalog if it is correct.                                                                                 |
-| `catalog.event_ambiguous`    | Warning. Use the specific canonical event name.                                                                                                                          |
-| `catalog.feature_unresolved` | Warning. Use the canonical feature name, or add the feature to the catalog if it is correct.                                                                             |
-| `catalog.feature_ambiguous`  | Warning. Use the specific canonical feature name.                                                                                                                        |
-| `catalog.term_unreferenced`  | Warning (coverage). A cataloged term is never referenced. Add a requirement that uses it if one is missing, or note the gap; do not invent behavior to satisfy coverage. |
-
-### `lint.*` style advice
-
-| Code                         | What to change                                                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `lint.multiple_responses`    | Warning. The response holds several semicolon-joined responses. Split into separate requirements.                  |
-| `lint.vague_response`        | Warning. Replace the vague term with an observable, bounded response, or raise a question if the bound is unknown. |
-| `lint.unparsed_tail`         | Warning. Text remains after the parsed requirement. Move it into the requirement or remove it.                     |
-| `lint.alias_used`            | Warning. A catalog alias matched. Prefer the canonical name.                                                       |
-| `lint.suspicious_text_shape` | Warning. The sentence shape looks accidental. Rewrite it into a clean EARS template.                               |
-
-## Review before accept
-
-Before `earsyntax accept`, produce a review summary. Acceptance is a human decision; the agent presents evidence and may recommend, but never accepts.
-
-The summary states:
-
-- how many requirements were generated
-- the distribution across the six EARS patterns
-- every unresolved question and the requirements each one blocks
-- the validation status and the command that produced it
-- source lines translated with medium or low confidence
-- any source behavior intentionally not converted, with the reason
-
-Recommend acceptance only when validation is clean (no error diagnostics) and no blocking questions remain. If either condition fails, say so and point at the next step (repair, or a human answer to a question) instead of recommending acceptance.
+The rules never tell an agent to approve, accept, or merge, and never reference a
+workspace, work item, or manifest. `review` mode produces a summary and reports
+what a human must resolve; it leaves the decision to the human. Acceptance lives
+in the host workflow: pull request review, Kiro review, Spec Kit review, or
+OpenSpec change review.

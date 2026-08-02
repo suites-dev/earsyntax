@@ -283,13 +283,47 @@ const { items, errors } = extractFromContent(md, 'requirements.md');
 
 The heading is ignored, the first bullet's `REQ-001:` prefix becomes the item `id`, and the second bullet keeps its text with no id. Pass the `items` to `lintEarsBatch` to lint them. `extractFromFile` reads from disk instead of a string and is the only function in the package that touches the file system.
 
+### Host-native pipeline
+
+The `extractFromContent`/`extractEars`/`extractMarkdown`/`extractYaml`/`extractJson` functions above are the non-profile surface: they read every list item, table row, and structured entry. The host-native pipeline is profile-driven, so a profile controls which regions of a host document become candidates. Two entry points cover it:
+
+```ts
+import { extractCandidates, runPipeline } from '@earsyntax/extract';
+import { BUILTIN_PROFILES } from '@earsyntax/core';
+
+// Stage 1-2 only: locate candidates (what `earsyntax extract` prints).
+const { candidates, notices } = extractCandidates({
+  files: [{ path: '.kiro/specs/checkout/requirements.md', content }],
+  profile: BUILTIN_PROFILES.kiro,
+});
+
+// The whole pipeline: locate, extract, parse, lint, assemble findings.
+const { findings } = runPipeline({
+  files: [{ path: 'requirements.ears', content, kind: 'ears' }],
+  profile: BUILTIN_PROFILES.strict,
+  strict: false,
+});
+```
+
+`inferKind(path)` returns the `DocumentKind` a bare path maps to. The pipeline, profiles, and candidate shapes are documented end to end in the [input formats guide](input-formats.md) and enumerated in the [public API reference](public-api.md).
+
 ## `@earsyntax/cli-contract`
 
-`@earsyntax/cli-contract` defines the shared report output shapes so external tools can consume linting results without depending on the CLI. It is pure data and serializers: no I/O, no argument parsing. You collect one item per requirement, group them by file, and pass the array to a builder.
+`@earsyntax/cli-contract` holds the report serializers so external tools can render
+linting results the way the CLI does, without depending on the CLI binary. It is
+pure data and serializers: no I/O, no argument parsing. It works from two shapes:
+a `ReportInput` (files of `{ input, result }` items) for terminal rendering, and a
+`Findings` object (from `@earsyntax/core` or `@earsyntax/extract`) for JSON, SARIF,
+and the exit code.
+
+### Terminal model from a `ReportInput`
+
+Collect one item per requirement, group them by file, and pass the array to
+`buildPrettyModel`:
 
 ```ts
 import { lintEars } from '@earsyntax/core';
-import { buildJsonReport, exitCodeForReport } from '@earsyntax/cli-contract';
+import { buildPrettyModel } from '@earsyntax/cli-contract';
 
 const inputs = [
   {
@@ -304,16 +338,42 @@ const inputs = [
   },
 ];
 
-const report = buildJsonReport([
+const model = buildPrettyModel([
   {
     path: 'requirements.ears',
     items: inputs.map((input) => ({ input, result: lintEars(input.text) })),
   },
 ]);
 
-exitCodeForReport(report); // 1, because REQ-002 has an error diagnostic
+// model.summary === { files: 1, requirements: 2, errors: 1, warnings: 0, infos: 0, valid: false }
 ```
 
-`report.summary` is `{ files: 1, requirements: 2, errors: 1, warnings: 0, infos: 0, valid: false }`, and `report.files[0].requirements` holds one entry per requirement with its `id`, `line`, `text`, `valid`, `pattern`, and `diagnostics`. The package also exports `buildSarifLog` for SARIF 2.1.0 and `buildPrettyModel` for terminal rendering. `serializeJsonReport` produces a byte-stable string for the same input.
+### Findings, SARIF, and the exit code
 
-Note: the CLI does not expose SARIF output yet. The builder is available here, but `earsyntax validate` emits pretty and JSON only.
+The findings-based serializers take a `Findings` object. Get one from
+`runPipeline` (`@earsyntax/extract`) or `toFindings`/`candidatesToFindings`
+(`@earsyntax/core`):
+
+```ts
+import { BUILTIN_PROFILES } from '@earsyntax/core';
+import { runPipeline } from '@earsyntax/extract';
+import { buildSarifLog, exitCodeForFindings, serializeFindings } from '@earsyntax/cli-contract';
+
+const { findings } = runPipeline({
+  files: [{ path: 'requirements.ears', content, kind: 'ears' }],
+  profile: BUILTIN_PROFILES.strict,
+  strict: false,
+});
+
+exitCodeForFindings(findings); // 1, because the file has an error-severity finding
+const sarif = buildSarifLog(findings); // SARIF 2.1.0 log; each id becomes a rule
+serializeFindings(findings); // byte-stable JSON string of the canonical findings
+```
+
+For the `If`-without-`then` line above, `findings.diagnostics[0]` is
+`{ id: 'EARS-E006', severity: 'error', file: 'requirements.ears', line: 1, col: 1, message: "The 'If' clause is missing the required 'then' boundary." }`,
+and the SARIF log carries a matching `EARS-E006` rule and result. The package also
+exports `serializeSarifLog`, `canonicalizeFindings`, the `EXIT_OK`/`EXIT_LINT_ERRORS`/`EXIT_USAGE`
+constants, and `DIAGNOSTIC_CODES`/`DIAGNOSTIC_DESCRIPTIONS`. This is the same
+projection the CLI uses; `earsyntax validate --sarif` and `--json` are thin
+wrappers over these serializers.

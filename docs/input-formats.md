@@ -273,12 +273,13 @@ inferred from the path extension (`.ears`, `.md`/`.markdown`, `.yaml`/`.yml`,
 
 ### Candidates and positions
 
-Each `Candidate` is `{ file, line, col?, text, id?, locatorRuleId, profile }`.
-`line` and `col` are 1-based and point at the original host document: `col` is
-the column of the requirement text's first character, past any list marker or
-lifted metadata prefix. `locatorRuleId` is the id of the profile `LocatorRule`
-that selected the candidate, so `extract` output can be traced back to the
-profile.
+Each `Candidate` is
+`{ file, line, col?, text, profile, locatorRuleId, requirementId? }`. `line` and
+`col` are 1-based and point at the original host document: `col` is the column of
+the requirement text's first character, past any list marker or stripped bold
+label. `locatorRuleId` is the id of the profile `LocatorRule` that selected the
+candidate, so `extract` output can be traced back to the profile.
+`requirementId` is the requirement's own id when the locator found one.
 
 ### Document-kind gating
 
@@ -291,17 +292,25 @@ JSON are structured requirement lists: no built-in profile declares them in
 carry a synthetic `locatorRuleId` of `structured.yaml` or `structured.json`. The
 active dialect still applies when their text is linted.
 
-### Frame metadata under the pipeline
+### Requirement ids under the pipeline
 
-Under the pipeline, a `REQ-001:` id prefix and a `[source: path:line]` tag are
-lifted from a line only when the profile's dialect sets `allowFrameMetadata`
-(the `ears-x` profile does; `strict`, `kiro`, `speckit`, and `openspec` do not).
-Under a profile that does not allow frame metadata, the prefix is kept as part of
-the requirement text, and the linter reports it. A lifted `[source: ...]` tag is
-stripped from the text but does not move the reported position: findings point at
-the physical line and column where the text sits, so an agent can edit it in
-place. This differs from the non-profile `extractEars`, where a `[source: ...]`
-reference overrides the item's source location.
+Two id conventions apply, and they are handled differently on purpose:
+
+- A markdown bold requirement label (`- **FR-001**: <sentence>`) is host
+  formatting, not part of the EARS sentence. The locator strips both the list
+  marker and the `**FR-001**:` label, sets `requirementId` to `FR-001`, and puts
+  `col` at the first character of the sentence. Speckit and Kiro use this form.
+- An `ears-x` frame prefix (`REQ-001:` and an optional `[source: path:line]`
+  tag) is retained in the candidate `text`, with `col` at the line start. Only
+  `requirementId` is lifted. The linter strips the frame prefix at parse time
+  under `allowFrameMetadata`, so the extractor must not move the reported
+  position: findings point at the physical line and column where the text sits.
+  This differs from the non-profile `extractEars`, which removes the prefix from
+  `text` and lets a `[source: ...]` reference override the item's source
+  location.
+
+Under a profile that allows neither (for example `strict`), a leading `REQ-001:`
+is left untouched in the text and the linter reports it.
 
 ### Never throws
 
@@ -310,3 +319,45 @@ unsupported kind produces zero candidates plus a `PipelineNotice`
 (`{ code, severity, message, file?, line? }`). Notices are the environment
 channel, distinct from lint findings; the CLI surfaces them as facade-level
 diagnostics, never inside the frozen Findings model.
+
+## Profiles
+
+A profile decides which regions of a document become requirement candidates and
+which grammar tolerances apply when they are linted. The `earsyntax validate`,
+`extract`, and `instructions` commands take `--profile <name>`; it defaults to
+`strict`. Run `earsyntax profiles --json` for the exact, data-rendered summary;
+the table below is the same information in prose.
+
+| Profile    | Locates                                                   | Document kinds | Notable relaxations and additions                                                                                                  |
+| ---------- | --------------------------------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `strict`   | Every non-empty line.                                     | `ears`, `text` | None. Canonical EARS only.                                                                                                         |
+| `ears-x`   | Every non-empty line.                                     | `ears`, `text` | Adds frame metadata, `shall not` prohibition, and a `^REQ-\d+$` id format.                                                         |
+| `kiro`     | List items under an `Acceptance Criteria` heading.        | `markdown`     | Relaxes keyword case, the leading comma, the literal `THE SYSTEM`, and user-story wrappers. Turns off `EARS-W011` and `EARS-W014`. |
+| `speckit`  | Body of sections matching `^(functional )?requirements$`. | `markdown`     | None beyond the locator.                                                                                                           |
+| `openspec` | `### Requirement:` blocks and `#### Scenario:` blocks.    | `markdown`     | None beyond the locator.                                                                                                           |
+
+### Markdown blindness under strict
+
+`strict` and `ears-x` declare `documentKinds` of `ears` and `text` only. A
+Markdown file's kind is inferred as `markdown`, which is not in that list, so
+validating a `.md` file under `strict` produces zero candidates and a clean run,
+not a parse error:
+
+```bash
+earsyntax validate ".kiro/specs/**/requirements.md" --profile strict --json
+# findings.summary.requirements === 0, ok === true
+```
+
+This is intended. EARS requirements inside Markdown live in host structure
+(acceptance-criteria lists, requirement sections), and locating them is exactly
+what the host profiles (`kiro`, `speckit`, `openspec`) do. Use `strict` for
+`.ears`, plain text, and stdin; use a host profile for a host document.
+
+### Structured formats are profile-agnostic
+
+YAML and JSON are structured requirement lists, so no built-in profile declares
+them in `documentKinds`. They are extracted regardless of the active profile,
+and their candidates carry a synthetic `locatorRuleId` of `structured.yaml` or
+`structured.json`. The active profile's dialect still applies when the extracted
+text is linted. For example, a YAML file validated under `kiro` still yields its
+requirement candidates and lints them with the `kiro` dialect.

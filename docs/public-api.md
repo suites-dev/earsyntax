@@ -1,125 +1,30 @@
-# Public API Reference
+# Public API reference
 
-`@earsyntax/core` exposes a small, frozen surface. Every type is defined in `packages/core/src/types.ts` and re-exported from the package root. The functions below are the entire public API for v0.1.
+`@earsyntax/core` and `@earsyntax/extract` expose the deterministic parser,
+linter, diagnostic registry, profile runtime, findings model, and host-native
+pipeline for TypeScript users. This page enumerates the exported surface. For
+worked examples of the four lint functions and the report serializers, see the
+[API reference](api.md); for the extraction formats and the profile locators, see
+the [input formats guide](input-formats.md).
+
+Every function here is deterministic: no LLM calls, no network, no file system
+access (the one exception is `extractFromFile`, which reads a path), no fuzzy
+matching. Diagnostics are stably sorted; batch and pipeline order is preserved.
+
+## `@earsyntax/core`
+
+### Linting
 
 ```ts
 import { lintEars, lintEarsBatch, parseEars, lintCatalogCoverage } from '@earsyntax/core';
-```
 
-## Determinism guarantees
-
-The core is deterministic by contract. For a given input it always returns the same result.
-
-- No LLM calls.
-- No network access.
-- No file system access.
-- No fuzzy or semantic matching (catalog matching is exact name, then exact alias).
-- Diagnostics are stably sorted by span, then code, then message, then severity.
-- `lintEarsBatch` preserves input order: result `i` corresponds to input `i`.
-- `valid` is derived only from severity: `false` when any diagnostic is an `error`, otherwise `true`.
-
-## `lintEars`
-
-```ts
 function lintEars(text: string, catalog?: Catalog, options?: Options): LintResult;
-```
-
-Lints a single requirement and returns a complete `LintResult` with `valid`, `pattern`, `ast`, `references`, and sorted `diagnostics`.
-
-### Example
-
-```ts
-const catalog = {
-  systems: [{ id: 'SYS-BILLING', name: 'billing service' }],
-  events: [{ id: 'EVT-WEBHOOK', name: 'a payment webhook is received' }],
-};
-
-const result = lintEars(
-  'When a payment webhook is received, the billing service shall verify the HMAC signature.',
-  catalog,
-  { mode: 'strict' },
-);
-```
-
-The billing-webhook example from the orchestration brief produces:
-
-```json
-{
-  "valid": true,
-  "pattern": "event-driven",
-  "ast": {
-    "pattern": "event-driven",
-    "trigger": {
-      "kind": "term",
-      "text": "a payment webhook is received"
-    },
-    "system": {
-      "raw": "billing service",
-      "role": "system"
-    },
-    "responses": ["verify the HMAC signature"],
-    "raw": "When a payment webhook is received, the billing service shall verify the HMAC signature."
-  },
-  "references": [],
-  "diagnostics": []
-}
-```
-
-## `lintEarsBatch`
-
-```ts
 function lintEarsBatch(
   items: RequirementInput[],
   catalog?: Catalog,
   options?: Options,
 ): LintResult[];
-```
-
-Lints many requirements at once. Returns one `LintResult` per input item, in the same order, each echoing the input `id`.
-
-### Example
-
-```ts
-const results = lintEarsBatch(
-  [
-    {
-      id: 'REQ-001',
-      text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
-    },
-    {
-      id: 'REQ-002',
-      text: 'If the HMAC signature is invalid, then the billing service shall reject the webhook.',
-    },
-  ],
-  catalog,
-  { mode: 'strict' },
-);
-
-// results[0].id === 'REQ-001', results[1].id === 'REQ-002'
-```
-
-## `parseEars`
-
-```ts
 function parseEars(text: string, catalog?: Catalog, options?: Options): ParseResult;
-```
-
-Parses a requirement without full linting. Returns the classified `pattern`, the parsed `ast`, and structural `diagnostics`. It does not return catalog `references` or lint-level findings.
-
-### Example
-
-```ts
-const parsed = parseEars(
-  'While the payment provider is unavailable, the billing service shall queue retryable events.',
-);
-
-// parsed.pattern === 'state-driven'
-// parsed.ast.preconditions describes "the payment provider is unavailable"
-```
-
-## `lintCatalogCoverage`
-
-```ts
 function lintCatalogCoverage(
   items: RequirementInput[],
   catalog?: Catalog,
@@ -127,43 +32,168 @@ function lintCatalogCoverage(
 ): Diagnostic[];
 ```
 
-Reports catalog entries that no requirement text references. Emits `catalog.term_unreferenced` warnings, and only when `mode` is `strict`. Returns a stably sorted list of diagnostics (empty in guided mode or when every entry is referenced).
+`lintEars` returns a full `LintResult` (`valid`, `pattern`, `ast`, `references`,
+sorted `diagnostics`). `lintEarsBatch` returns one result per input in order, each
+echoing its `id`. `parseEars` returns the lighter `ParseResult` (`pattern`, `ast`,
+structural `diagnostics`) with no catalog references. `lintCatalogCoverage`
+reports catalog entries no requirement references, as `catalog.term_unreferenced`
+warnings in strict mode. `isStoryWrapperLine(line)` reports whether a line is a
+user-story wrapper the host profiles skip.
 
-### Example
+### Dialect resolution
 
 ```ts
-const diagnostics = lintCatalogCoverage(
-  [
-    {
-      id: 'REQ-001',
-      text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
-    },
-  ],
-  {
-    systems: [
-      { id: 'SYS-BILLING', name: 'billing service' },
-      { id: 'SYS-LEDGER', name: 'ledger service' },
-    ],
-  },
-  { mode: 'strict' },
-);
+import { STRICT_DIALECT, resolveDialect } from '@earsyntax/core';
+import type { ResolvedDialect } from '@earsyntax/core';
+
+const STRICT_DIALECT: ResolvedDialect; // canonical EARS tolerances
+function resolveDialect(options?: Options): ResolvedDialect; // merge a partial dialect over strict
 ```
 
-Since the ledger service is never mentioned, the result contains one diagnostic:
+`STRICT_DIALECT` is the default `lintEars`/`parseEars` apply. `resolveDialect`
+merges a partial dialect over it, so the pipeline and profile layers share one
+defaulting step.
 
-```json
-[
-  {
-    "code": "catalog.term_unreferenced",
-    "severity": "warning",
-    "message": "catalog systems term \"ledger service\" (SYS-LEDGER) is not referenced by any requirement text"
-  }
-]
+### Diagnostic registry
+
+```ts
+import {
+  DIAGNOSTIC_REGISTRY,
+  resolveDiagnosticId,
+  getDiagnosticEntry,
+  idForCode,
+} from '@earsyntax/core';
+import type { DiagnosticRegistryEntry, RegistrySeverity } from '@earsyntax/core';
+
+const DIAGNOSTIC_REGISTRY: readonly DiagnosticRegistryEntry[];
+function resolveDiagnosticId(idOrAlias: string): string | undefined; // current id, or undefined
+function getDiagnosticEntry(idOrAlias: string): DiagnosticRegistryEntry | undefined;
+function idForCode(code: DiagnosticCode): string; // dotted code -> EARS-* id
 ```
 
-## Types
+The registry is the single source of truth for the id, alias, and default-severity
+mapping. `resolveDiagnosticId` resolves current ids and deprecated dotted aliases
+to the current `EARS-*` id; `idForCode` maps a legacy `DiagnosticCode` to its id.
+This is the same table `earsyntax explain` and the findings layer read.
 
-All shapes are defined and documented in `packages/core/src/types.ts` and re-exported from `@earsyntax/core`. The load-bearing ones:
+### Profiles
+
+```ts
+import {
+  validateProfile,
+  resolveProfile,
+  diffProfile,
+  summarizeProfiles,
+  BUILTIN_PROFILES,
+  BUILTIN_PROFILE_NAMES,
+  KNOWN_DIAGNOSTIC_IDS,
+  isKnownDiagnosticId,
+} from '@earsyntax/core';
+
+function validateProfile(input: unknown): ProfileValidationResult; // schema-check an untrusted profile
+function resolveProfile(name: string): ResolveProfileResult; // built-in profile by name
+function diffProfile(profile: Profile): ProfileDiff; // what one profile relaxes/adds
+function summarizeProfiles(): ProfileDiff[]; // the `profiles` command data
+```
+
+`BUILTIN_PROFILES` is the record of built-in `Profile` objects (`strict`,
+`ears-x`, `kiro`, `speckit`, `openspec`); `BUILTIN_PROFILE_NAMES` is their names
+in order. `KNOWN_DIAGNOSTIC_IDS` and `isKnownDiagnosticId` gate a profile's
+`severityOverrides` keys against the registry. Exported profile types:
+`Profile`, `ProfileName`, `ProfileDialect`, `ProfileLocator`, `ProfileIdFormat`,
+`LocatorRule`, `LocatorRuleKind`, `ListMarker`, `KeywordCase`,
+`CommaAfterLeadingClause`, `CodeFences`, `SeverityLevel`, `ProfileValidationError`,
+`ProfileValidationErrorCode`, `ProfileValidationResult`, `ResolveProfileResult`,
+`UnknownProfileError`, `ProfileDiff`.
+
+### Findings
+
+```ts
+import { toFindings, defaultSeverityForId } from '@earsyntax/core';
+
+function toFindings(input: FindingsInput, options?: ToFindingsOptions): Findings;
+function defaultSeverityForId(id: string): FindingsSeverity;
+```
+
+`toFindings` assembles the frozen Findings model (the shape `earsyntax validate
+--json` returns) from lint results, applying `--strict` and profile severity
+overrides. Exported findings types: `Findings`, `FindingsDiagnostic`,
+`FindingsInput`, `FindingsInputFile`, `FindingsInputItem`, `FindingsSeverity`,
+`FindingsSummary`, `SeverityOverride`, `SeverityOverrides`, `ToFindingsOptions`.
+The model is specified in [`docs/contracts/findings.md`](contracts/findings.md).
+
+### Pipeline findings assembly
+
+```ts
+import { candidatesToFindings } from '@earsyntax/core';
+import type {
+  Candidate,
+  CandidateFile,
+  PipelineNotice,
+  LintCandidatesOptions,
+} from '@earsyntax/core';
+
+function candidatesToFindings(
+  files: readonly CandidateFile[],
+  profile: Profile,
+  options?: LintCandidatesOptions,
+): Findings;
+```
+
+`candidatesToFindings` is the lint-and-assemble stage: it takes located candidates
+and a profile and returns Findings. The locate and extract stages live in
+`@earsyntax/extract`; `runPipeline` composes all of them.
+
+## `@earsyntax/extract`
+
+### Format extractors
+
+```ts
+import {
+  extractEars,
+  extractMarkdown,
+  extractYaml,
+  extractJson,
+  extractFromContent,
+  extractFromFile,
+} from '@earsyntax/extract';
+import type { ExtractError, ExtractResult } from '@earsyntax/extract';
+```
+
+Each extractor turns one authored format into `RequirementInput` items. Every
+parser is pure; `extractFromContent` dispatches on the file extension, and
+`extractFromFile` is the only function that reads disk. The formats are documented
+in the [input formats guide](input-formats.md).
+
+### Host-native pipeline
+
+```ts
+import { extractCandidates, runPipeline, inferKind } from '@earsyntax/extract';
+import type {
+  DocumentKind,
+  PipelineFile,
+  ExtractCandidatesInput,
+  ExtractCandidatesResult,
+  RunPipelineInput,
+  RunPipelineResult,
+} from '@earsyntax/extract';
+
+function extractCandidates(input: ExtractCandidatesInput): ExtractCandidatesResult; // locate only
+function runPipeline(input: RunPipelineInput): RunPipelineResult; // locate + lint + findings
+function inferKind(path: string): DocumentKind; // path -> document kind
+```
+
+`extractCandidates` locates the requirement candidates a profile selects (what
+`earsyntax extract` prints). `runPipeline` runs the whole chain (locate, extract,
+parse, lint, assemble findings) and returns `{ findings, notices }` (what
+`earsyntax validate` returns). `Candidate` and `PipelineNotice` are re-exported
+from core so callers need no separate import.
+
+## Core types
+
+All shapes are defined and documented in
+[`packages/core/src/types.ts`](../packages/core/src/types.ts) and re-exported from
+`@earsyntax/core`. The load-bearing ones:
 
 | Type               | Role                                                                        |
 | ------------------ | --------------------------------------------------------------------------- |
@@ -179,7 +209,7 @@ All shapes are defined and documented in `packages/core/src/types.ts` and re-exp
 | `TermMatch`        | Result of matching one term against the catalog.                            |
 | `ReferenceMatch`   | A catalog reference found in a requirement, with clause and span.           |
 | `Diagnostic`       | `{ code, severity, message, span? }` with `code` typed as `DiagnosticCode`. |
-| `DiagnosticCode`   | The frozen, append-only registry of diagnostic codes.                       |
+| `DiagnosticCode`   | The frozen, append-only registry of dotted diagnostic codes.                |
 | `Catalog`          | Grouped catalog of known domain terms.                                      |
 | `CatalogEntry`     | `{ id, name, aliases? }`.                                                   |
 | `CatalogRef`       | `{ group, id, name }` pointer to a matched entry.                           |
