@@ -2,23 +2,20 @@
  * The single error type command handlers throw to abort with a facade
  * diagnostic and a specific exit code.
  *
- * `run` catches {@link CliError}, renders a base {@link FacadeResponse} carrying
- * the diagnostic (JSON or pretty), and returns the carried exit code. Exit
- * codes follow the contract: 2 for usage/resolution errors, 3 for refusals.
+ * The dispatcher catches {@link CliError}, renders a base {@link FacadeResponse}
+ * carrying the diagnostic (JSON or pretty), and returns the carried exit code.
+ * The only failure exit code is `2` (usage or environment): there is no
+ * workspace to refuse writes over, so exit `3` no longer exists.
  */
 
-import type { FacadeDiagnostic } from './facade-types.js';
+import type { FacadeDiagnostic, NextAction } from './facade-types.js';
 
 export class CliError extends Error {
   readonly exitCode: number;
   readonly diagnostic: FacadeDiagnostic;
-  readonly next: { command: string; reason: string; forAgent?: boolean; blocking?: boolean }[];
+  readonly next: NextAction[];
 
-  constructor(
-    exitCode: number,
-    diagnostic: FacadeDiagnostic,
-    next: { command: string; reason: string; forAgent?: boolean; blocking?: boolean }[] = [],
-  ) {
+  constructor(exitCode: number, diagnostic: FacadeDiagnostic, next: NextAction[] = []) {
     super(diagnostic.message);
     this.name = 'CliError';
     this.exitCode = exitCode;
@@ -27,20 +24,11 @@ export class CliError extends Error {
   }
 }
 
-/** Build a usage/resolution error (exit 2). */
+/** Build a usage or environment error (exit 2). */
 export function usageError(
   code: string,
   message: string,
   extra?: Partial<FacadeDiagnostic>,
 ): CliError {
   return new CliError(2, { code, severity: 'error', message, ...extra });
-}
-
-/** Build a refusal error (exit 3): overwrite protection, stale source, confirmation required. */
-export function refusalError(
-  code: string,
-  message: string,
-  extra?: Partial<FacadeDiagnostic>,
-): CliError {
-  return new CliError(3, { code, severity: 'error', message, ...extra });
 }

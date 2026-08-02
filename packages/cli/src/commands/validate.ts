@@ -1,310 +1,351 @@
 /**
- * `earsyntax validate <files|globs>` — validate `.ears` files deterministically.
+ * `earsyntax validate <paths...|->` — stateless EARS validation.
  *
- * Uses `@earsyntax/extract` to read every supported format and
- * `@earsyntax/core` `lintEarsBatch` to lint. Never writes source or asks
- * questions. This is the only command that returns exit 1 (error diagnostics).
- * When run against a work item it updates the manifest status and writes the
- * `validation.json` / `validation.md` artifacts, and reports source staleness.
+ * Locate, extract, parse, and lint EARS in the given files (or stdin `-`) under
+ * the active profile, and return the frozen Findings model. This command is
+ * stateless: it works in any directory, knows nothing about a `.earsyntax/`
+ * workspace, records no manifest, and never edits source. It is the only command
+ * that returns exit 1 (an error-severity finding).
+ *
+ * The heavy lifting lives in `@earsyntax/extract`'s {@link runPipeline}; this
+ * module only resolves flags, reads inputs, maps pipeline notices onto the
+ * facade-level `diagnostics` channel, and frames the response. Extraction is not
+ * reimplemented here.
+ *
+ * Exit codes: `0` no error findings, `1` at least one error finding, `2` usage
+ * or environment failure (unknown profile, missing/unreadable path, bad flag
+ * combination). A missing file is an environment failure (exit 2), never a lint
+ * finding.
  */
 
-import { existsSync, globSync, readFileSync, writeFileSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
-import { type Catalog, lintEarsBatch, type Options } from '@earsyntax/core';
-import { extractFromFile } from '@earsyntax/extract';
-import type { CommandContext } from '../context.js';
-import type {
-  FacadeDiagnostic,
-  ValidationResult,
-  WorkManifest,
-  WorkStatus,
-} from '../facade-types.js';
-import { usageError } from '../errors.js';
-import { hashContent } from '../hash.js';
-import { findRoot, loadConfig, requireRoot, resolveInput, toRelative } from '../project.js';
-import { buildResponse, emit } from '../response.js';
-import { currentSourceHash, requireManifest, toWorkSummary, type WorkPaths } from '../workspace.js';
+import { existsSync, globSync, readFileSync } from 'node:fs';
+import { isAbsolute, relative, sep } from 'node:path';
+import { type Profile, resolveProfile } from '@earsyntax/core';
+import {
+  type DocumentKind,
+  inferKind,
+  type PipelineFile,
+  type PipelineNotice,
+  runPipeline,
+} from '@earsyntax/extract';
+import { canonicalizeFindings, type Findings } from '@earsyntax/cli-contract';
+import type { CommandContext, CommandResult } from '../context.js';
+import type { FacadeDiagnostic, FacadeResponse, NextAction } from '../facade-types.js';
+import { buildResponse } from '../response.js';
+import { resolveInput } from '../paths.js';
 
+/** Characters that mark a positional as a glob pattern rather than a literal path. */
 const GLOB_CHARS = /[*?[\]{}]/;
 
-/** Expand file arguments (literals and globs) into absolute paths, in order. */
-function expandFiles(cwd: string, patterns: string[]): string[] {
-  const files: string[] = [];
-  for (const pattern of patterns) {
-    if (GLOB_CHARS.test(pattern)) {
-      const matches = globSync(pattern, { cwd });
-      for (const match of matches.sort((a, b) => a.localeCompare(b))) {
-        files.push(resolveInput(cwd, match));
+/** The document kinds the pipeline understands, for narrowing a profile's first kind. */
+const KNOWN_KINDS: readonly DocumentKind[] = ['ears', 'text', 'markdown', 'yaml', 'json'];
+
+/** The disk and stdin access the command needs, injectable so tests stay hermetic. */
+export interface ValidateDeps {
+  /** Whether a path exists on disk. */
+  exists(absPath: string): boolean;
+  /** Read a file's UTF-8 content; throws when the file is unreadable. */
+  readFile(absPath: string): string;
+  /** Expand a glob pattern against `cwd`, returning cwd-relative matches. */
+  glob(pattern: string, cwd: string): string[];
+  /** Read all of stdin as one UTF-8 document. */
+  readStdin(): string;
+}
+
+/** The resolved inputs {@link runValidate} works from. */
+export interface ValidateInputs {
+  /** Positional paths, glob patterns, or `-` for stdin. */
+  paths: string[];
+  /** The `--profile` value (defaults to `strict` at the call site). */
+  profileName: string;
+  /** `--strict`: upgrade surviving warnings to errors at the findings layer. */
+  strict: boolean;
+  /** `--sarif`: SARIF output (a later-phase seam; see {@link runValidate}). */
+  sarif: boolean;
+  /** `--json`: JSON output. Used only to reject the `--json --sarif` conflict in-band. */
+  json: boolean;
+  /** The resolved working directory paths and globs resolve against. */
+  cwd: string;
+}
+
+/** The framed outcome of a validation: the response, its pretty text, and the exit code. */
+export interface ValidateResult {
+  response: FacadeResponse;
+  pretty: string;
+  exitCode: number;
+}
+
+/** The default deps: real disk and stdin access. */
+const DEFAULT_DEPS: ValidateDeps = {
+  exists: (absPath) => existsSync(absPath),
+  readFile: (absPath) => readFileSync(absPath, 'utf8'),
+  glob: (pattern, cwd) => globSync(pattern, { cwd }),
+  readStdin: () => readFileSync(0, 'utf8'),
+};
+
+/** One resolved input file, ready for the pipeline and for a missing/unreadable check. */
+interface ResolvedFile {
+  pipelineFile: PipelineFile;
+}
+
+/** The outcome of resolving the positional inputs into pipeline files. */
+type ResolveInputsOutcome =
+  | { ok: true; files: PipelineFile[] }
+  | { ok: false; result: ValidateResult };
+
+/**
+ * Run a stateless validation and frame the result.
+ *
+ * Never throws for user error: unknown profile, missing or unreadable path, no
+ * inputs, and the `--json --sarif` conflict are all returned in-band as an
+ * exit-2 {@link ValidateResult} carrying a facade-level diagnostic. Extraction
+ * and linting are delegated to {@link runPipeline}.
+ *
+ * @param inputs The resolved flags and positional paths.
+ * @param deps Injectable disk and stdin access; defaults to real I/O.
+ * @returns The response, pretty text, and exit code.
+ */
+export function runValidate(inputs: ValidateInputs, deps: ValidateDeps = DEFAULT_DEPS): ValidateResult {
+  // `--json` and `--sarif` are mutually exclusive. The dispatcher rejects the
+  // combination before reaching a handler (cli.exclusive_flags); this in-band
+  // guard covers direct callers of runValidate so the invariant holds either way.
+  if (inputs.sarif && inputs.json) {
+    return usageResult('cli.conflicting_flags', 'The --json and --sarif flags are mutually exclusive.');
+  }
+
+  // `--sarif` is a later-phase seam. The existing cli-contract SARIF builder
+  // consumes the legacy ReportInput shape, not the Findings model, so it is not
+  // wired here; Agent W5-sarif replaces this branch with a Findings projection
+  // returned as `CommandResult.raw`.
+  if (inputs.sarif) {
+    return usageResult('validate.sarif_pending', 'SARIF output lands in a later phase.');
+  }
+
+  const resolved = resolveProfile(inputs.profileName);
+  if (!resolved.ok) {
+    return usageResult('cli.unknown_profile', resolved.error.message);
+  }
+  const profile = resolved.profile;
+
+  if (inputs.paths.length === 0) {
+    return usageResult('validate.no_files', 'Provide one or more files, globs, or - for stdin.');
+  }
+
+  const outcome = resolveInputs(inputs.paths, profile, inputs.cwd, deps);
+  if (!outcome.ok) {
+    return outcome.result;
+  }
+  if (outcome.files.length === 0) {
+    return usageResult('validate.no_files', 'No files matched the given paths or globs.');
+  }
+
+  const { findings, notices } = runPipeline({
+    files: outcome.files,
+    profile,
+    strict: inputs.strict,
+  });
+
+  return frame(canonicalizeFindings(findings), notices, profile);
+}
+
+/** Resolve the positional inputs into pipeline files, or an exit-2 result. */
+function resolveInputs(
+  paths: string[],
+  profile: Profile,
+  cwd: string,
+  deps: ValidateDeps,
+): ResolveInputsOutcome {
+  const files: PipelineFile[] = [];
+  let readStdin = false;
+
+  for (const path of paths) {
+    if (path === '-') {
+      if (readStdin) {
+        return {
+          ok: false,
+          result: usageResult('validate.duplicate_stdin', 'Read stdin (-) at most once.'),
+        };
       }
-    } else {
-      const abs = resolveInput(cwd, pattern);
-      if (!existsSync(abs)) {
-        throw usageError('validate.missing_file', `File not found: ${pattern}.`);
-      }
-      files.push(abs);
-    }
-  }
-  return files;
-}
-
-/** Load and parse a catalog file, throwing a usage error on failure. */
-function loadCatalog(cwd: string, catalogArg: string | undefined): Catalog | undefined {
-  if (catalogArg === undefined) {
-    return undefined;
-  }
-  const abs = resolveInput(cwd, catalogArg);
-  let raw: string;
-  try {
-    raw = readFileSync(abs, 'utf8');
-  } catch {
-    throw usageError('validate.catalog_unreadable', `Could not read catalog: ${catalogArg}.`);
-  }
-  try {
-    return JSON.parse(raw) as Catalog;
-  } catch {
-    throw usageError('validate.catalog_invalid', `Catalog is not valid JSON: ${catalogArg}.`);
-  }
-}
-
-/** Build core lint options from the parsed flags. */
-function buildOptions(context: CommandContext): Options {
-  const mode = context.args.values.get('mode');
-  if (mode !== undefined && mode !== 'strict' && mode !== 'guided') {
-    throw usageError('validate.bad_mode', `Unknown --mode "${mode}". Expected strict or guided.`);
-  }
-  return {
-    ...(mode === 'strict' || mode === 'guided' ? { mode } : {}),
-    ...(context.args.booleans.has('comma-as-and') ? { commaAsAnd: true } : {}),
-  };
-}
-
-/** Find the work-item slug a validated path belongs to, if any. */
-function inferWorkSlug(root: string, workDir: string, absFiles: string[]): string | undefined {
-  const base = resolve(root, workDir);
-  for (const file of absFiles) {
-    const rel = relative(base, file);
-    if (!rel.startsWith('..') && rel !== '') {
-      const segment = rel.split(/[/\\]/).at(0);
-      if (segment !== undefined && segment !== '') {
-        return segment;
-      }
-    }
-  }
-  return undefined;
-}
-
-/** Render a short human-readable validation.md artifact. */
-function renderValidationMarkdown(
-  results: ValidationResult[],
-  errors: number,
-  warnings: number,
-): string {
-  const lines = ['# Validation', '', `errors: ${errors}, warnings: ${warnings}`, ''];
-  for (const result of results) {
-    for (const diagnostic of result.diagnostics) {
-      const at = result.line === undefined ? '' : `:${result.line}`;
-      lines.push(
-        `- ${diagnostic.severity} ${diagnostic.code} (${result.id ?? '?'}${at}) ${diagnostic.message}`,
-      );
-    }
-  }
-  lines.push('');
-  return lines.join('\n');
-}
-
-export function validateCommand(context: CommandContext): number {
-  const patterns = context.args.positionals;
-  if (patterns.length === 0) {
-    throw usageError('validate.no_files', 'Provide one or more .ears files or globs to validate.');
-  }
-
-  const workId = context.args.values.get('work');
-  const root =
-    workId !== undefined ? requireRoot(context.cwd) : (findRoot(context.cwd) ?? context.cwd);
-  const config = existsSync(resolve(root, '.earsyntax'))
-    ? loadConfig(root, context.global.config)
-    : undefined;
-
-  const absFiles = expandFiles(context.cwd, patterns);
-  const catalog = loadCatalog(context.cwd, context.args.values.get('catalog'));
-  const options = buildOptions(context);
-
-  // Lint each file, grouping results in input order.
-  const results: ValidationResult[] = [];
-  let requirements = 0;
-  for (const abs of absFiles) {
-    const extracted = extractFromFile(abs);
-    if (extracted.items.length === 0 && extracted.errors.length > 0) {
-      throw usageError(
-        'validate.unreadable',
-        extracted.errors.at(0)?.message ?? `Could not read ${abs}.`,
-      );
-    }
-    const fileRel = toRelative(root, abs);
-    const lintResults = lintEarsBatch(extracted.items, catalog, options);
-    for (let i = 0; i < extracted.items.length; i++) {
-      const item = extracted.items.at(i);
-      const lint = lintResults.at(i);
-      if (item === undefined || lint === undefined) {
-        continue;
-      }
-      requirements += 1;
-      results.push({
-        ...(item.id !== undefined ? { id: item.id } : {}),
-        file: fileRel,
-        ...(item.source?.line !== undefined ? { line: item.source.line } : {}),
-        valid: lint.valid,
-        ...(lint.pattern !== undefined ? { pattern: lint.pattern } : {}),
-        ...(lint.ast !== undefined ? { ast: lint.ast } : {}),
-        references: lint.references,
-        diagnostics: lint.diagnostics,
-      });
-    }
-  }
-
-  // Facade-level stable-ID validation: duplicate IDs are error diagnostics.
-  const facadeDiagnostics: FacadeDiagnostic[] = [];
-  const seen = new Set<string>();
-  for (const result of results) {
-    if (result.id === undefined) {
+      readStdin = true;
+      files.push({ path: '-', content: deps.readStdin(), kind: stdinKind(profile) });
       continue;
     }
-    if (seen.has(result.id)) {
-      facadeDiagnostics.push({
-        code: 'facade.duplicate_id',
-        severity: 'error',
-        message: `Duplicate requirement ID "${result.id}". Requirement IDs must be unique.`,
-        path: result.file,
-        ...(result.line !== undefined ? { line: result.line } : {}),
-      });
-    } else {
-      seen.add(result.id);
-    }
-  }
 
-  let errors = facadeDiagnostics.length;
-  let warnings = 0;
-  let validCount = 0;
-  for (const result of results) {
-    if (result.valid) {
-      validCount += 1;
-    }
-    for (const diagnostic of result.diagnostics) {
-      if (diagnostic.severity === 'error') {
-        errors += 1;
-      } else if (diagnostic.severity === 'warning') {
-        warnings += 1;
+    if (GLOB_CHARS.test(path)) {
+      const matches = deps.glob(path, cwd).sort((a, b) => a.localeCompare(b));
+      for (const match of matches) {
+        const resolvedFile = readResolved(match, cwd, deps);
+        if (!resolvedFile.ok) {
+          return { ok: false, result: resolvedFile.result };
+        }
+        files.push(resolvedFile.file.pipelineFile);
       }
+      continue;
     }
+
+    const resolvedFile = readResolved(path, cwd, deps);
+    if (!resolvedFile.ok) {
+      return { ok: false, result: resolvedFile.result };
+    }
+    files.push(resolvedFile.file.pipelineFile);
   }
 
-  const summary = { files: absFiles.length, requirements, valid: validCount, errors, warnings };
-  const ok = errors === 0;
+  return { ok: true, files };
+}
 
-  // Work-item integration: update the manifest and write artifacts, then expose
-  // the refreshed work summary and staleness. No target work item leaves it {}.
-  const slug =
-    config === undefined ? undefined : (workId ?? inferWorkSlug(root, config.workDir, absFiles));
-  const workBlock =
-    config !== undefined && slug !== undefined
-      ? (() => {
-          const { paths, manifest } = requireManifest(root, config, slug);
-          const { manifest: updated, stale } = updateWorkItem(
-            root,
-            paths,
-            manifest,
-            errors,
-            results,
-            summary,
-            warnings,
-          );
-          return { work: toWorkSummary(root, updated), stale };
-        })()
-      : {};
+/** Read one literal or glob-matched path into a pipeline file, or an exit-2 result. */
+function readResolved(
+  userPath: string,
+  cwd: string,
+  deps: ValidateDeps,
+): { ok: true; file: ResolvedFile } | { ok: false; result: ValidateResult } {
+  const abs = resolveInput(cwd, userPath);
+  if (!deps.exists(abs)) {
+    return {
+      ok: false,
+      result: usageResult('validate.missing_file', `File not found: ${userPath}.`, userPath),
+    };
+  }
+  let content: string;
+  try {
+    content = deps.readFile(abs);
+  } catch {
+    return {
+      ok: false,
+      result: usageResult('validate.unreadable', `Could not read file: ${userPath}.`, userPath),
+    };
+  }
+  return {
+    ok: true,
+    file: {
+      pipelineFile: {
+        path: displayPath(userPath, abs, cwd),
+        content,
+        kind: inferKind(abs),
+      },
+    },
+  };
+}
 
-  const extra: Record<string, unknown> = { summary, results, ...workBlock };
+/**
+ * The path recorded on findings for a file. Absolute when the caller passed an
+ * absolute path, otherwise a cwd-relative POSIX path (per the Findings contract).
+ */
+function displayPath(userPath: string, abs: string, cwd: string): string {
+  if (isAbsolute(userPath)) {
+    return userPath;
+  }
+  return relative(cwd, abs).split(sep).join('/');
+}
 
-  const next = ok
-    ? []
-    : [
-        {
-          command: `earsyntax instructions repair${workId ? ` --work ${workId}` : ''} --json`,
-          reason: 'Get targeted repair rules for the reported diagnostics.',
-          forAgent: true,
-        },
-      ];
+/** The document kind to read stdin as: the profile's first located kind, else text. */
+function stdinKind(profile: Profile): DocumentKind {
+  const first = profile.locator.documentKinds.at(0);
+  if (first !== undefined && (KNOWN_KINDS as readonly string[]).includes(first)) {
+    return first as DocumentKind;
+  }
+  return 'text';
+}
 
+/** Frame a completed pipeline run into a response, pretty text, and exit code. */
+function frame(findings: Findings, notices: PipelineNotice[], profile: Profile): ValidateResult {
+  const diagnostics = notices.map(noticeToDiagnostic);
+  const environmentError = notices.some((notice) => notice.severity === 'error');
+  const ok = !environmentError && findings.summary.errors === 0;
+  const exitCode = environmentError ? 2 : findings.summary.errors > 0 ? 1 : 0;
+
+  const next = buildNext(findings, profile);
   const response = buildResponse(
-    { command: 'validate', ok, root, diagnostics: facadeDiagnostics, next },
-    extra,
+    {
+      command: 'validate',
+      ok,
+      ...(diagnostics.length > 0 ? { diagnostics } : {}),
+      next,
+    },
+    { findings },
   );
 
-  const pretty = renderPretty(results, summary, facadeDiagnostics);
-  emit(context.emitter, response, pretty);
-  return ok ? 0 : 1;
+  return { response, pretty: prettyFindings(findings, diagnostics), exitCode };
 }
 
-/** Update the work manifest after a validation and persist the artifacts. */
-function updateWorkItem(
-  root: string,
-  paths: WorkPaths,
-  manifest: WorkManifest,
-  errors: number,
-  results: ValidationResult[],
-  summary: { files: number; requirements: number; valid: number; errors: number; warnings: number },
-  warnings: number,
-): { manifest: WorkManifest; stale: boolean } {
-  const outputAbs = resolveInput(root, manifest.output.path);
-  let outputHash = manifest.output.hash;
-  try {
-    outputHash = hashContent(readFileSync(outputAbs, 'utf8'));
-  } catch {
-    // Leave the recorded hash if the output is unreadable.
-  }
-
-  const nextStatus: WorkStatus = errors > 0 ? 'invalid' : 'valid';
-  const updated: WorkManifest = {
-    ...manifest,
-    status: nextStatus,
-    output: { ...manifest.output, hash: outputHash },
-    updatedAt: new Date().toISOString(),
+/** Map a pipeline notice onto the facade-level diagnostic channel. */
+function noticeToDiagnostic(notice: PipelineNotice): FacadeDiagnostic {
+  return {
+    code: notice.code,
+    severity: notice.severity,
+    message: notice.message,
+    ...(notice.file === undefined ? {} : { path: notice.file }),
+    ...(notice.line === undefined ? {} : { line: notice.line }),
   };
-  writeFileSync(paths.manifest, `${JSON.stringify(updated, null, 2)}\n`);
-  writeFileSync(paths.validationJson, `${JSON.stringify({ summary, results }, null, 2)}\n`);
-  writeFileSync(paths.validationMarkdown, renderValidationMarkdown(results, errors, warnings));
-
-  const current = currentSourceHash(root, updated.source?.path);
-  const stale =
-    nextStatus === 'valid' &&
-    current !== undefined &&
-    updated.source?.hash !== undefined &&
-    current !== updated.source.hash;
-  return { manifest: updated, stale };
 }
 
-/** Pretty output: one line per diagnostic plus a summary. */
-function renderPretty(
-  results: ValidationResult[],
-  summary: { requirements: number; valid: number; errors: number; warnings: number },
-  facadeDiagnostics: FacadeDiagnostic[],
-): string {
-  const lines: string[] = [];
-  for (const result of results) {
-    for (const diagnostic of result.diagnostics) {
-      const at = result.line === undefined ? '' : `:${result.line}`;
-      lines.push(
-        `${result.file}${at} ${diagnostic.severity} ${diagnostic.code}  ${diagnostic.message}`,
-      );
-    }
+/** A repair `next` action pointing at the first file that carries an error finding. */
+function buildNext(findings: Findings, profile: Profile): NextAction[] {
+  if (findings.summary.errors === 0) {
+    return [];
   }
-  for (const diagnostic of facadeDiagnostics) {
-    const at = diagnostic.line === undefined ? '' : `:${diagnostic.line}`;
+  const erroredFile = findings.diagnostics.find(
+    (diagnostic) => diagnostic.severity === 'error' && diagnostic.file !== '-',
+  )?.file;
+  if (erroredFile === undefined) {
+    return [];
+  }
+  return [
+    {
+      command: `earsyntax instructions repair --file ${erroredFile} --profile ${profile.name} --json`,
+      reason: 'Get repair rules for the reported diagnostics.',
+      forAgent: true,
+    },
+  ];
+}
+
+/** Pretty output: one line per finding, then per notice, then a summary line. */
+function prettyFindings(findings: Findings, diagnostics: FacadeDiagnostic[]): string {
+  const lines: string[] = [];
+  for (const diagnostic of findings.diagnostics) {
+    const col = diagnostic.col === undefined ? '' : `:${diagnostic.col}`;
     lines.push(
-      `${diagnostic.path ?? ''}${at} ${diagnostic.severity} ${diagnostic.code}  ${diagnostic.message}`,
+      `${diagnostic.file}:${diagnostic.line}${col} ${diagnostic.id} ${diagnostic.severity} ${diagnostic.message}`,
     );
   }
+  for (const diagnostic of diagnostics) {
+    const at = diagnostic.line === undefined ? '' : `:${diagnostic.line}`;
+    lines.push(`${diagnostic.path ?? ''}${at} ${diagnostic.severity} ${diagnostic.code} ${diagnostic.message}`);
+  }
+  const { valid, requirements, files, errors, warnings } = findings.summary;
   lines.push(
-    `\n${summary.valid}/${summary.requirements} valid, ${summary.errors} errors, ${summary.warnings} warnings`,
+    `${valid}/${requirements} valid across ${files} file(s), ${errors} error(s), ${warnings} warning(s)`,
   );
   return lines.join('\n');
+}
+
+/** Build an exit-2 usage/environment result carrying a single facade diagnostic. */
+function usageResult(code: string, message: string, path?: string): ValidateResult {
+  const diagnostic: FacadeDiagnostic = {
+    code,
+    severity: 'error',
+    message,
+    ...(path === undefined ? {} : { path }),
+  };
+  const response = buildResponse({ command: 'validate', ok: false, diagnostics: [diagnostic], next: [] });
+  return { response, pretty: `error ${code}: ${message}`, exitCode: 2 };
+}
+
+/**
+ * The `validate` command handler. Reads the resolved globals and positionals
+ * from the context, runs the stateless validation, and returns the
+ * {@link CommandResult}; the dispatcher performs the single write. `--quiet`
+ * blanks the pretty rendering (JSON output is unaffected, per the facade).
+ */
+export function validateCommand(context: CommandContext): CommandResult {
+  const { global } = context;
+  const result = runValidate({
+    paths: context.args.positionals,
+    profileName: global.profile,
+    strict: global.strict,
+    sarif: global.sarif,
+    json: global.json,
+    cwd: context.cwd,
+  });
+  return global.quiet && !global.json ? { ...result, pretty: '' } : result;
 }

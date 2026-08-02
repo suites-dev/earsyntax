@@ -1,26 +1,16 @@
 /**
- * End-to-end facade tests.
+ * Dispatcher-level tests for the host-native facade shell.
  *
- * Each test drives `run(argv, { cwd })` against a temp project directory and
- * captures stdout, exercising the full loop: init -> new -> instructions ->
- * agent-simulated write -> validate -> status -> accept, plus staleness,
- * refusals, and exit codes. JSON responses are compared structurally to the
- * golden fixtures in `fixtures/facade/` (values that vary by run are ignored).
+ * These exercise the command surface `run()` owns: routing across the eight
+ * commands, flag validation against the closed surface, help and version text,
+ * the response envelope, and the not-yet-reimplemented stubs. Command bodies
+ * (validate, extract, and the W4/W5 commands) are tested in their own suites;
+ * here we only prove the shell routes to them and enforces their flags.
  */
 
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { parseArgs } from './args.js';
 import { run } from './cli.js';
-
-const HERE = dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = resolve(HERE, '..', '..', '..');
-const DEMO = resolve(REPO_ROOT, 'fixtures', 'demo');
-const DEMO_REQUIREMENTS = resolve(DEMO, 'requirements.ears');
-const DEMO_VALID_ONLY = resolve(DEMO, 'valid-only.ears');
-const DEMO_CATALOG = resolve(DEMO, 'catalog.json');
 
 interface RunResult {
   code: number;
@@ -28,348 +18,217 @@ interface RunResult {
   json: () => Record<string, unknown>;
 }
 
-function makeRunner(cwd: string) {
-  return (...argv: string[]): RunResult => {
-    let out = '';
-    const code = run(argv, { cwd, stdout: (s) => (out += s) });
-    return { code, out, json: () => JSON.parse(out) as Record<string, unknown> };
-  };
+function runCli(...argv: string[]): RunResult {
+  let out = '';
+  const code = run(argv, { cwd: process.cwd(), stdout: (s) => (out += s) });
+  return { code, out, json: () => JSON.parse(out) as Record<string, unknown> };
 }
 
-function tempProject(): string {
-  // Directories are left in the OS temp dir; the OS reclaims them.
-  return mkdtempSync(join(tmpdir(), 'earsyntax-cli-'));
-}
+const REMOVED_VERBS = ['new', 'list', 'status', 'show', 'accept', 'check'];
+const FACADE_COMMANDS = [
+  'validate',
+  'extract',
+  'instructions',
+  'explain',
+  'profiles',
+  'doctor',
+  'init',
+  'version',
+];
 
-const SOURCE_MD = [
-  '# Checkout webhooks',
-  '',
-  'When a payment webhook is received, the billing service must verify the HMAC signature.',
-  'If the HMAC signature is invalid, the webhook must be rejected.',
-  '',
-].join('\n');
+describe('help', () => {
+  it('lists exactly the eight facade commands and none of the removed verbs', () => {
+    const res = runCli('--help');
+    expect(res.code).toBe(0);
+    for (const command of FACADE_COMMANDS) {
+      expect(res.out).toContain(command);
+    }
+    for (const verb of REMOVED_VERBS) {
+      // Word-boundary check so "extract" does not count as containing "act", etc.
+      expect(new RegExp(`\\b${verb}\\b`).test(res.out)).toBe(false);
+    }
+  });
+
+  it('exits 2 on a bare invocation and prints usage', () => {
+    const res = runCli();
+    expect(res.code).toBe(2);
+    expect(res.out).toContain('earsyntax <command>');
+  });
+
+  it('does not advertise --work, --source, --out, or --mode', () => {
+    const res = runCli('--help');
+    for (const flag of ['--work', '--source', '--out', '--mode', '--config']) {
+      expect(res.out).not.toContain(flag);
+    }
+  });
+});
 
 describe('version', () => {
-  it('reports features as JSON', () => {
-    const r = makeRunner(tempProject());
-    const res = r('version', '--features', '--json');
+  it('reports the feature map as JSON with the closed surface', () => {
+    const res = runCli('version', '--features', '--json');
     expect(res.code).toBe(0);
     const body = res.json();
+    expect(body.version).toBeTypeOf('string');
     expect(body.command).toBe('version');
     expect(body.ok).toBe(true);
     expect(body.next).toEqual([]);
+    expect('root' in body).toBe(false);
+
     const features = body.features as Record<string, unknown>;
     expect(features.facade).toBe(1);
+    expect(features.commands).toEqual(FACADE_COMMANDS);
+    expect(features.profiles).toEqual(['strict', 'ears-x', 'kiro', 'speckit', 'openspec']);
     expect(features.instructions).toEqual(['author', 'convert', 'repair', 'review']);
-    expect(features.sarif).toBe(false);
+    expect(features.hosts).toEqual(['kiro', 'speckit', 'openspec']);
+    expect(features.agents).toEqual(['claude', 'codex', 'cursor', 'copilot', 'gemini', 'generic']);
+    expect(features.inputFormats).toEqual(['ears', 'text', 'markdown', 'yaml', 'json']);
+    expect(features.outputFormats).toEqual(['pretty', 'json', 'sarif']);
+    expect(features.sarif).toBe(true);
+    expect('workItems' in features).toBe(false);
+  });
+
+  it('does not report the removed work-item verbs in its command list', () => {
+    const features = runCli('version', '--features', '--json').json().features as {
+      commands: string[];
+    };
+    for (const verb of REMOVED_VERBS) {
+      expect(features.commands).not.toContain(verb);
+    }
+  });
+
+  it('maps --version and -v to the version command', () => {
+    for (const flag of ['--version', '-v']) {
+      const res = runCli(flag);
+      expect(res.code).toBe(0);
+      expect(res.out).toContain('earsyntax ');
+    }
+  });
+
+  it('emits pure JSON to stdout in --json mode', () => {
+    const res = runCli('version', '--json');
+    expect(() => JSON.parse(res.out)).not.toThrow();
   });
 });
 
-describe('init', () => {
-  it('writes the workspace and refuses to overwrite without --force', () => {
-    const cwd = tempProject();
-    const r = makeRunner(cwd);
+describe('envelope shape', () => {
+  it('orders base keys version, command, ok, then next last', () => {
+    const res = runCli('version', '--json');
+    const keys = Object.keys(res.json());
+    expect(keys[0]).toBe('version');
+    expect(keys[1]).toBe('command');
+    expect(keys[2]).toBe('ok');
+    expect(keys.at(-1)).toBe('next');
+  });
+});
 
-    const first = r('init', '--json');
-    expect(first.code).toBe(0);
-    const body = first.json();
-    expect(body.ok).toBe(true);
-    expect(body.written).toEqual(['.earsyntax/config.json', '.earsyntax/work/.gitkeep']);
-    expect(typeof body.root).toBe('string');
-
-    const again = r('init', '--json');
-    expect(again.code).toBe(3);
-    const failure = again.json();
-    expect(failure.ok).toBe(false);
-    const diags = failure.diagnostics as { code: string }[];
-    expect(diags[0]?.code).toBe('init.exists');
-
-    const forced = r('init', '--force', '--json');
-    expect(forced.code).toBe(0);
+describe('routing', () => {
+  it('routes all eight facade commands (never reports an unknown command)', () => {
+    // A bogus flag proves the command was recognized and reached flag checking,
+    // without executing an unfinished command body.
+    for (const command of FACADE_COMMANDS) {
+      const res = runCli(command, '--totally-unknown', '--json');
+      const code = (res.json().diagnostics as { code: string }[])[0]?.code;
+      expect(code).not.toBe('cli.unknown_command');
+    }
   });
 
-  it('writes tool wrappers for --tools claude', () => {
-    const cwd = tempProject();
-    const r = makeRunner(cwd);
-    const res = r('init', '--tools', 'claude', '--json');
-    expect(res.code).toBe(0);
-    const body = res.json();
-    expect(body.tools).toEqual(['claude']);
-    const written = body.written as string[];
-    expect(written).toContain('.claude/commands/earsyntax-author.md');
-    expect(written).toContain('.claude/commands/earsyntax-convert.md');
-    expect(written).toContain('.claude/commands/earsyntax-repair.md');
-  });
-
-  it('rejects an unknown tool with exit 2', () => {
-    const r = makeRunner(tempProject());
-    const res = r('init', '--tools', 'bogus', '--json');
+  it('rejects an unknown command with exit 2', () => {
+    const res = runCli('frobnicate', '--json');
     expect(res.code).toBe(2);
-    expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('init.bad_tools');
-  });
-});
-
-describe('convert loop (happy path)', () => {
-  it('runs new -> instructions -> write -> validate -> status -> accept', () => {
-    const cwd = tempProject();
-    const r = makeRunner(cwd);
-    writeFileSync(join(cwd, 'source.md'), SOURCE_MD);
-
-    r('init', '--json');
-
-    const createdRes = r(
-      'new',
-      'checkout-webhooks',
-      '--source',
-      'source.md',
-      '--mode',
-      'convert',
-      '--json',
-    );
-    expect(createdRes.code).toBe(0);
-    const newBody = createdRes.json();
-    const work = newBody.work as Record<string, unknown>;
-    expect(work.id).toBe('checkout-webhooks');
-    expect(work.mode).toBe('convert');
-    expect(work.status).toBe('scaffolded');
-    expect(String(work.sourceHash)).toMatch(/^sha256:[0-9a-f]{64}$/);
-    expect(newBody.written).toContain('.earsyntax/work/checkout-webhooks/manifest.json');
-
-    const instr = r('instructions', 'convert', '--work', 'checkout-webhooks', '--json');
-    expect(instr.code).toBe(0);
-    const instrBody = instr.json();
-    expect(instrBody.command).toBe('instructions convert');
-    expect(instrBody.mode).toBe('convert');
-    expect((instrBody.rules as string[]).length).toBeGreaterThan(0);
-    const format = instrBody.format as Record<string, unknown>;
-    expect((format.allowedPatterns as string[]).length).toBe(5);
-    expect((format.metadataPrefixes as string[]).length).toBe(3);
-    const source = instrBody.source as Record<string, unknown>;
-    expect(source.path).toBe('source.md');
-    expect(Array.isArray(source.excerpts)).toBe(true);
-    const next = instrBody.next as { command: string }[];
-    expect(next[0]?.command).toContain('earsyntax validate');
-
-    // Agent writes valid .ears content into the reserved output path.
-    const outPath = join(cwd, '.earsyntax', 'work', 'checkout-webhooks', 'requirements.ears');
-    writeFileSync(outPath, readFileSync(DEMO_VALID_ONLY, 'utf8'));
-
-    const validated = r(
-      'validate',
-      '.earsyntax/work/checkout-webhooks/requirements.ears',
-      '--source',
-      'source.md',
-      '--work',
-      'checkout-webhooks',
-      '--json',
-    );
-    expect(validated.code).toBe(0);
-    const vBody = validated.json();
-    expect(vBody.ok).toBe(true);
-    const summary = vBody.summary as Record<string, number>;
-    expect(summary.errors).toBe(0);
-    expect((vBody.work as Record<string, unknown>).status).toBe('valid');
-    expect(vBody.stale).toBe(false);
-
-    const status = r('status', 'checkout-webhooks', '--json');
-    expect(status.code).toBe(0);
-    expect((status.json().work as Record<string, unknown>).status).toBe('valid');
-
-    const accepted = r('accept', 'checkout-webhooks', '--by', 'omer', '--json');
-    expect(accepted.code).toBe(0);
-    const aWork = accepted.json().work as Record<string, unknown>;
-    expect(aWork.status).toBe('accepted');
-    const acceptedBlock = aWork.accepted as Record<string, unknown>;
-    expect(acceptedBlock.by).toBe('omer');
-    expect(String(acceptedBlock.outputHash)).toMatch(/^sha256:/);
-  });
-});
-
-describe('invalid content and repair', () => {
-  it('validate exits 1 and repair surfaces diagnostics; accept refuses invalid', () => {
-    const cwd = tempProject();
-    const r = makeRunner(cwd);
-    writeFileSync(join(cwd, 'source.md'), SOURCE_MD);
-    r('init', '--json');
-    r('new', 'checkout-webhooks', '--source', 'source.md', '--mode', 'convert', '--json');
-
-    const outPath = join(cwd, '.earsyntax', 'work', 'checkout-webhooks', 'requirements.ears');
-    writeFileSync(outPath, readFileSync(DEMO_REQUIREMENTS, 'utf8'));
-
-    const validated = r(
-      'validate',
-      '.earsyntax/work/checkout-webhooks/requirements.ears',
-      '--work',
-      'checkout-webhooks',
-      '--json',
-    );
-    expect(validated.code).toBe(1);
-    const vBody = validated.json();
-    expect(vBody.ok).toBe(false);
-    expect((vBody.summary as Record<string, number>).errors).toBeGreaterThan(0);
-    expect((vBody.work as Record<string, unknown>).status).toBe('invalid');
-
-    const repair = r('instructions', 'repair', '--work', 'checkout-webhooks', '--json');
-    expect(repair.code).toBe(0);
-    const diagnostics = repair.json().diagnostics as { code: string }[];
-    expect(diagnostics.length).toBeGreaterThan(0);
-
-    const accept = r('accept', 'checkout-webhooks', '--json');
-    expect(accept.code).toBe(3);
-    expect((accept.json().diagnostics as { code: string }[])[0]?.code).toBe('accept.not_valid');
-  });
-});
-
-describe('validate standalone files', () => {
-  it('exits 1 on the demo requirements with invalid lines', () => {
-    const r = makeRunner(tempProject());
-    const res = r('validate', DEMO_REQUIREMENTS, '--json');
-    expect(res.code).toBe(1);
-    expect((res.json().summary as Record<string, number>).errors).toBeGreaterThan(0);
-  });
-
-  it('exits 0 on the valid-only demo', () => {
-    const r = makeRunner(tempProject());
-    const res = r('validate', DEMO_VALID_ONLY, '--json');
-    expect(res.code).toBe(0);
-    expect((res.json().summary as Record<string, number>).errors).toBe(0);
-  });
-
-  it('exits 2 on a missing file', () => {
-    const r = makeRunner(tempProject());
-    const res = r('validate', 'does-not-exist.ears', '--json');
-    expect(res.code).toBe(2);
-    expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('validate.missing_file');
-  });
-
-  it('accepts a catalog', () => {
-    const r = makeRunner(tempProject());
-    const res = r('validate', DEMO_VALID_ONLY, '--catalog', DEMO_CATALOG, '--json');
-    expect(res.code).toBe(0);
-    const body = res.json();
-    expect((body.summary as Record<string, number>).errors).toBe(0);
-    expect(Array.isArray(body.results)).toBe(true);
-  });
-
-  it('flags duplicate IDs as a facade error', () => {
-    const cwd = tempProject();
-    const dupPath = join(cwd, 'dup.ears');
-    writeFileSync(
-      dupPath,
-      [
-        'REQ-001: The billing service shall verify the HMAC signature of every incoming webhook.',
-        'REQ-001: The billing service shall retry failed webhook deliveries up to five times.',
-      ].join('\n'),
-    );
-    const r = makeRunner(cwd);
-    const res = r('validate', 'dup.ears', '--json');
-    expect(res.code).toBe(1);
     const diags = res.json().diagnostics as { code: string }[];
-    expect(diags.some((d) => d.code === 'facade.duplicate_id')).toBe(true);
+    expect(diags[0]?.code).toBe('cli.unknown_command');
+    expect(res.json().ok).toBe(false);
+  });
+
+  it('rejects each removed verb as an unknown command', () => {
+    for (const verb of REMOVED_VERBS) {
+      const res = runCli(verb, '--json');
+      expect(res.code).toBe(2);
+      expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.unknown_command');
+    }
   });
 });
 
-describe('staleness', () => {
-  it('reports stale after the source changes and accept refuses it', () => {
-    const cwd = tempProject();
-    const r = makeRunner(cwd);
-    const sourcePath = join(cwd, 'source.md');
-    writeFileSync(sourcePath, SOURCE_MD);
-    r('init', '--json');
-    r('new', 'checkout-webhooks', '--source', 'source.md', '--mode', 'convert', '--json');
+describe('not-yet-reimplemented stubs', () => {
+  it('returns exit 2 with cli.not_implemented for the W4/W5 commands', () => {
+    for (const command of ['init', 'doctor', 'explain', 'profiles']) {
+      const res = runCli(command, '--json');
+      expect(res.code).toBe(2);
+      const body = res.json();
+      expect(body.command).toBe(command);
+      expect(body.ok).toBe(false);
+      expect((body.diagnostics as { code: string }[])[0]?.code).toBe('cli.not_implemented');
+    }
+  });
 
-    const outPath = join(cwd, '.earsyntax', 'work', 'checkout-webhooks', 'requirements.ears');
-    writeFileSync(outPath, readFileSync(DEMO_VALID_ONLY, 'utf8'));
-
-    const first = r(
-      'validate',
-      '.earsyntax/work/checkout-webhooks/requirements.ears',
-      '--source',
-      'source.md',
-      '--work',
-      'checkout-webhooks',
-      '--json',
-    );
-    expect(first.code).toBe(0);
-    expect(first.json().stale).toBe(false);
-
-    // The source drifts.
-    writeFileSync(sourcePath, `${SOURCE_MD}\nWhile the provider is unavailable, queue events.\n`);
-
-    const second = r(
-      'validate',
-      '.earsyntax/work/checkout-webhooks/requirements.ears',
-      '--source',
-      'source.md',
-      '--work',
-      'checkout-webhooks',
-      '--json',
-    );
-    expect(second.code).toBe(0);
-    expect(second.json().stale).toBe(true);
-
-    const status = r('status', 'checkout-webhooks', '--json');
-    expect((status.json().work as Record<string, unknown>).status).toBe('stale');
-
-    const accept = r('accept', 'checkout-webhooks', '--json');
-    expect(accept.code).toBe(3);
-    expect((accept.json().diagnostics as { code: string }[])[0]?.code).toBe('accept.stale');
+  it('carries the instructions mode into the stub command label', () => {
+    const res = runCli('instructions', 'repair', '--file', 'x.md', '--json');
+    expect(res.code).toBe(2);
+    expect(res.json().command).toBe('instructions repair');
   });
 });
 
-describe('metadata-prefix requirements', () => {
-  it('validates a work item whose .ears uses the [source: path:line] form', () => {
-    const cwd = tempProject();
-    const r = makeRunner(cwd);
-    writeFileSync(join(cwd, 'source.md'), SOURCE_MD);
-    r('init', '--json');
-    r('new', 'checkout-webhooks', '--source', 'source.md', '--mode', 'convert', '--json');
+describe('flag validation', () => {
+  it('rejects an unknown flag with exit 2', () => {
+    const res = runCli('version', '--bogus', '--json');
+    expect(res.code).toBe(2);
+    expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.unknown_flag');
+  });
 
-    // The agent writes requirements using the documented metadata prefix,
-    // including the range form. The declared ref, not the physical line,
-    // becomes the reported source line.
-    const outPath = join(cwd, '.earsyntax', 'work', 'checkout-webhooks', 'requirements.ears');
-    writeFileSync(
-      outPath,
-      [
-        'REQ-001 [source: source.md:7]: When a payment webhook is received, the billing service shall verify the HMAC signature.',
-        'REQ-002 [source: source.md:10-11]: If the HMAC signature is invalid, then the billing service shall reject the webhook.',
-        '',
-      ].join('\n'),
-    );
+  it('rejects a known flag used on the wrong command with exit 2', () => {
+    const res = runCli('doctor', '--strict', '--json');
+    expect(res.code).toBe(2);
+    expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.flag_not_allowed');
+  });
 
-    const res = r(
-      'validate',
-      '.earsyntax/work/checkout-webhooks/requirements.ears',
-      '--source',
-      'source.md',
-      '--work',
-      'checkout-webhooks',
-      '--json',
-    );
-    expect(res.code).toBe(0);
-    const body = res.json();
-    expect((body.summary as Record<string, number>).errors).toBe(0);
-    expect((body.work as Record<string, unknown>).status).toBe('valid');
-    const results = body.results as { id?: string; line?: number; valid: boolean }[];
-    expect(results[0]?.id).toBe('REQ-001');
-    expect(results[0]?.line).toBe(7);
-    expect(results[0]?.valid).toBe(true);
-    expect(results[1]?.id).toBe('REQ-002');
-    expect(results[1]?.line).toBe(10);
-    expect(results[1]?.valid).toBe(true);
+  it('rejects --sarif on any command other than validate', () => {
+    for (const command of ['extract', 'doctor', 'init', 'explain', 'profiles', 'instructions']) {
+      const res = runCli(command, '--sarif', '--json');
+      expect(res.code).toBe(2);
+      expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.flag_not_allowed');
+    }
+  });
+
+  it('accepts --sarif on validate (reaches the handler, not a flag error)', () => {
+    const res = runCli('validate', '--sarif', '--totally-unknown', '--json');
+    // Routed past flag-allow for --sarif; the unknown flag is what trips it.
+    expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.unknown_flag');
+  });
+
+  it('rejects --json and --sarif together as mutually exclusive', () => {
+    const res = runCli('validate', '--json', '--sarif');
+    expect(res.code).toBe(2);
+    expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.exclusive_flags');
+  });
+
+  it('rejects a value flag with no value with exit 2', () => {
+    const res = runCli('version', '--cwd', '--json');
+    expect(res.code).toBe(2);
+    expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.missing_value');
   });
 });
 
-describe('new refusals', () => {
-  it('refuses a duplicate slug without --force', () => {
-    const cwd = tempProject();
-    const r = makeRunner(cwd);
-    writeFileSync(join(cwd, 'source.md'), SOURCE_MD);
-    r('init', '--json');
-    expect(r('new', 'dup-item', '--source', 'source.md', '--json').code).toBe(0);
-    const again = r('new', 'dup-item', '--source', 'source.md', '--json');
-    expect(again.code).toBe(3);
-    expect((again.json().diagnostics as { code: string }[])[0]?.code).toBe('new.exists');
+describe('parseArgs', () => {
+  it('takes the last value for a repeated value flag', () => {
+    const parsed = parseArgs(['--profile', 'kiro', '--profile', 'speckit']);
+    expect(parsed.values.get('profile')).toBe('speckit');
+  });
+
+  it('treats everything after -- as positional', () => {
+    const parsed = parseArgs(['validate', '--', '--profile', '-x']);
+    expect(parsed.positionals).toEqual(['validate', '--profile', '-x']);
+    expect(parsed.values.has('profile')).toBe(false);
+  });
+
+  it('supports --flag=value form', () => {
+    const parsed = parseArgs(['--cwd=/tmp/x']);
+    expect(parsed.values.get('cwd')).toBe('/tmp/x');
+  });
+
+  it('separates positionals from boolean flags', () => {
+    const parsed = parseArgs(['a.md', 'b.md', '--json', '--strict']);
+    expect(parsed.positionals).toEqual(['a.md', 'b.md']);
+    expect(parsed.booleans.has('json')).toBe(true);
+    expect(parsed.booleans.has('strict')).toBe(true);
   });
 });

@@ -3,7 +3,8 @@
  *
  * The reported `version` is the installed `@earsyntax/cli` package version,
  * read from `package.json` at runtime so it never drifts from what npm shipped.
- * {@link FEATURES} is the capability map agents branch on without guessing.
+ * {@link FEATURES} is the capability map agents branch on to discover the closed
+ * command surface without guessing.
  */
 
 import { readFileSync } from 'node:fs';
@@ -39,8 +40,11 @@ export const FACADE_CONTRACT = 1;
 /** The capability map shape agents branch on. */
 export interface Features {
   facade: number;
-  workItems: boolean;
+  commands: string[];
+  profiles: string[];
   instructions: string[];
+  hosts: string[];
+  agents: string[];
   inputFormats: string[];
   outputFormats: string[];
   sarif: boolean;
@@ -49,11 +53,12 @@ export interface Features {
 /** Capability map returned by `version --features`. */
 export const FEATURES: Features = {
   facade: FACADE_CONTRACT,
-  workItems: true,
+  commands: ['validate', 'extract', 'instructions', 'explain', 'profiles', 'doctor', 'init', 'version'],
+  profiles: ['strict', 'ears-x', 'kiro', 'speckit', 'openspec'],
   instructions: ['author', 'convert', 'repair', 'review'],
-  inputFormats: ['.ears', 'markdown', 'yaml', 'json'],
-  outputFormats: ['pretty', 'json'],
-  // SARIF output exists in @earsyntax/cli-contract but is not wired into the
-  // CLI in this milestone; the flag is false so agents do not select it.
-  sarif: false,
+  hosts: ['kiro', 'speckit', 'openspec'],
+  agents: ['claude', 'codex', 'cursor', 'copilot', 'gemini', 'generic'],
+  inputFormats: ['ears', 'text', 'markdown', 'yaml', 'json'],
+  outputFormats: ['pretty', 'json', 'sarif'],
+  sarif: true,
 };

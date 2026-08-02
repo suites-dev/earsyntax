@@ -1,33 +1,21 @@
 /**
  * A lean, hand-rolled argument parser.
  *
- * The facade JSON contract is exact and the command set is small, so a tiny
+ * The facade JSON contract is exact and the command set is closed, so a tiny
  * parser keeps the output shape under direct control rather than fitting a
  * framework's conventions. It understands `--flag`, `--flag value`,
- * `--flag=value`, and `--no-flag`, and separates positionals from options.
+ * `--flag=value`, and `--` (end of flags), and separates positionals from
+ * options.
  *
  * Value-taking flags are declared up front so `--flag value` consumes the next
- * token only for those; every other `--flag` is a boolean.
+ * token only for those; every other `--flag` is a boolean. A repeated value
+ * flag takes the last value; a repeated boolean stays set.
  */
 
 import { usageError } from './errors.js';
 
-/** Flags that take a value (`--flag value` or `--flag=value`). */
-const VALUE_FLAGS = new Set([
-  'cwd',
-  'config',
-  'tools',
-  'mode',
-  'source',
-  'prompt',
-  'out',
-  'by',
-  'work',
-  'catalog',
-  'format',
-  'artifact',
-  'status',
-]);
+/** Flags that take a value (`--flag value` or `--flag=value`), across all commands. */
+const VALUE_FLAGS = new Set(['cwd', 'profile', 'file', 'from', 'agent', 'host', 'tools']);
 
 /** The parsed result: positionals plus a flat flag map. */
 export interface ParsedArgs {
@@ -62,17 +50,10 @@ export function parseArgs(argv: string[]): ParsedArgs {
       continue;
     }
 
-    // `--flag=value` form.
+    // `--flag=value` form. Last assignment wins for a repeated flag.
     const eq = body.indexOf('=');
     if (eq !== -1) {
-      const name = body.slice(0, eq);
-      values.set(name, body.slice(eq + 1));
-      continue;
-    }
-
-    // `--no-flag` boolean negation.
-    if (body.startsWith('no-')) {
-      booleans.add(body);
+      values.set(body.slice(0, eq), body.slice(eq + 1));
       continue;
     }
 
@@ -96,19 +77,25 @@ export function parseArgs(argv: string[]): ParsedArgs {
 /** Resolved global options shared by every command. */
 export interface GlobalOptions {
   json: boolean;
-  color: boolean;
-  interactive: boolean;
+  sarif: boolean;
+  strict: boolean;
+  quiet: boolean;
+  /** The active profile name; defaults to `strict`. Commands validate it against the registry. */
+  profile: string;
   cwd?: string;
-  config?: string;
+  /** Whether pretty output may use ANSI color. Set by the dispatcher, not a user flag. */
+  color: boolean;
 }
 
-/** Extract global options from parsed args. */
-export function resolveGlobals(args: ParsedArgs): GlobalOptions {
+/** Extract global options from parsed args. `color` is supplied by the dispatcher. */
+export function resolveGlobals(args: ParsedArgs, color: boolean): GlobalOptions {
   return {
     json: args.booleans.has('json'),
-    color: !args.booleans.has('no-color'),
-    interactive: !args.booleans.has('no-interactive'),
+    sarif: args.booleans.has('sarif'),
+    strict: args.booleans.has('strict'),
+    quiet: args.booleans.has('quiet'),
+    profile: args.values.get('profile') ?? 'strict',
     cwd: args.values.get('cwd'),
-    config: args.values.get('config'),
+    color,
   };
 }
