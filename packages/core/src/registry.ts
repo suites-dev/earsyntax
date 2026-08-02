@@ -65,6 +65,24 @@ const WARNING_PROFILE_NOTE =
   'Warning by default. --strict upgrades it to error at the findings layer; a profile severity override can set it to error or off.';
 
 /**
+ * Profile note for a coverage diagnostic. Coverage codes are produced by
+ * `lintCatalogCoverage` over a set of requirements and their catalog, not by
+ * linting a single requirement, so the bad example is read as one requirement in
+ * a coverage scan whose catalog still holds a term no requirement references.
+ */
+const COVERAGE_PROFILE_NOTE =
+  'Warning by default, emitted by the catalog-coverage pass (`lintCatalogCoverage`), not by linting a single requirement. It fires when a cataloged term is referenced by no requirement text; the bad example is one such requirement whose catalog still holds an unreferenced term. --strict upgrades it to error at the findings layer.';
+
+/**
+ * Profile note for a diagnostic that only the legacy guided mode produces.
+ * Guided mode is retained on the core API for compatibility but is never
+ * selected by the host-native CLI, so this code does not surface through any
+ * profile; the strict default reports EARS-E010 for the same text.
+ */
+const GUIDED_ONLY_PROFILE_NOTE =
+  'Emitted only under the legacy guided mode (`lintEars` with `mode: "guided"`), retained for core API compatibility. The host-native CLI never selects guided mode, so this code does not surface through any built-in profile; under the strict default the same text reports EARS-E010 instead.';
+
+/**
  * The registry, in ascending id order within each band (errors, then
  * warnings). Ids are assigned per the frozen migration table in
  * `docs/refactor/host-native-facade.md`: alphabetically by old code within each
@@ -188,7 +206,7 @@ const ENTRIES: DiagnosticRegistryEntry[] = [
     meaning: 'The text does not match any supported EARS shell pattern.',
     rationale:
       'The text has no recognizable EARS shape at all, so no more precise structural cause can be reported.',
-    badExample: 'The quick brown fox.',
+    badExample: 'quick brown fox',
     goodExample: 'The system shall log the event.',
     profileNotes: ERROR_PROFILE_NOTE,
   },
@@ -350,9 +368,9 @@ const ENTRIES: DiagnosticRegistryEntry[] = [
     meaning: 'A cataloged term is never referenced by any requirement text.',
     rationale:
       'A catalog entry that no requirement mentions is either dead vocabulary or a sign that a requirement is missing.',
-    badExample: 'A payment-http entry that no requirement references.',
-    goodExample: 'When the payment-http call fails, the system shall retry once.',
-    profileNotes: WARNING_PROFILE_NOTE,
+    badExample: 'The billing service shall retain the audit log.',
+    goodExample: 'When a payment webhook is received, the billing service shall retain the audit log.',
+    profileNotes: COVERAGE_PROFILE_NOTE,
   },
   {
     id: 'EARS-W008',
@@ -432,12 +450,12 @@ const ENTRIES: DiagnosticRegistryEntry[] = [
     oldCode: 'lint.suspicious_text_shape',
     title: 'Suspicious text shape',
     defaultSeverity: 'warning',
-    meaning: 'The sentence shape is likely accidental or malformed.',
+    meaning: 'The sentence shape is likely accidental or malformed (legacy guided mode only).',
     rationale:
       'Text that resembles no EARS shell but was submitted as a requirement is flagged so it is not silently ignored in guided processing.',
     badExample: 'timer reset maybe when idle',
     goodExample: 'While idle, the system shall reset the timer.',
-    profileNotes: WARNING_PROFILE_NOTE,
+    profileNotes: GUIDED_ONLY_PROFILE_NOTE,
   },
   {
     id: 'EARS-W015',

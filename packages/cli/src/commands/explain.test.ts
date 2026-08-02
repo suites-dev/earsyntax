@@ -11,12 +11,15 @@
  *    current id with `alias: true` and the exact deprecation note.
  * 3. Executable examples — every registry example is run through the real
  *    `@earsyntax/core` linter and asserted to behave as documented: the bad
- *    example emits the diagnostic's own id, the good example does not. Catalog
- *    diagnostics are executed with a minimal catalog derived from the example
- *    (the linter never emits catalog codes without a catalog). Three entries do
- *    not reproduce through `lintEars` as their example text is written; they are
- *    listed in {@link KNOWN_DIVERGENT} with the observed behavior and reported to
- *    main for arbitration rather than silently weakening the test.
+ *    example emits the diagnostic's own id, the good example does not. Structural
+ *    codes run through `lintEars`; catalog codes run with a minimal catalog
+ *    derived from the example (the linter never emits catalog codes without a
+ *    catalog); coverage codes run through `lintCatalogCoverage`, whose input is a
+ *    requirement set plus its catalog. One code, EARS-W014, is emitted only by
+ *    the legacy guided mode the host-native CLI never selects; it is documented
+ *    in {@link NON_EXECUTABLE} with a guard pinning that behavior rather than
+ *    executed. Every id lands in exactly one of these buckets, so the executable
+ *    check has no silent gaps.
  * 4. Errors and the envelope — unknown id, missing id, and extra args each exit
  *    2 with the facade envelope; JSON output is pure; the dispatcher wires it end
  *    to end.
@@ -166,6 +169,7 @@ const EXAMPLE_CONTEXT: Record<string, ExampleContext> = {
   'EARS-E007': {},
   'EARS-E008': {},
   'EARS-E009': {},
+  'EARS-E010': {},
   'EARS-E011': {},
   'EARS-E012': {},
   'EARS-E013': {},
@@ -269,44 +273,44 @@ const EXAMPLE_CONTEXT: Record<string, ExampleContext> = {
 };
 
 /**
- * Registry entries whose documented example does not reproduce its own id
- * through `lintEars` as written. These are surfaced to main for arbitration of
- * the registry (an append-only file this agent does not edit), not worked around
- * by weakening the assertion. Each guard asserts the observed behavior so the
- * divergence stays explicit: if the registry example is later fixed, the guard
- * fails and forces the entry off this list.
+ * Coverage diagnostics: their example is a requirement evaluated by
+ * `lintCatalogCoverage` against a catalog, not by linting a single requirement.
+ * The bad catalog holds a term the bad requirement leaves unreferenced (so the
+ * code fires); the good requirement references that term (so it does not). The
+ * catalogs live here as test scaffolding, the same as {@link EXAMPLE_CONTEXT}.
  */
-const KNOWN_DIVERGENT: Record<string, { reason: string; guard: () => void }> = {
-  'EARS-E010': {
-    reason:
-      'badExample "The quick brown fox." parses as a system + response missing shall, so lintEars emits EARS-E007 (missing_shall), not EARS-E010. A true no_match needs a bare fragment such as "quick brown fox".',
-    guard: () => {
-      const codes = codesFor('The quick brown fox.');
-      expect(codes).not.toContain('EARS-E010');
-      expect(codes).toContain('EARS-E007');
+const COVERAGE_CONTEXT: Record<string, { badCatalog: Catalog; goodCatalog: Catalog }> = {
+  'EARS-W007': {
+    badCatalog: {
+      systems: [{ id: 'SYS-BILLING', name: 'billing service' }],
+      events: [{ id: 'EVT-PAY', name: 'a payment webhook is received' }],
+    },
+    goodCatalog: {
+      systems: [{ id: 'SYS-BILLING', name: 'billing service' }],
+      events: [{ id: 'EVT-PAY', name: 'a payment webhook is received' }],
     },
   },
+};
+
+/**
+ * Registry entries no host-native code path emits, documented rather than
+ * executed. EARS-W014 is produced only by the legacy guided mode, which the
+ * facade never selects; its guard pins that the strict default reports EARS-E010
+ * for the same text and guided mode adds EARS-W014, so a future change to either
+ * path fails here instead of passing silently.
+ */
+const NON_EXECUTABLE: Record<string, { reason: string; guard: () => void }> = {
   'EARS-W014': {
     reason:
-      'badExample "timer reset maybe when idle" emits EARS-E010 (no_match) under the default strict dialect; EARS-W014 (suspicious_text_shape) only appears under the removed `guided` mode, which the host-native facade no longer exposes.',
+      'suspicious_text_shape is emitted only by lintEars in guided mode; the host-native CLI never selects guided mode. Under the strict default the badExample reports EARS-E010, and guided mode adds EARS-W014 alongside it.',
     guard: () => {
-      const codes = codesFor('timer reset maybe when idle');
-      expect(codes).not.toContain('EARS-W014');
-      expect(codes).toContain('EARS-E010');
-    },
-  },
-  'EARS-W007': {
-    reason:
-      'badExample is descriptive prose ("A payment-http entry that no requirement references."), not a requirement; catalog.term_unreferenced is emitted only by lintCatalogCoverage, never by lintEars, so it cannot be executed as a lintEars example.',
-    guard: () => {
-      // Not a requirement: lintEars does not surface the code either way.
-      expect(codesFor('A payment-http entry that no requirement references.')).not.toContain('EARS-W007');
-      // Its real path does reach the code, proving the id is reachable.
-      const coverage = lintCatalogCoverage([{ text: 'The billing service shall retain the audit log.' }], {
-        systems: [{ id: 'SYS-BILLING', name: 'billing service' }],
-        events: [{ id: 'EVT-UNUSED', name: 'a payment webhook is received' }],
-      });
-      expect(coverage.map((diagnostic) => idForCode(diagnostic.code))).toContain('EARS-W007');
+      const strict = codesFor('timer reset maybe when idle');
+      expect(strict).not.toContain('EARS-W014');
+      expect(strict).toContain('EARS-E010');
+      const guided = lintEars('timer reset maybe when idle', undefined, { mode: 'guided' }).diagnostics.map(
+        (diagnostic) => idForCode(diagnostic.code),
+      );
+      expect(guided).toContain('EARS-W014');
     },
   },
 };
@@ -316,19 +320,26 @@ function codesFor(text: string, catalog?: Catalog): string[] {
   return lintEars(text, catalog).diagnostics.map((diagnostic) => idForCode(diagnostic.code));
 }
 
+/** Run the coverage pass over one requirement and return the ids it emits. */
+function coverageCodesFor(text: string, catalog: Catalog): string[] {
+  return lintCatalogCoverage([{ text }], catalog).map((diagnostic) => idForCode(diagnostic.code));
+}
+
 describe('explain — the registry examples execute as documented', () => {
-  it('partitions every registry id into an executable context or the divergent list', () => {
+  it('partitions every registry id into exactly one execution bucket', () => {
     for (const entry of DIAGNOSTIC_REGISTRY) {
-      const known = entry.id in EXAMPLE_CONTEXT || entry.id in KNOWN_DIVERGENT;
-      expect(known, `id ${entry.id} has no executable-example context`).toBe(true);
-      // No id is both executable and divergent.
-      expect(entry.id in EXAMPLE_CONTEXT && entry.id in KNOWN_DIVERGENT).toBe(false);
+      const buckets = [
+        entry.id in EXAMPLE_CONTEXT,
+        entry.id in COVERAGE_CONTEXT,
+        entry.id in NON_EXECUTABLE,
+      ].filter(Boolean).length;
+      expect(buckets, `id ${entry.id} must belong to exactly one execution bucket`).toBe(1);
     }
   });
 
   it('emits the diagnostic id for the bad example and not for the good example', () => {
     for (const entry of DIAGNOSTIC_REGISTRY) {
-      if (entry.id in KNOWN_DIVERGENT) {
+      if (!(entry.id in EXAMPLE_CONTEXT)) {
         continue;
       }
       const context = EXAMPLE_CONTEXT[entry.id];
@@ -339,12 +350,23 @@ describe('explain — the registry examples execute as documented', () => {
     }
   });
 
-  it('documents the known-divergent entries with their observed behavior', () => {
-    // This list is visible and pending arbitration by main; it is not empty by
-    // accident. Each guard pins the current behavior so a later registry fix
-    // surfaces here.
-    expect(Object.keys(KNOWN_DIVERGENT).sort()).toEqual(['EARS-E010', 'EARS-W007', 'EARS-W014']);
-    for (const { guard } of Object.values(KNOWN_DIVERGENT)) {
+  it('emits the coverage diagnostic for the bad example and not the good example', () => {
+    for (const [id, context] of Object.entries(COVERAGE_CONTEXT)) {
+      const entry = DIAGNOSTIC_REGISTRY.find((candidate) => candidate.id === id);
+      expect(entry, `${id} is not in the registry`).toBeDefined();
+      const badCodes = coverageCodesFor(entry!.badExample, context.badCatalog);
+      const goodCodes = coverageCodesFor(entry!.goodExample, context.goodCatalog);
+      expect(badCodes, `${id} bad example should emit ${id}`).toContain(id);
+      expect(goodCodes, `${id} good example should not emit ${id}`).not.toContain(id);
+    }
+  });
+
+  it('documents the non-executable entries with their observed behavior', () => {
+    // Codes no host-native path emits, pinned rather than executed. Each guard
+    // fixes the current behavior so a later change to the emitting path surfaces
+    // here instead of passing silently.
+    expect(Object.keys(NON_EXECUTABLE).sort()).toEqual(['EARS-W014']);
+    for (const { guard } of Object.values(NON_EXECUTABLE)) {
       guard();
     }
   });

@@ -45,7 +45,7 @@ These report defects in the outer EARS sentence shape. All are mode-dependent. `
 
 | ID          | Deprecated alias            | Meaning                                                     | strict  | guided    | Example trigger                                                     |
 | ----------- | --------------------------- | ----------------------------------------------------------- | ------- | --------- | ------------------------------------------------------------------- |
-| `EARS-E010` | `ears.no_match`             | The text does not match any supported EARS shell pattern.   | `error` | `warning` | `The quick brown fox.`                                              |
+| `EARS-E010` | `ears.no_match`             | The text does not match any supported EARS shell pattern.   | `error` | `warning` | `quick brown fox`                                                   |
 | `EARS-E005` | `ears.invalid_clause_order` | Shell clauses appear in an unsupported order.               | `error` | `warning` | `When the timer fires, while idle, the system shall reset.`         |
 | `EARS-E008` | `ears.missing_system`       | The system name before `shall` is absent or empty.          | `error` | `warning` | `When the timer fires, shall reset.`                                |
 | `EARS-E007` | `ears.missing_shall`        | The requirement has no single `shall` response boundary.    | `error` | `warning` | `The system resets the timer.`                                      |
@@ -85,7 +85,7 @@ The `system` role is mode-dependent (an unknown or ambiguous system is a hard er
 | `EARS-W001` | `catalog.event_ambiguous`    | An event term matches more than one known event.              | `warning` | `warning` | An event name two entries share.                                 |
 | `EARS-W004` | `catalog.feature_unresolved` | A feature term matches no known feature.                      | `warning` | `warning` | `Where retries are enabled, ...` with no such feature.           |
 | `EARS-W003` | `catalog.feature_ambiguous`  | A feature term matches more than one known feature.           | `warning` | `warning` | A feature name two entries share.                                |
-| `EARS-W007` | `catalog.term_unreferenced`  | A cataloged term is never referenced by any requirement text. | `warning` | `warning` | A `payment-http` entry no requirement mentions (coverage check). |
+| `EARS-W007` | `catalog.term_unreferenced`  | A cataloged term is never referenced by any requirement text. | `warning` | `warning` | A cataloged event no requirement mentions (coverage check).      |
 
 ### `lint.*` style advice
 
@@ -97,7 +97,7 @@ Stylistic findings that never affect validity. All are always warnings.
 | `EARS-W016` | `lint.vague_response`        | The response contains a configured vague term.            | `warning` | `warning` | `The system shall respond as needed.`                    |
 | `EARS-W015` | `lint.unparsed_tail`         | Text remains after the parsed requirement.                | `warning` | `warning` | Trailing tokens the expression parser could not consume. |
 | `EARS-W012` | `lint.alias_used`            | A catalog alias matched; the canonical name is preferred. | `warning` | `warning` | `db` matching a `Postgres` entry via an alias.           |
-| `EARS-W014` | `lint.suspicious_text_shape` | The sentence shape is likely accidental or malformed.     | `warning` | `warning` | Guided-mode text that resembles no EARS shell.           |
+| `EARS-W014` | `lint.suspicious_text_shape` | The sentence shape is likely accidental or malformed.     | `warning` | `warning` | Legacy guided mode only; strict reports `EARS-E010`.     |
 
 ## Ordering
 
