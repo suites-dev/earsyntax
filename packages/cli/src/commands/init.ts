@@ -131,10 +131,7 @@ export function runInit(inputs: InitInputs, deps: InitDeps = DEFAULT_DEPS): Init
   }
 
   if (agents.values.length === 0 && hosts.values.length === 0) {
-    return usageResult(
-      'init.no_targets',
-      'Request at least one --agent or --host to render.',
-    );
+    return usageResult('init.no_targets', 'Request at least one --agent or --host to render.');
   }
 
   const root = detectRoot(inputs.cwd) ?? inputs.cwd;
@@ -258,7 +255,12 @@ function prettyInit(
 /** Build an exit-2 usage result carrying a single facade diagnostic. */
 function usageResult(code: string, message: string): InitResult {
   const diagnostic: FacadeDiagnostic = { code, severity: 'error', message };
-  const response = buildResponse({ command: 'init', ok: false, diagnostics: [diagnostic], next: [] });
+  const response = buildResponse({
+    command: 'init',
+    ok: false,
+    diagnostics: [diagnostic],
+    next: [],
+  });
   return { response, pretty: `error ${code}: ${message}`, exitCode: 2 };
 }
 

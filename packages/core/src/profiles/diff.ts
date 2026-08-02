@@ -71,7 +71,10 @@ export function diffProfile(profile: Profile): ProfileDiff {
 
   const dialect = profile.dialect;
 
-  if (dialect.keywordCase !== strict.dialect.keywordCase && dialect.keywordCase === 'case-insensitive') {
+  if (
+    dialect.keywordCase !== strict.dialect.keywordCase &&
+    dialect.keywordCase === 'case-insensitive'
+  ) {
     relaxes.push('keyword case');
   }
   if (

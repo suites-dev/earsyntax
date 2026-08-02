@@ -19,11 +19,7 @@ export { extractFromContent, extractFromFile } from './dispatch.js';
 
 // --- Host-native pipeline (Agent W2). Locate + extract stages plus the full
 // pipeline composed with @earsyntax/core's findings assembly. ---
-export {
-  extractCandidates,
-  runPipeline,
-  inferKind,
-} from './pipeline.js';
+export { extractCandidates, runPipeline, inferKind } from './pipeline.js';
 export type {
   DocumentKind,
   PipelineFile,

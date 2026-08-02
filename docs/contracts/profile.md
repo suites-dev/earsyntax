@@ -55,13 +55,13 @@ candidate (`extract` returns `locatorRuleId`). The `id` field and the four
 fixtures depend on them. The optional fields are the finalized minimal set the
 built-in markdown profiles need; each applies to specific kinds:
 
-| Field | Applies to | Meaning |
-|---|---|---|
-| `headingPattern` | `heading-section` | Regex selecting the heading whose section body lines this rule targets (include) or removes (exclude). |
-| `underHeading` | `list-item` | Regex selecting the ancestor heading a candidate list must sit under. |
-| `listMarker` | `list-item` | Which list markers qualify: `bullet`, `ordered`, or `any`. Defaults to `any` when omitted. |
-| `blockPrefix` | `block` | Literal heading line that opens a candidate block; the block body runs until the next heading of equal or higher level. |
-| `note` | any | Human note documenting intent in the data file. Rendered nowhere. |
+| Field            | Applies to        | Meaning                                                                                                                 |
+| ---------------- | ----------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `headingPattern` | `heading-section` | Regex selecting the heading whose section body lines this rule targets (include) or removes (exclude).                  |
+| `underHeading`   | `list-item`       | Regex selecting the ancestor heading a candidate list must sit under.                                                   |
+| `listMarker`     | `list-item`       | Which list markers qualify: `bullet`, `ordered`, or `any`. Defaults to `any` when omitted.                              |
+| `blockPrefix`    | `block`           | Literal heading line that opens a candidate block; the block body runs until the next heading of equal or higher level. |
+| `note`           | any               | Human note documenting intent in the data file. Rendered nowhere.                                                       |
 
 `headingPattern` and `underHeading` are JavaScript regular-expression source
 strings matched case-insensitively against a heading's trimmed text.
@@ -73,34 +73,34 @@ line of a `documentKinds` file is a candidate.
 
 ### Top level
 
-| Field | Meaning |
-|---|---|
-| `name` | The profile identity. One of the five closed names. There are no user-defined profile names in alpha. |
+| Field      | Meaning                                                                                                     |
+| ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `name`     | The profile identity. One of the five closed names. There are no user-defined profile names in alpha.       |
 | `notation` | Always `'ears'`. Reserved so a future notation cannot be added by silently repurposing an existing profile. |
-| `dialect` | Grammar tolerances the parser/linter apply. See below. |
-| `locator` | Which regions of a host document become requirement candidates. See below. |
-| `severity` | Per-ID severity overrides keyed by registry ID (`EARS-E###` / `EARS-W###`). |
-| `idFormat` | Whether requirements must carry an ID and its shape. |
+| `dialect`  | Grammar tolerances the parser/linter apply. See below.                                                      |
+| `locator`  | Which regions of a host document become requirement candidates. See below.                                  |
+| `severity` | Per-ID severity overrides keyed by registry ID (`EARS-E###` / `EARS-W###`).                                 |
+| `idFormat` | Whether requirements must carry an ID and its shape.                                                        |
 
 ### `dialect`
 
-| Field | Meaning |
-|---|---|
-| `keywordCase` | `strict`: EARS keywords must match canonical casing (`When`, `While`, `Where`, `If`, `shall`). `case-insensitive`: any casing, including all-caps (`WHEN`, `THE SYSTEM SHALL`). |
-| `allowLiteralSystemName` | Literal system phrases accepted in place of `the <system>` (for example `["THE SYSTEM"]`). Empty means only the canonical `the <system>` form is valid. |
-| `commaAfterLeadingClause` | `required`: a leading `When`/`While`/`Where`/`If` clause must be followed by a comma before the main clause. `optional`: the comma may be absent. |
-| `allowStoryWrapper` | When `true`, user-story frame lines (for example `As a user, I want ...`) are treated as non-requirement frame content and skipped, not parsed as EARS. |
-| `allowFrameMetadata` | When `true`, `REQ-###` frame IDs and `[source: path:line]` tags are accepted as metadata prefixes on a requirement line. |
-| `allowProhibition` | When `true`, `shall not` is accepted as a prohibition kind. When `false`, `shall not` is rejected (canonical Mavin EARS has no prohibition template). |
+| Field                     | Meaning                                                                                                                                                                         |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `keywordCase`             | `strict`: EARS keywords must match canonical casing (`When`, `While`, `Where`, `If`, `shall`). `case-insensitive`: any casing, including all-caps (`WHEN`, `THE SYSTEM SHALL`). |
+| `allowLiteralSystemName`  | Literal system phrases accepted in place of `the <system>` (for example `["THE SYSTEM"]`). Empty means only the canonical `the <system>` form is valid.                         |
+| `commaAfterLeadingClause` | `required`: a leading `When`/`While`/`Where`/`If` clause must be followed by a comma before the main clause. `optional`: the comma may be absent.                               |
+| `allowStoryWrapper`       | When `true`, user-story frame lines (for example `As a user, I want ...`) are treated as non-requirement frame content and skipped, not parsed as EARS.                         |
+| `allowFrameMetadata`      | When `true`, `REQ-###` frame IDs and `[source: path:line]` tags are accepted as metadata prefixes on a requirement line.                                                        |
+| `allowProhibition`        | When `true`, `shall not` is accepted as a prohibition kind. When `false`, `shall not` is rejected (canonical Mavin EARS has no prohibition template).                           |
 
 ### `locator`
 
-| Field | Meaning |
-|---|---|
-| `documentKinds` | The file kinds this profile locates over, for example `['ears','text']` or `['markdown']`. Files of other kinds produce no candidates. |
-| `include` | Ordered `LocatorRule`s that select candidate regions. A region matched by any include rule is a candidate unless an exclude rule removes it. |
-| `exclude` | Ordered `LocatorRule`s that remove regions from the candidate set (for example design or background prose sections). |
-| `codeFences` | `ignore`: fenced code blocks are never candidates (prevents false positives on code samples). `include`: fenced content is eligible. |
+| Field           | Meaning                                                                                                                                      |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `documentKinds` | The file kinds this profile locates over, for example `['ears','text']` or `['markdown']`. Files of other kinds produce no candidates.       |
+| `include`       | Ordered `LocatorRule`s that select candidate regions. A region matched by any include rule is a candidate unless an exclude rule removes it. |
+| `exclude`       | Ordered `LocatorRule`s that remove regions from the candidate set (for example design or background prose sections).                         |
+| `codeFences`    | `ignore`: fenced code blocks are never candidates (prevents false positives on code samples). `include`: fenced content is eligible.         |
 
 For `.ears` and plain-text documents the include set is the trivial
 `every-line` rule: each non-empty line is a candidate. Markdown profiles use
@@ -117,10 +117,10 @@ severity is never hard-coded in the linter.
 
 ### `idFormat`
 
-| Field | Meaning |
-|---|---|
-| `required` | When `true`, a requirement without an ID is a finding. When `false`, IDs are optional. |
-| `pattern` | Optional regular expression a present ID must match (for example `^REQ-\d+$`). Applied whether or not `required` is `true`. |
+| Field      | Meaning                                                                                                                     |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `required` | When `true`, a requirement without an ID is a finding. When `false`, IDs are optional.                                      |
+| `pattern`  | Optional regular expression a present ID must match (for example `^REQ-\d+$`). Applied whether or not `required` is `true`. |
 
 ## Validation rules
 
@@ -146,18 +146,18 @@ on both sides of every line, and by the profile detail in
 `EARSYNTAX-CLI-FACADE-ALPHA-0.md`. `strict` is the default when no `--profile`
 is passed.
 
-| Field | `strict` | `ears-x` | `kiro` | `speckit` | `openspec` |
-|---|---|---|---|---|---|
-| `keywordCase` | strict | strict | case-insensitive | strict | strict |
-| `allowLiteralSystemName` | `[]` | `[]` | `["THE SYSTEM"]` | `[]` | `[]` |
-| `commaAfterLeadingClause` | required | required | optional | required | required |
-| `allowStoryWrapper` | false | false | true | false | false |
-| `allowFrameMetadata` | false | true | false | false | false |
-| `allowProhibition` | false | true | false | false | false |
-| `locator.documentKinds` | `['ears','text']` | `['ears','text']` | `['markdown']` | `['markdown']` | `['markdown']` |
-| `locator.codeFences` | ignore | ignore | ignore | ignore | ignore |
-| `idFormat.required` | false | false | false | false | false |
-| `idFormat.pattern` | (none) | `^REQ-\d+$` | (none) | (none) | (none) |
+| Field                     | `strict`          | `ears-x`          | `kiro`           | `speckit`      | `openspec`     |
+| ------------------------- | ----------------- | ----------------- | ---------------- | -------------- | -------------- |
+| `keywordCase`             | strict            | strict            | case-insensitive | strict         | strict         |
+| `allowLiteralSystemName`  | `[]`              | `[]`              | `["THE SYSTEM"]` | `[]`           | `[]`           |
+| `commaAfterLeadingClause` | required          | required          | optional         | required       | required       |
+| `allowStoryWrapper`       | false             | false             | true             | false          | false          |
+| `allowFrameMetadata`      | false             | true              | false            | false          | false          |
+| `allowProhibition`        | false             | true              | false            | false          | false          |
+| `locator.documentKinds`   | `['ears','text']` | `['ears','text']` | `['markdown']`   | `['markdown']` | `['markdown']` |
+| `locator.codeFences`      | ignore            | ignore            | ignore           | ignore         | ignore         |
+| `idFormat.required`       | false             | false             | false            | false          | false          |
+| `idFormat.pattern`        | (none)            | `^REQ-\d+$`       | (none)           | (none)         | (none)         |
 
 Locator targets, per profile:
 

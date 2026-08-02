@@ -242,5 +242,7 @@ export function instructionsCommand(context: CommandContext): CommandResult {
     next,
   });
 
-  return global.quiet && !global.json ? { response, pretty: '', exitCode: 0 } : { response, pretty, exitCode: 0 };
+  return global.quiet && !global.json
+    ? { response, pretty: '', exitCode: 0 }
+    : { response, pretty, exitCode: 0 };
 }

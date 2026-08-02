@@ -88,7 +88,9 @@ describe('runValidate — inputs and exit codes', () => {
   it('--strict flips a warning-only run from exit 0 to exit 1', () => {
     const lenient = runOne('warn.ears', WARN_LINE, 'strict', false);
     expect(lenient.exitCode).toBe(0);
-    expect((lenient.response.findings as { summary: { warnings: number } }).summary.warnings).toBe(1);
+    expect((lenient.response.findings as { summary: { warnings: number } }).summary.warnings).toBe(
+      1,
+    );
 
     const strict = runOne('warn.ears', WARN_LINE, 'strict', true);
     expect(strict.exitCode).toBe(1);
@@ -105,7 +107,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('aggregates multiple files into one Findings with the right file count', () => {
     const r = runValidate(
-      { paths: ['a.ears', 'b.ears'], profileName: 'strict', strict: false, sarif: false, json: true, cwd: CWD },
+      {
+        paths: ['a.ears', 'b.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: false,
+        json: true,
+        cwd: CWD,
+      },
       fakeDeps({ [`${CWD}/a.ears`]: CLEAN_LINE, [`${CWD}/b.ears`]: KIRO_LINES }),
     );
     expect(r.exitCode).toBe(1);
@@ -115,7 +124,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('expands a glob pattern in sorted order', () => {
     const r = runValidate(
-      { paths: ['*.ears'], profileName: 'strict', strict: false, sarif: false, json: true, cwd: CWD },
+      {
+        paths: ['*.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: false,
+        json: true,
+        cwd: CWD,
+      },
       fakeDeps(
         { [`${CWD}/a.ears`]: CLEAN_LINE, [`${CWD}/b.ears`]: CLEAN_LINE },
         { glob: () => ['b.ears', 'a.ears'] },
@@ -141,11 +157,20 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('rejects reading stdin twice', () => {
     const r = runValidate(
-      { paths: ['-', '-'], profileName: 'strict', strict: false, sarif: false, json: true, cwd: CWD },
+      {
+        paths: ['-', '-'],
+        profileName: 'strict',
+        strict: false,
+        sarif: false,
+        json: true,
+        cwd: CWD,
+      },
       fakeDeps({}, { readStdin: () => CLEAN_LINE }),
     );
     expect(r.exitCode).toBe(2);
-    expect((r.response.diagnostics as { code: string }[])[0]?.code).toBe('validate.duplicate_stdin');
+    expect((r.response.diagnostics as { code: string }[])[0]?.code).toBe(
+      'validate.duplicate_stdin',
+    );
   });
 
   it('exits 2 with a typed diagnostic on an unknown profile', () => {
@@ -158,7 +183,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('exits 2 on a missing file (an environment failure, not a finding)', () => {
     const r = runValidate(
-      { paths: ['ghost.ears'], profileName: 'strict', strict: false, sarif: false, json: true, cwd: CWD },
+      {
+        paths: ['ghost.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: false,
+        json: true,
+        cwd: CWD,
+      },
       fakeDeps({}),
     );
     expect(r.exitCode).toBe(2);
@@ -169,7 +201,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('exits 2 on an unreadable file', () => {
     const r = runValidate(
-      { paths: ['locked.ears'], profileName: 'strict', strict: false, sarif: false, json: true, cwd: CWD },
+      {
+        paths: ['locked.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: false,
+        json: true,
+        cwd: CWD,
+      },
       fakeDeps(
         { [`${CWD}/locked.ears`]: '' },
         {
@@ -195,7 +234,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('exits 2 when a glob matches nothing', () => {
     const r = runValidate(
-      { paths: ['*.ears'], profileName: 'strict', strict: false, sarif: false, json: true, cwd: CWD },
+      {
+        paths: ['*.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: false,
+        json: true,
+        cwd: CWD,
+      },
       fakeDeps({}, { glob: () => [] }),
     );
     expect(r.exitCode).toBe(2);
@@ -204,7 +250,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('emits a valid, empty SARIF log as raw stdout on a clean run (exit 0)', () => {
     const r = runValidate(
-      { paths: ['clean.ears'], profileName: 'strict', strict: false, sarif: true, json: false, cwd: CWD },
+      {
+        paths: ['clean.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: true,
+        json: false,
+        cwd: CWD,
+      },
       fakeDeps({ [`${CWD}/clean.ears`]: CLEAN_LINE }),
     );
     expect(r.exitCode).toBe(0);
@@ -220,7 +273,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('emits SARIF results with EARS ids, levels, and positions on a failing run (exit 1)', () => {
     const r = runValidate(
-      { paths: ['bad.ears'], profileName: 'strict', strict: false, sarif: true, json: false, cwd: CWD },
+      {
+        paths: ['bad.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: true,
+        json: false,
+        cwd: CWD,
+      },
       fakeDeps({ [`${CWD}/bad.ears`]: 'The system resets the timer.\n' }),
     );
     expect(r.exitCode).toBe(1);
@@ -230,7 +290,9 @@ describe('runValidate — inputs and exit codes', () => {
           ruleId: string;
           ruleIndex: number;
           level: string;
-          locations: { physicalLocation: { artifactLocation: { uri: string }; region: { startLine: number } } }[];
+          locations: {
+            physicalLocation: { artifactLocation: { uri: string }; region: { startLine: number } };
+          }[];
         }[];
         tool: { driver: { rules: { id: string }[] } };
       }[];
@@ -248,7 +310,14 @@ describe('runValidate — inputs and exit codes', () => {
 
   it('rejects --json --sarif together as a flag conflict', () => {
     const r = runValidate(
-      { paths: ['clean.ears'], profileName: 'strict', strict: false, sarif: true, json: true, cwd: CWD },
+      {
+        paths: ['clean.ears'],
+        profileName: 'strict',
+        strict: false,
+        sarif: true,
+        json: true,
+        cwd: CWD,
+      },
       fakeDeps({ [`${CWD}/clean.ears`]: CLEAN_LINE }),
     );
     expect(r.exitCode).toBe(2);
@@ -272,19 +341,16 @@ describe('runValidate — JSON envelope shape', () => {
     ]);
     const first = (findings.diagnostics as Record<string, unknown>[])[0];
     // Optional keys included only when present, always in contract order.
-    expect(Object.keys(first).slice(0, 4)).toEqual([
-      'id',
-      'severity',
-      'file',
-      'line',
-    ]);
+    expect(Object.keys(first).slice(0, 4)).toEqual(['id', 'severity', 'file', 'line']);
   });
 
   it('adds a repair next action pointing at the first errored file', () => {
     const r = runOne('bad.ears', KIRO_LINES, 'strict');
     const next = r.response.next;
     expect(next).toHaveLength(1);
-    expect(next[0]?.command).toBe('earsyntax instructions repair --file bad.ears --profile strict --json');
+    expect(next[0]?.command).toBe(
+      'earsyntax instructions repair --file bad.ears --profile strict --json',
+    );
     expect(next[0]?.forAgent).toBe(true);
   });
 
@@ -315,7 +381,11 @@ function makeContext(
     cwd: options.cwd,
     color: false,
   };
-  const emitter: Emitter = { json: global.json, painter: createPainter(false), write: () => undefined };
+  const emitter: Emitter = {
+    json: global.json,
+    painter: createPainter(false),
+    write: () => undefined,
+  };
   return { args, global, cwd: options.cwd, emitter };
 }
 
@@ -376,7 +446,9 @@ describe('validateCommand — kiro and strict profiles', () => {
   it('fails the kiro house style under strict when the lines are plain .ears', () => {
     const cwd = mkdtempSync(join(tmpdir(), 'earsyntax-validate-'));
     writeFileSync(join(cwd, 'criteria.ears'), KIRO_LINES);
-    const result = validateCommand(makeContext(['criteria.ears'], { profile: 'strict', json: true, cwd }));
+    const result = validateCommand(
+      makeContext(['criteria.ears'], { profile: 'strict', json: true, cwd }),
+    );
     expect(result.exitCode).toBe(1);
     const findings = result.response.findings as { diagnostics: { id: string }[] };
     const ids = new Set(findings.diagnostics.map((d) => d.id));

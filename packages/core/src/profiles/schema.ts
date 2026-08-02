@@ -157,8 +157,7 @@ export interface ProfileValidationError {
 
 /** The outcome of {@link validateProfile}. */
 export type ProfileValidationResult =
-  | { ok: true; profile: Profile }
-  | { ok: false; errors: ProfileValidationError[] };
+  { ok: true; profile: Profile } | { ok: false; errors: ProfileValidationError[] };
 
 const PROFILE_NAMES: readonly ProfileName[] = ['strict', 'ears-x', 'kiro', 'speckit', 'openspec'];
 const KEYWORD_CASES: readonly KeywordCase[] = ['strict', 'case-insensitive'];
@@ -201,7 +200,12 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function reportUnknownKeys(value: Record<string, unknown>, known: readonly string[], path: string, errors: Errors): void {
+function reportUnknownKeys(
+  value: Record<string, unknown>,
+  known: readonly string[],
+  path: string,
+  errors: Errors,
+): void {
   for (const key of Object.keys(value)) {
     if (!known.includes(key)) {
       errors.push({
@@ -213,7 +217,12 @@ function reportUnknownKeys(value: Record<string, unknown>, known: readonly strin
   }
 }
 
-function requireEnum<T extends string>(value: unknown, allowed: readonly T[], path: string, errors: Errors): value is T {
+function requireEnum<T extends string>(
+  value: unknown,
+  allowed: readonly T[],
+  path: string,
+  errors: Errors,
+): value is T {
   if (typeof value !== 'string' || !allowed.includes(value as T)) {
     errors.push({
       path,
@@ -250,7 +259,11 @@ function requireRegexSource(value: unknown, path: string, errors: Errors): boole
     RegExp(value);
     return true;
   } catch {
-    errors.push({ path, code: 'invalid-pattern', message: `Not a valid regular expression: '${value}'.` });
+    errors.push({
+      path,
+      code: 'invalid-pattern',
+      message: `Not a valid regular expression: '${value}'.`,
+    });
     return false;
   }
 }
@@ -269,7 +282,11 @@ function validateLocatorRule(value: unknown, path: string, errors: Errors): void
   }
 
   if (!('kind' in value)) {
-    errors.push({ path: `${path}.kind`, code: 'missing-key', message: "Missing required key 'kind'." });
+    errors.push({
+      path: `${path}.kind`,
+      code: 'missing-key',
+      message: "Missing required key 'kind'.",
+    });
   } else {
     requireEnum(value.kind, LOCATOR_KINDS, `${path}.kind`, errors);
   }
@@ -312,7 +329,11 @@ function validateDialect(value: unknown, errors: Errors): void {
   if ('keywordCase' in value) {
     requireEnum(value.keywordCase, KEYWORD_CASES, `${path}.keywordCase`, errors);
   } else {
-    errors.push({ path: `${path}.keywordCase`, code: 'missing-key', message: "Missing required key 'keywordCase'." });
+    errors.push({
+      path: `${path}.keywordCase`,
+      code: 'missing-key',
+      message: "Missing required key 'keywordCase'.",
+    });
   }
 
   if ('allowLiteralSystemName' in value) {
@@ -326,7 +347,12 @@ function validateDialect(value: unknown, errors: Errors): void {
   }
 
   if ('commaAfterLeadingClause' in value) {
-    requireEnum(value.commaAfterLeadingClause, COMMA_MODES, `${path}.commaAfterLeadingClause`, errors);
+    requireEnum(
+      value.commaAfterLeadingClause,
+      COMMA_MODES,
+      `${path}.commaAfterLeadingClause`,
+      errors,
+    );
   } else {
     errors.push({
       path: `${path}.commaAfterLeadingClause`,
@@ -339,7 +365,11 @@ function validateDialect(value: unknown, errors: Errors): void {
     if (key in value) {
       requireBoolean(value[key], `${path}.${key}`, errors);
     } else {
-      errors.push({ path: `${path}.${key}`, code: 'missing-key', message: `Missing required key '${key}'.` });
+      errors.push({
+        path: `${path}.${key}`,
+        code: 'missing-key',
+        message: `Missing required key '${key}'.`,
+      });
     }
   }
 }
@@ -355,25 +385,41 @@ function validateLocator(value: unknown, errors: Errors): void {
   if ('documentKinds' in value) {
     requireStringArray(value.documentKinds, `${path}.documentKinds`, errors);
   } else {
-    errors.push({ path: `${path}.documentKinds`, code: 'missing-key', message: "Missing required key 'documentKinds'." });
+    errors.push({
+      path: `${path}.documentKinds`,
+      code: 'missing-key',
+      message: "Missing required key 'documentKinds'.",
+    });
   }
 
   if ('include' in value) {
     validateLocatorRuleList(value.include, `${path}.include`, errors);
   } else {
-    errors.push({ path: `${path}.include`, code: 'missing-key', message: "Missing required key 'include'." });
+    errors.push({
+      path: `${path}.include`,
+      code: 'missing-key',
+      message: "Missing required key 'include'.",
+    });
   }
 
   if ('exclude' in value) {
     validateLocatorRuleList(value.exclude, `${path}.exclude`, errors);
   } else {
-    errors.push({ path: `${path}.exclude`, code: 'missing-key', message: "Missing required key 'exclude'." });
+    errors.push({
+      path: `${path}.exclude`,
+      code: 'missing-key',
+      message: "Missing required key 'exclude'.",
+    });
   }
 
   if ('codeFences' in value) {
     requireEnum(value.codeFences, CODE_FENCES, `${path}.codeFences`, errors);
   } else {
-    errors.push({ path: `${path}.codeFences`, code: 'missing-key', message: "Missing required key 'codeFences'." });
+    errors.push({
+      path: `${path}.codeFences`,
+      code: 'missing-key',
+      message: "Missing required key 'codeFences'.",
+    });
   }
 }
 
@@ -406,7 +452,11 @@ function validateIdFormat(value: unknown, errors: Errors): void {
   if ('required' in value) {
     requireBoolean(value.required, `${path}.required`, errors);
   } else {
-    errors.push({ path: `${path}.required`, code: 'missing-key', message: "Missing required key 'required'." });
+    errors.push({
+      path: `${path}.required`,
+      code: 'missing-key',
+      message: "Missing required key 'required'.",
+    });
   }
 
   if ('pattern' in value) {
@@ -428,7 +478,10 @@ export function validateProfile(input: unknown): ProfileValidationResult {
   const errors: Errors = [];
 
   if (!isPlainObject(input)) {
-    return { ok: false, errors: [{ path: '', code: 'not-object', message: 'Expected a profile object.' }] };
+    return {
+      ok: false,
+      errors: [{ path: '', code: 'not-object', message: 'Expected a profile object.' }],
+    };
   }
 
   reportUnknownKeys(input, TOP_KEYS, '', errors);
@@ -442,31 +495,51 @@ export function validateProfile(input: unknown): ProfileValidationResult {
   if ('notation' in input) {
     requireEnum(input.notation, ['ears'] as const, 'notation', errors);
   } else {
-    errors.push({ path: 'notation', code: 'missing-key', message: "Missing required key 'notation'." });
+    errors.push({
+      path: 'notation',
+      code: 'missing-key',
+      message: "Missing required key 'notation'.",
+    });
   }
 
   if ('dialect' in input) {
     validateDialect(input.dialect, errors);
   } else {
-    errors.push({ path: 'dialect', code: 'missing-key', message: "Missing required key 'dialect'." });
+    errors.push({
+      path: 'dialect',
+      code: 'missing-key',
+      message: "Missing required key 'dialect'.",
+    });
   }
 
   if ('locator' in input) {
     validateLocator(input.locator, errors);
   } else {
-    errors.push({ path: 'locator', code: 'missing-key', message: "Missing required key 'locator'." });
+    errors.push({
+      path: 'locator',
+      code: 'missing-key',
+      message: "Missing required key 'locator'.",
+    });
   }
 
   if ('severity' in input) {
     validateSeverity(input.severity, errors);
   } else {
-    errors.push({ path: 'severity', code: 'missing-key', message: "Missing required key 'severity'." });
+    errors.push({
+      path: 'severity',
+      code: 'missing-key',
+      message: "Missing required key 'severity'.",
+    });
   }
 
   if ('idFormat' in input) {
     validateIdFormat(input.idFormat, errors);
   } else {
-    errors.push({ path: 'idFormat', code: 'missing-key', message: "Missing required key 'idFormat'." });
+    errors.push({
+      path: 'idFormat',
+      code: 'missing-key',
+      message: "Missing required key 'idFormat'.",
+    });
   }
 
   if (errors.length > 0) {

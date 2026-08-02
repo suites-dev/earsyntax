@@ -20,7 +20,9 @@ import type { Emitter } from '../response.js';
 import { profilesCommand } from './profiles.js';
 
 /** Build a bare {@link CommandContext} for the handler; it reads no args or flags. */
-function makeContext(options: { json?: boolean; quiet?: boolean; profile?: string } = {}): CommandContext {
+function makeContext(
+  options: { json?: boolean; quiet?: boolean; profile?: string } = {},
+): CommandContext {
   const args: ParsedArgs = { positionals: [], booleans: new Set(), values: new Map() };
   const global: GlobalOptions = {
     json: options.json ?? false,
@@ -31,7 +33,11 @@ function makeContext(options: { json?: boolean; quiet?: boolean; profile?: strin
     cwd: '/work',
     color: false,
   };
-  const emitter: Emitter = { json: global.json, painter: createPainter(false), write: () => undefined };
+  const emitter: Emitter = {
+    json: global.json,
+    painter: createPainter(false),
+    write: () => undefined,
+  };
   return { args, global, cwd: '/work', emitter };
 }
 

@@ -49,7 +49,10 @@ export function runCli(args: string[], options: RunOptions = {}): CliResult {
 }
 
 /** Run the CLI and parse its stdout as the JSON envelope, failing loudly on bad JSON. */
-export function runCliJson(args: string[], options: RunOptions = {}): {
+export function runCliJson(
+  args: string[],
+  options: RunOptions = {},
+): {
   result: CliResult;
   json: Record<string, unknown>;
 } {

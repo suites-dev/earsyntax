@@ -23,7 +23,12 @@
  * Findings value.
  */
 
-import { toFindings, type Findings, type FindingsInputFile, type FindingsInputItem } from './findings.js';
+import {
+  toFindings,
+  type Findings,
+  type FindingsInputFile,
+  type FindingsInputItem,
+} from './findings.js';
 import { lintEarsBatch } from './lint.js';
 import type { Profile, ProfileName } from './profiles/index.js';
 import type { Catalog, RequirementInput } from './types.js';

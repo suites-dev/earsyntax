@@ -22,7 +22,12 @@
  * Determinism: pure string processing. No clock, file system, or network.
  */
 
-import { isStoryWrapperLine, type Candidate, type LocatorRule, type Profile } from '@earsyntax/core';
+import {
+  isStoryWrapperLine,
+  type Candidate,
+  type LocatorRule,
+  type Profile,
+} from '@earsyntax/core';
 import { splitId } from './internal.js';
 import { classifyFences } from './markdown-scan.js';
 
@@ -173,14 +178,7 @@ function applyIncludeRule(
     case 'every-line':
       // An every-line rule inside a markdown profile: treat each eligible line as
       // a candidate. Not used by the built-ins but supported for completeness.
-      return bodyLineCandidates(
-        model,
-        profile,
-        file,
-        includeCode,
-        rule.id,
-        () => true,
-      );
+      return bodyLineCandidates(model, profile, file, includeCode, rule.id, () => true);
     default:
       return [];
   }
@@ -198,8 +196,13 @@ function headingSectionCandidates(
     return [];
   }
   const re = compile(rule.headingPattern);
-  return bodyLineCandidates(model, profile, file, includeCode, rule.id, (i) =>
-    model.headingLevels[i] === 0 && model.headingStacks[i].some((text) => re.test(text)),
+  return bodyLineCandidates(
+    model,
+    profile,
+    file,
+    includeCode,
+    rule.id,
+    (i) => model.headingLevels[i] === 0 && model.headingStacks[i].some((text) => re.test(text)),
   );
 }
 
@@ -247,7 +250,15 @@ function blockCandidates(
     if (!isEarsShaped(model.lines[i].slice(contentStart))) {
       continue;
     }
-    const candidate = buildCandidate(model.lines[i], contentStart, i + 1, rule.id, profile, file, allowFrameMetadata);
+    const candidate = buildCandidate(
+      model.lines[i],
+      contentStart,
+      i + 1,
+      rule.id,
+      profile,
+      file,
+      allowFrameMetadata,
+    );
     claimed = true;
     if (candidate !== undefined) {
       candidates.push(candidate);
@@ -389,7 +400,10 @@ interface ListItemMatch {
 }
 
 /** Match a bullet or numbered list item, honoring the marker filter. */
-function matchListItem(raw: string, marker: 'bullet' | 'ordered' | 'any'): ListItemMatch | undefined {
+function matchListItem(
+  raw: string,
+  marker: 'bullet' | 'ordered' | 'any',
+): ListItemMatch | undefined {
   if (marker !== 'ordered') {
     const bullet = BULLET.exec(raw);
     if (bullet) {

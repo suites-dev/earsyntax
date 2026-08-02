@@ -62,9 +62,7 @@ describe('toFindings summary math', () => {
       },
       {
         file: 'specs/b.ears',
-        items: [
-          { input: { text: 'warn', source: { line: 2 } }, result: lint([vagueWarning]) },
-        ],
+        items: [{ input: { text: 'warn', source: { line: 2 } }, result: lint([vagueWarning]) }],
       },
     ];
 

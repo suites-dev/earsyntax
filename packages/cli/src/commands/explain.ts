@@ -90,7 +90,12 @@ function suggestIds(requested: string): string[] {
 /** Build an exit-2 usage result carrying one facade diagnostic and a matching pretty line. */
 function usageResult(code: string, message: string): CommandResult {
   const diagnostic: FacadeDiagnostic = { code, severity: 'error', message };
-  const response = buildResponse({ command: 'explain', ok: false, diagnostics: [diagnostic], next: [] });
+  const response = buildResponse({
+    command: 'explain',
+    ok: false,
+    diagnostics: [diagnostic],
+    next: [],
+  });
   return { response, pretty: `error ${code}: ${message}`, exitCode: 2 };
 }
 
@@ -154,9 +159,7 @@ export function explainCommand(context: CommandContext): CommandResult {
     {
       id: entry.id,
       requestedId,
-      ...(viaAlias
-        ? { alias: true, deprecationNote: deprecationNote(requestedId, entry.id) }
-        : {}),
+      ...(viaAlias ? { alias: true, deprecationNote: deprecationNote(requestedId, entry.id) } : {}),
       severity: entry.defaultSeverity,
       title: entry.title,
       meaning: entry.meaning,

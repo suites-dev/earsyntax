@@ -152,7 +152,8 @@ const SPECKIT: Profile = {
       {
         id: 'speckit.non-requirement-section',
         kind: 'heading-section',
-        headingPattern: '^(design|background|context|overview|non-goals?|key entities|success criteria|assumptions)$',
+        headingPattern:
+          '^(design|background|context|overview|non-goals?|key entities|success criteria|assumptions)$',
         note: 'Prose subsections nested in or beside Requirements that must not produce candidates (notably Spec Kit Key Entities).',
       },
     ],

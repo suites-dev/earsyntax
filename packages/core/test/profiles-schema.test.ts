@@ -14,7 +14,10 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, test } from 'vitest';
 import { validateProfile, type ProfileValidationErrorCode } from '../src/profiles/schema.js';
 
-const SCHEMA_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../../fixtures/profiles/schema');
+const SCHEMA_ROOT = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../../../fixtures/profiles/schema',
+);
 
 interface ExpectedError {
   path: string;

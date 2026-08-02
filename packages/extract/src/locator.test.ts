@@ -19,7 +19,9 @@ function candidates(path: string, content: string, profile = strict) {
 
 describe('every-line locator (strict, ears-x)', () => {
   it('emits one candidate per non-empty, non-comment line with 1-based positions', () => {
-    const content = ['# comment', '', 'The system shall stop.', '  The system shall wait.'].join('\n');
+    const content = ['# comment', '', 'The system shall stop.', '  The system shall wait.'].join(
+      '\n',
+    );
     const result = candidates('r.ears', content);
     expect(result).toHaveLength(2);
     expect(result[0]).toMatchObject({ line: 3, col: 1, text: 'The system shall stop.' });
@@ -84,7 +86,9 @@ describe('markdown list-item locator (kiro)', () => {
     ].join('\n');
     const result = candidates('requirements.md', doc2, kiro);
     expect(result).toHaveLength(1);
-    expect(result[0].text).toBe('WHEN a webhook arrives THE SYSTEM SHALL verify it and record the outcome.');
+    expect(result[0].text).toBe(
+      'WHEN a webhook arrives THE SYSTEM SHALL verify it and record the outcome.',
+    );
   });
 });
 

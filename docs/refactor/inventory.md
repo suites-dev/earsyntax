@@ -11,12 +11,12 @@ host-native refactor removes.
 
 ## Package layout
 
-| Package | Role |
-|---|---|
-| `@earsyntax/core` | Parser, linter, diagnostics, catalog matching. Pure, no I/O, no LLM. (`packages/core/src/`) |
-| `@earsyntax/extract` | Turns `.ears`, Markdown, YAML, JSON files into `RequirementInput`. Only `extractFromFile` touches disk. (`packages/extract/src/`) |
+| Package                   | Role                                                                                                                                                            |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@earsyntax/core`         | Parser, linter, diagnostics, catalog matching. Pure, no I/O, no LLM. (`packages/core/src/`)                                                                     |
+| `@earsyntax/extract`      | Turns `.ears`, Markdown, YAML, JSON files into `RequirementInput`. Only `extractFromFile` touches disk. (`packages/extract/src/`)                               |
 | `@earsyntax/cli-contract` | Report projections: JSON report, SARIF, pretty, exit codes, diagnostic registry descriptions. Pure serializers, no I/O, no argv. (`packages/cli-contract/src/`) |
-| `@earsyntax/cli` | Command dispatcher and the workspace-backed command handlers. (`packages/cli/src/`) |
+| `@earsyntax/cli`          | Command dispatcher and the workspace-backed command handlers. (`packages/cli/src/`)                                                                             |
 
 Note: `@earsyntax/cli-contract` already contains a `JsonReport`, a `SarifLog`
 builder, an exit-code helper, and a `DIAGNOSTIC_DESCRIPTIONS` registry keyed by
@@ -65,13 +65,13 @@ There is no `--profile`, `--strict`, `--sarif`, or `--quiet` today.
 
 ## Global options (current)
 
-| Flag | Type | Meaning | Site |
-|---|---|---|---|
-| `--json` | boolean | Emit JSON instead of pretty text. | `args.ts:108` |
-| `--no-color` | boolean | Disable ANSI color in pretty output. | `args.ts:109` |
-| `--no-interactive` | boolean | Non-interactive mode. | `args.ts:110` |
-| `--cwd <dir>` | value | Working directory to resolve from. | `args.ts:111` |
-| `--config <path>` | value | Explicit config path override. | `args.ts:112` |
+| Flag               | Type    | Meaning                              | Site          |
+| ------------------ | ------- | ------------------------------------ | ------------- |
+| `--json`           | boolean | Emit JSON instead of pretty text.    | `args.ts:108` |
+| `--no-color`       | boolean | Disable ANSI color in pretty output. | `args.ts:109` |
+| `--no-interactive` | boolean | Non-interactive mode.                | `args.ts:110` |
+| `--cwd <dir>`      | value   | Working directory to resolve from.   | `args.ts:111` |
+| `--config <path>`  | value   | Explicit config path override.       | `args.ts:112` |
 
 ## Base response shape
 
@@ -145,9 +145,9 @@ newline.
 - Never resolves a project; `root` absent.
 - Output key: `features` = `FEATURES` (`version.ts:14`).
 - `FEATURES` (`version.ts:50-59`): `{ facade: 1, workItems: true,
-  instructions: ['author','convert','repair','review'], inputFormats:
-  ['.ears','markdown','yaml','json'], outputFormats: ['pretty','json'],
-  sarif: false }`.
+instructions: ['author','convert','repair','review'], inputFormats:
+['.ears','markdown','yaml','json'], outputFormats: ['pretty','json'],
+sarif: false }`.
 - `CLI_VERSION` read from package.json at runtime (`version.ts:13-34`), falls
   back to `0.1.0`.
 - Exit `0`.
@@ -231,7 +231,7 @@ Rule bodies live in `packages/cli/src/rules.ts`: `ALLOWED_PATTERNS`
 - Positionals: `<files|globs...>`; none throws `validate.no_files` (exit `2`)
   (`validate.ts:117-119`).
 - Flags: `--work <id>` (workspace recording, `validate.ts:121`), `--catalog
-  <path>` (`validate.ts:129`), `--mode strict|guided` (`buildOptions`,
+<path>` (`validate.ts:129`), `--mode strict|guided` (`buildOptions`,
   `validate.ts:70`), `--comma-as-and` (`validate.ts:77`).
 - With `--work`, requires a workspace (`requireRoot`); without, uses
   `findRoot(cwd) ?? cwd` so it runs outside a workspace too (`validate.ts:122`).
@@ -246,7 +246,7 @@ Rule bodies live in `packages/cli/src/rules.ts`: `ALLOWED_PATTERNS`
   `results: ValidationResult[]`, optional `work` + `stale` when validating a
   work item (`validate.ts:201-225`).
 - `ValidationResult` (`facade-types.ts:110-119`): `{ id?, file, line?, valid,
-  pattern?, ast?, references, diagnostics }`. `diagnostics` are core
+pattern?, ast?, references, diagnostics }`. `diagnostics` are core
   `Diagnostic` objects, `references` are `ReferenceMatch[]`.
 - Work-item integration (`updateWorkItem`, `validate.ts:248`) writes
   `manifest.json`, `validation.json`, `validation.md` and computes staleness.
@@ -287,28 +287,28 @@ Rule bodies live in `packages/cli/src/rules.ts`: `ALLOWED_PATTERNS`
 
 `docs/facade-api.md:77-105`, `errors.ts`.
 
-| Code | Meaning | Site |
-|---|---|---|
-| `0` | Completed, no error-severity diagnostic. | all handlers |
-| `1` | Error diagnostics present. Only `validate`. | `validate.ts:244` |
-| `2` | Usage, config, missing file, unparseable input, work-item resolution. | `usageError`, `errors.ts:31` |
-| `3` | Refused write, stale source, overwrite protection, human confirmation. | `refusalError`, `errors.ts:40` |
+| Code | Meaning                                                                | Site                           |
+| ---- | ---------------------------------------------------------------------- | ------------------------------ |
+| `0`  | Completed, no error-severity diagnostic.                               | all handlers                   |
+| `1`  | Error diagnostics present. Only `validate`.                            | `validate.ts:244`              |
+| `2`  | Usage, config, missing file, unparseable input, work-item resolution.  | `usageError`, `errors.ts:31`   |
+| `3`  | Refused write, stale source, overwrite protection, human confirmation. | `refusalError`, `errors.ts:40` |
 
 ## Workspace files (`.earsyntax/`)
 
 Written and read by the workspace commands. `packages/cli/src/workspace.ts`,
 `packages/cli/src/project.ts`.
 
-| Path | Written by | Read by | Shape |
-|---|---|---|---|
-| `.earsyntax/config.json` | `init` (`init.ts:100`) | `loadConfig` (`project.ts:60`), every workspace command | `{ version, workDir, tools[] }` (`project.ts:14-20`) |
-| `.earsyntax/work/.gitkeep` | `init` (`init.ts:101`) | none | empty |
-| `.earsyntax/work/<slug>/manifest.json` | `new`, `validate`, `accept` (`workspace.ts:66`) | `readManifest` (`workspace.ts:43`) | `WorkManifest` (`facade-types.ts:59-89`) |
-| `.earsyntax/work/<slug>/requirements.ears` | `new` (empty), agent-authored | `validate`, `show` | EARS text |
-| `.earsyntax/work/<slug>/questions.md` | `new` (template) | `show` | Markdown |
-| `.earsyntax/work/<slug>/traceability.json` | `new` (template) | `show` | `{ requirements[], questions[] }` |
-| `.earsyntax/work/<slug>/validation.json` | `validate` (`validate.ts:273`) | `instructions repair` (`instructions.ts:51`), `show` | `{ summary, results }` |
-| `.earsyntax/work/<slug>/validation.md` | `validate` (`validate.ts:274`) | none | Markdown |
+| Path                                       | Written by                                      | Read by                                                 | Shape                                                |
+| ------------------------------------------ | ----------------------------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
+| `.earsyntax/config.json`                   | `init` (`init.ts:100`)                          | `loadConfig` (`project.ts:60`), every workspace command | `{ version, workDir, tools[] }` (`project.ts:14-20`) |
+| `.earsyntax/work/.gitkeep`                 | `init` (`init.ts:101`)                          | none                                                    | empty                                                |
+| `.earsyntax/work/<slug>/manifest.json`     | `new`, `validate`, `accept` (`workspace.ts:66`) | `readManifest` (`workspace.ts:43`)                      | `WorkManifest` (`facade-types.ts:59-89`)             |
+| `.earsyntax/work/<slug>/requirements.ears` | `new` (empty), agent-authored                   | `validate`, `show`                                      | EARS text                                            |
+| `.earsyntax/work/<slug>/questions.md`      | `new` (template)                                | `show`                                                  | Markdown                                             |
+| `.earsyntax/work/<slug>/traceability.json` | `new` (template)                                | `show`                                                  | `{ requirements[], questions[] }`                    |
+| `.earsyntax/work/<slug>/validation.json`   | `validate` (`validate.ts:273`)                  | `instructions repair` (`instructions.ts:51`), `show`    | `{ summary, results }`                               |
+| `.earsyntax/work/<slug>/validation.md`     | `validate` (`validate.ts:274`)                  | none                                                    | Markdown                                             |
 
 `WorkManifest` fields (`facade-types.ts:59-89`): `schemaVersion`, `id`, `mode`,
 `status`, `source?{path,hash,kind,snapshotPath?}`, `prompt?`,

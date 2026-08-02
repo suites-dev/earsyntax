@@ -274,7 +274,9 @@ export function toFindings(input: FindingsInput, options: ToFindingsOptions = {}
         if (severity === 'error') {
           hasError = true;
         }
-        collected.push(buildFindingsDiagnostic(id, severity, fileGroup.file, item, diagnostic.message));
+        collected.push(
+          buildFindingsDiagnostic(id, severity, fileGroup.file, item, diagnostic.message),
+        );
       }
       if (!hasError) {
         valid += 1;

@@ -138,7 +138,10 @@ describe('buildSarifLog — shape and metadata', () => {
 
   it('carries startLine always and startColumn only when col is present', () => {
     const results = buildSarifLog(SAMPLE).runs[0]?.results ?? [];
-    expect(results[0]?.locations[0]?.physicalLocation.region).toEqual({ startLine: 12, startColumn: 3 });
+    expect(results[0]?.locations[0]?.physicalLocation.region).toEqual({
+      startLine: 12,
+      startColumn: 3,
+    });
     expect(results[1]?.locations[0]?.physicalLocation.region).toEqual({ startLine: 20 });
   });
 
@@ -150,7 +153,9 @@ describe('buildSarifLog — shape and metadata', () => {
 
   it('records tool.driver.version only when toolVersion is supplied', () => {
     expect(buildSarifLog(CLEAN).runs[0]?.tool.driver.version).toBeUndefined();
-    expect(buildSarifLog(CLEAN, { toolVersion: '1.2.3' }).runs[0]?.tool.driver.version).toBe('1.2.3');
+    expect(buildSarifLog(CLEAN, { toolVersion: '1.2.3' }).runs[0]?.tool.driver.version).toBe(
+      '1.2.3',
+    );
   });
 
   it('emits an empty, valid log for a clean run', () => {
@@ -167,7 +172,10 @@ describe('buildSarifLog — URI normalization', () => {
       summary: { files: 1, requirements: 1, valid: 0, errors: 1, warnings: 0 },
       diagnostics: [{ id: 'EARS-E006', severity: 'error', file, line: 1, message: 'm' }],
     };
-    return buildSarifLog(findings).runs[0]?.results[0]?.locations[0]?.physicalLocation.artifactLocation.uri ?? '';
+    return (
+      buildSarifLog(findings).runs[0]?.results[0]?.locations[0]?.physicalLocation.artifactLocation
+        .uri ?? ''
+    );
   };
 
   it('leaves a relative POSIX path as forward-slash segments', () => {
@@ -220,18 +228,26 @@ function schemaViolations(log: SarifLog): string[] {
   const has = (obj: object, key: string): boolean => Object.hasOwn(obj, key);
   const requireKeys = (obj: object, keys: string[] | undefined, where: string): void => {
     for (const key of keys ?? []) {
-      if (!has(obj, key)) {problems.push(`${where}: missing required "${key}"`);}
+      if (!has(obj, key)) {
+        problems.push(`${where}: missing required "${key}"`);
+      }
     }
   };
 
   for (const key of SCHEMA.required) {
-    if (!has(log, key)) {problems.push(`log: missing required "${key}"`);}
+    if (!has(log, key)) {
+      problems.push(`log: missing required "${key}"`);
+    }
   }
   if (!SCHEMA.properties.version.enum?.includes(log.version)) {
     problems.push(`log.version "${log.version}" not in schema enum`);
   }
-  if (typeof log.$schema !== 'string') {problems.push('log.$schema is not a string');}
-  if (!Array.isArray(log.runs)) {problems.push('log.runs is not an array');}
+  if (typeof log.$schema !== 'string') {
+    problems.push('log.$schema is not a string');
+  }
+  if (!Array.isArray(log.runs)) {
+    problems.push('log.runs is not an array');
+  }
 
   const resultLevels = def.result.properties?.level.enum ?? [];
   const configLevels = def.reportingConfiguration.properties?.level.enum ?? [];
@@ -246,10 +262,18 @@ function schemaViolations(log: SarifLog): string[] {
     run.tool.driver.rules.forEach((rule, di) => {
       const at = `runs[${ri}].tool.driver.rules[${di}]`;
       requireKeys(rule, def.reportingDescriptor.required, at);
-      if (typeof rule.id !== 'string') {problems.push(`${at}.id is not a string`);}
-      requireKeys(rule.shortDescription, def.multiformatMessageString.required, `${at}.shortDescription`);
+      if (typeof rule.id !== 'string') {
+        problems.push(`${at}.id is not a string`);
+      }
+      requireKeys(
+        rule.shortDescription,
+        def.multiformatMessageString.required,
+        `${at}.shortDescription`,
+      );
       if (!configLevels.includes(rule.defaultConfiguration.level)) {
-        problems.push(`${at}.defaultConfiguration.level "${rule.defaultConfiguration.level}" not in enum`);
+        problems.push(
+          `${at}.defaultConfiguration.level "${rule.defaultConfiguration.level}" not in enum`,
+        );
       }
     });
 
@@ -257,8 +281,12 @@ function schemaViolations(log: SarifLog): string[] {
       const at = `runs[${ri}].results[${si}]`;
       requireKeys(result, def.result.required, at);
       requireKeys(result.message, def.multiformatMessageString.required, `${at}.message`);
-      if (typeof result.ruleId !== 'string') {problems.push(`${at}.ruleId is not a string`);}
-      if (!Number.isInteger(result.ruleIndex)) {problems.push(`${at}.ruleIndex is not an integer`);}
+      if (typeof result.ruleId !== 'string') {
+        problems.push(`${at}.ruleId is not a string`);
+      }
+      if (!Number.isInteger(result.ruleIndex)) {
+        problems.push(`${at}.ruleIndex is not an integer`);
+      }
       if (!resultLevels.includes(result.level)) {
         problems.push(`${at}.level "${result.level}" not in enum`);
       }
@@ -266,15 +294,23 @@ function schemaViolations(log: SarifLog): string[] {
         const region = location.physicalLocation.region;
         const rat = `${at}.locations[${li}].physicalLocation`;
         const uri = location.physicalLocation.artifactLocation.uri;
-        if (typeof uri !== 'string') {problems.push(`${rat}.artifactLocation.uri is not a string`);}
+        if (typeof uri !== 'string') {
+          problems.push(`${rat}.artifactLocation.uri is not a string`);
+        }
         if (uri.startsWith('/') || /^[A-Za-z]:/.test(uri) || uri.includes('\\')) {
-          problems.push(`${rat}.artifactLocation.uri "${uri}" is not a relative forward-slash path`);
+          problems.push(
+            `${rat}.artifactLocation.uri "${uri}" is not a relative forward-slash path`,
+          );
         }
         if (!Number.isInteger(region.startLine) || region.startLine < startLineMin) {
-          problems.push(`${rat}.region.startLine "${region.startLine}" violates minimum ${startLineMin}`);
+          problems.push(
+            `${rat}.region.startLine "${region.startLine}" violates minimum ${startLineMin}`,
+          );
         }
         if (region.startColumn !== undefined && region.startColumn < startColumnMin) {
-          problems.push(`${rat}.region.startColumn "${region.startColumn}" violates minimum ${startColumnMin}`);
+          problems.push(
+            `${rat}.region.startColumn "${region.startColumn}" violates minimum ${startColumnMin}`,
+          );
         }
       });
     });
@@ -297,7 +333,14 @@ describe('buildSarifLog — schema conformance', () => {
       ok: false,
       summary: { files: 2, requirements: 2, valid: 0, errors: 2, warnings: 0 },
       diagnostics: [
-        { id: 'EARS-E006', severity: 'error', file: 'C:\\work\\a.ears', line: 1, col: 2, message: 'm' },
+        {
+          id: 'EARS-E006',
+          severity: 'error',
+          file: 'C:\\work\\a.ears',
+          line: 1,
+          col: 2,
+          message: 'm',
+        },
         { id: 'EARS-E007', severity: 'error', file: '/abs/b.ears', line: 3, message: 'n' },
       ],
     };

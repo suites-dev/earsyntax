@@ -23,12 +23,12 @@ Observed conventions of AWS Kiro's `requirements.md`, and exactly what the
 
 ## What the profile relaxes (and only this)
 
-| Relaxation | Dialect field | Effect |
-|---|---|---|
-| Case-insensitive / all-caps keywords | `keywordCase: 'case-insensitive'` | `WHEN`, `IF`, `WHILE`, `WHERE`, `THEN`, `SHALL` are accepted; strict requires `When`/`If`/`While`/`Where` and lowercase `shall` (else `EARS-E014`). |
-| Literal `THE SYSTEM` | `allowLiteralSystemName: ['THE SYSTEM']` | `THE SYSTEM` is accepted as the system name; strict expects the canonical `the <system>` form. |
-| Optional leading comma | `commaAfterLeadingClause: 'optional'` | `WHEN <event> THE SYSTEM ...` with no comma is accepted; strict requires the comma (else `EARS-E015`). |
-| User-story wrapper skipped | `allowStoryWrapper: true` | `As a ..., I want ..., so that ...` frame lines are non-requirement content, not parsed as EARS. |
+| Relaxation                           | Dialect field                            | Effect                                                                                                                                              |
+| ------------------------------------ | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Case-insensitive / all-caps keywords | `keywordCase: 'case-insensitive'`        | `WHEN`, `IF`, `WHILE`, `WHERE`, `THEN`, `SHALL` are accepted; strict requires `When`/`If`/`While`/`Where` and lowercase `shall` (else `EARS-E014`). |
+| Literal `THE SYSTEM`                 | `allowLiteralSystemName: ['THE SYSTEM']` | `THE SYSTEM` is accepted as the system name; strict expects the canonical `the <system>` form.                                                      |
+| Optional leading comma               | `commaAfterLeadingClause: 'optional'`    | `WHEN <event> THE SYSTEM ...` with no comma is accepted; strict requires the comma (else `EARS-E015`).                                              |
+| User-story wrapper skipped           | `allowStoryWrapper: true`                | `As a ..., I want ..., so that ...` frame lines are non-requirement content, not parsed as EARS.                                                    |
 
 ## What the profile does NOT relax
 

@@ -38,7 +38,12 @@ describe('candidatesToFindings', () => {
       {
         file: 'spec.ears',
         candidates: [
-          candidate({ text: 'This is not a requirement at all.', line: 12, col: 7, file: 'spec.ears' }),
+          candidate({
+            text: 'This is not a requirement at all.',
+            line: 12,
+            col: 7,
+            file: 'spec.ears',
+          }),
         ],
       },
     ];
@@ -56,7 +61,15 @@ describe('candidatesToFindings', () => {
     const files: CandidateFile[] = [
       {
         file: 'spec.ears',
-        candidates: [{ file: 'spec.ears', line: 3, text: 'Nonsense line.', locatorRuleId: 'r', profile: 'strict' }],
+        candidates: [
+          {
+            file: 'spec.ears',
+            line: 3,
+            text: 'Nonsense line.',
+            locatorRuleId: 'r',
+            profile: 'strict',
+          },
+        ],
       },
     ];
     const findings = candidatesToFindings(files, STRICT);
@@ -65,7 +78,12 @@ describe('candidatesToFindings', () => {
 
   it('reports a clean requirement as valid with no diagnostics', () => {
     const files: CandidateFile[] = [
-      { file: 'a.ears', candidates: [candidate({ text: 'The billing service shall verify the signature.', line: 1 })] },
+      {
+        file: 'a.ears',
+        candidates: [
+          candidate({ text: 'The billing service shall verify the signature.', line: 1 }),
+        ],
+      },
     ];
     const findings = candidatesToFindings(files, STRICT);
     expect(findings.ok).toBe(true);
@@ -98,7 +116,9 @@ describe('candidatesToFindings', () => {
     const files: CandidateFile[] = [
       {
         file: 'a.ears',
-        candidates: [candidate({ requirementId: 'REQ-007', text: 'Bad requirement text.', line: 2 })],
+        candidates: [
+          candidate({ requirementId: 'REQ-007', text: 'Bad requirement text.', line: 2 }),
+        ],
       },
     ];
     const findings = candidatesToFindings(files, STRICT);

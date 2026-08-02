@@ -53,10 +53,7 @@ export interface DialectPayload {
 }
 
 /** A fallback sentence for a locator rule that carries no `note`, mentioning the file kinds. */
-function fallbackRuleSentence(
-  rule: Profile['locator']['include'][number],
-  kinds: string,
-): string {
+function fallbackRuleSentence(rule: Profile['locator']['include'][number], kinds: string): string {
   switch (rule.kind) {
     case 'every-line':
       return `Every non-empty line of ${kinds} files.`;
@@ -182,37 +179,46 @@ const FROM_RULES: readonly string[] = [
  */
 export const FIX_BY_ID: Readonly<Record<string, string>> = {
   'EARS-E001': 'Use the specific canonical system name so it matches exactly one catalog entry.',
-  'EARS-E002': 'Use the catalog canonical system name, or confirm the system with the catalog owner.',
+  'EARS-E002':
+    'Use the catalog canonical system name, or confirm the system with the catalog owner.',
   'EARS-E003': 'Fill the empty leading clause body, or remove the clause if it was accidental.',
   'EARS-E004': 'Add the response after shall, or flag a question if the source states none.',
-  'EARS-E005': 'Reorder the leading clauses to While, then Where, then When, then If, before the system shall response.',
+  'EARS-E005':
+    'Reorder the leading clauses to While, then Where, then When, then If, before the system shall response.',
   'EARS-E006': 'Add the missing then: If <condition>, then the <system> shall <response>.',
   'EARS-E007': 'Add a single shall response boundary stating one obligation.',
   'EARS-E008': 'Insert the system name before shall: the <system> shall <response>.',
   'EARS-E009': 'Split into separate requirements, one shall each.',
-  'EARS-E010': 'Rewrite the line into a canonical EARS template, or move it out of the requirements region.',
+  'EARS-E010':
+    'Rewrite the line into a canonical EARS template, or move it out of the requirements region.',
   'EARS-E011': 'Remove the empty group or supply the missing operand in the clause expression.',
   'EARS-E012': 'Fix the malformed operator run (for example a trailing and or a leading or).',
   'EARS-E013': 'Balance the parentheses in the clause expression.',
   'EARS-E014': 'Match the EARS keyword casing the profile requires.',
-  'EARS-E015': 'Add the comma after the leading clause: When <trigger>, the <system> shall <response>.',
-  'EARS-E016': 'Restate the prohibition as a positive obligation, or use a profile that allows shall not.',
+  'EARS-E015':
+    'Add the comma after the leading clause: When <trigger>, the <system> shall <response>.',
+  'EARS-E016':
+    'Restate the prohibition as a positive obligation, or use a profile that allows shall not.',
   'EARS-W001': 'Use the specific canonical event name.',
   'EARS-W002': 'Use the canonical event name, or add the event to the catalog if it is correct.',
   'EARS-W003': 'Use the specific canonical feature name.',
-  'EARS-W004': 'Use the canonical feature name, or add the feature to the catalog if it is correct.',
+  'EARS-W004':
+    'Use the canonical feature name, or add the feature to the catalog if it is correct.',
   'EARS-W005': 'Use the specific canonical state name.',
   'EARS-W006': 'Use the canonical state name, or add the state to the catalog if it is correct.',
-  'EARS-W007': 'Add a requirement that uses the cataloged term if one is missing, or note the gap; do not invent behaviour to satisfy coverage.',
+  'EARS-W007':
+    'Add a requirement that uses the cataloged term if one is missing, or note the gap; do not invent behaviour to satisfy coverage.',
   'EARS-W008': 'Disambiguate the term so it matches one catalog entry, or use the canonical name.',
   'EARS-W009': 'Align the unresolved term in the clause with the catalog.',
   'EARS-W010': 'Add parentheses to the mixed and/or expression to make grouping explicit.',
-  'EARS-W011': 'Align the clause term with a catalog entry, or add the term to the catalog if it is correct.',
+  'EARS-W011':
+    'Align the clause term with a catalog entry, or add the term to the catalog if it is correct.',
   'EARS-W012': 'Prefer the canonical catalog name over the matched alias.',
   'EARS-W013': 'Split the semicolon-joined responses into separate requirements.',
   'EARS-W014': 'Rewrite the sentence into a clean EARS template.',
   'EARS-W015': 'Move the trailing text into the requirement or remove it.',
-  'EARS-W016': 'Replace the vague term with an observable, bounded response, or flag a question if the bound is unknown.',
+  'EARS-W016':
+    'Replace the vague term with an observable, bounded response, or flag a question if the bound is unknown.',
 };
 
 /** Per-id fix rules for the diagnostics a repair run reports, in first-seen order, deduped. */

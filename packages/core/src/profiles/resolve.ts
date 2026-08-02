@@ -25,8 +25,7 @@ export interface UnknownProfileError {
 
 /** The outcome of {@link resolveProfile}. */
 export type ResolveProfileResult =
-  | { ok: true; profile: Profile }
-  | { ok: false; error: UnknownProfileError };
+  { ok: true; profile: Profile } | { ok: false; error: UnknownProfileError };
 
 function isProfileName(name: string): name is ProfileName {
   return (BUILTIN_PROFILE_NAMES as readonly string[]).includes(name);

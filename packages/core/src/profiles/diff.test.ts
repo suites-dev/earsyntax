@@ -41,7 +41,9 @@ describe('diffProfile', () => {
   });
 
   test('locates is generated from locator data', () => {
-    expect(diffProfile(BUILTIN_PROFILES.strict).locates).toBe('every non-empty line in ears, text files.');
+    expect(diffProfile(BUILTIN_PROFILES.strict).locates).toBe(
+      'every non-empty line in ears, text files.',
+    );
     expect(diffProfile(BUILTIN_PROFILES.openspec).locates).toContain('### Requirement: blocks');
     expect(diffProfile(BUILTIN_PROFILES.openspec).locates).toContain('#### Scenario: blocks');
   });

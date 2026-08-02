@@ -51,7 +51,11 @@ function runExtract(opts: {
     profile: opts.profile ?? 'strict',
     color: false,
   };
-  const emitter: Emitter = { json: global.json, painter: createPainter(false), write: () => undefined };
+  const emitter: Emitter = {
+    json: global.json,
+    painter: createPainter(false),
+    write: () => undefined,
+  };
   const context: CommandContext = { args, global, cwd: opts.cwd ?? FIXTURES, emitter };
   return extractCommand(context);
 }
@@ -169,7 +173,6 @@ describe('extract snapshots against profile fixtures', () => {
       expect(result.response.summary).toEqual({ files: 1, candidates: 0 });
     });
   }
-
 });
 
 describe('extract candidate projection', () => {

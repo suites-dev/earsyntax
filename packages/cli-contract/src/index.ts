@@ -16,7 +16,12 @@
  * preserve input order, so identical input always produces identical output.
  */
 
-export type { Findings, FindingsDiagnostic, FindingsSummary, FindingsSeverity } from '@earsyntax/core';
+export type {
+  Findings,
+  FindingsDiagnostic,
+  FindingsSummary,
+  FindingsSeverity,
+} from '@earsyntax/core';
 
 export { canonicalizeFindings, serializeFindings } from './findings-report.js';
 
@@ -38,7 +43,13 @@ export type {
   SarifRule,
   SarifRun,
 } from './sarif.js';
-export { buildSarifLog, serializeSarifLog, SARIF_SCHEMA, SARIF_TOOL_NAME, SARIF_VERSION } from './sarif.js';
+export {
+  buildSarifLog,
+  serializeSarifLog,
+  SARIF_SCHEMA,
+  SARIF_TOOL_NAME,
+  SARIF_VERSION,
+} from './sarif.js';
 
 export type { PrettyModel, PrettyRecord, PrettySummary } from './pretty.js';
 export { buildPrettyModel } from './pretty.js';

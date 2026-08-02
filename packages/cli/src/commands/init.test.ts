@@ -133,9 +133,7 @@ describe('runInit — idempotency', () => {
     const second = runInit({ agents: 'claude,codex', hosts: 'kiro,openspec', cwd: CWD }, deps);
     expect(payload(second).written).toEqual([]);
     expect(payload(second).updated).toEqual([]);
-    expect(payload(second).skipped).toEqual(
-      [...payload(first).written].sort(),
-    );
+    expect(payload(second).skipped).toEqual([...payload(first).written].sort());
 
     expect(files.size).toBe(snapshot.size);
     for (const [path, content] of files) {
@@ -310,7 +308,9 @@ describe('initCommand and dispatcher — real disk', () => {
     const body = JSON.parse(second.out) as { written: string[]; skipped: string[] };
     expect(body.written).toEqual([]);
     expect(body.skipped.length).toBeGreaterThan(0);
-    expect(readFileSync(resolve(dir, '.claude/commands/earsyntax-author.md'), 'utf8')).toBe(authored);
+    expect(readFileSync(resolve(dir, '.claude/commands/earsyntax-author.md'), 'utf8')).toBe(
+      authored,
+    );
   });
 
   it('blanks pretty output under --quiet but still writes', () => {
@@ -320,7 +320,9 @@ describe('initCommand and dispatcher — real disk', () => {
     );
     expect(res.code).toBe(0);
     expect(res.out.trim()).toBe('');
-    expect(readFileSync(resolve(dir, '.cursor/rules/earsyntax.mdc'), 'utf8')).toContain('earsyntax');
+    expect(readFileSync(resolve(dir, '.cursor/rules/earsyntax.mdc'), 'utf8')).toContain(
+      'earsyntax',
+    );
   });
 });
 

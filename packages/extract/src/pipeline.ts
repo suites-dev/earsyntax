@@ -178,7 +178,8 @@ function structuredCandidates(
   path: string,
   profile: Profile,
 ): { candidates: Candidate[]; notices: PipelineNotice[] } {
-  const result: ExtractResult = kind === 'yaml' ? extractYaml(content, path) : extractJson(content, path);
+  const result: ExtractResult =
+    kind === 'yaml' ? extractYaml(content, path) : extractJson(content, path);
   const locatorRuleId = `structured.${kind}`;
   const candidates: Candidate[] = result.items.map((item) => {
     const candidate: Candidate = {

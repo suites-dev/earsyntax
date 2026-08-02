@@ -16,7 +16,8 @@ describe('runPipeline', () => {
       files: [
         {
           path: '-',
-          content: 'When a payment webhook arrives, the billing service shall verify the signature.',
+          content:
+            'When a payment webhook arrives, the billing service shall verify the signature.',
         },
       ],
       profile: strict,
@@ -43,14 +44,23 @@ describe('runPipeline', () => {
     expect(findings.summary.files).toBe(1);
     expect(findings.summary.requirements).toBe(0);
     expect(notices).toHaveLength(1);
-    expect(notices[0]).toMatchObject({ code: 'extract.malformed_yaml', severity: 'error', file: 'bad.yaml' });
+    expect(notices[0]).toMatchObject({
+      code: 'extract.malformed_yaml',
+      severity: 'error',
+      file: 'bad.yaml',
+    });
   });
 });
 
 describe('extractCandidates', () => {
   it('extracts structured YAML requirements with a synthetic locator rule id', () => {
-    const content = ['requirements:', '  - id: REQ-001', '    text: The system shall stop.'].join('\n');
-    const { candidates } = extractCandidates({ files: [{ path: 'r.yaml', content }], profile: strict });
+    const content = ['requirements:', '  - id: REQ-001', '    text: The system shall stop.'].join(
+      '\n',
+    );
+    const { candidates } = extractCandidates({
+      files: [{ path: 'r.yaml', content }],
+      profile: strict,
+    });
     expect(candidates).toHaveLength(1);
     expect(candidates[0]).toMatchObject({
       file: 'r.yaml',
@@ -64,7 +74,10 @@ describe('extractCandidates', () => {
 
   it('strips a leading BOM before parsing JSON', () => {
     const json = '﻿{"requirements":[{"id":"REQ-001","text":"The system shall stop."}]}';
-    const { candidates, notices } = extractCandidates({ files: [{ path: 'r.json', content: json }], profile: strict });
+    const { candidates, notices } = extractCandidates({
+      files: [{ path: 'r.json', content: json }],
+      profile: strict,
+    });
     expect(notices).toHaveLength(0);
     expect(candidates).toHaveLength(1);
     expect(candidates[0].requirementId).toBe('REQ-001');

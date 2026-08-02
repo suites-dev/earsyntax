@@ -26,7 +26,11 @@
     { "id": "EARS-W007", "oldCode": "catalog.term_unreferenced", "defaultSeverity": "warning" },
     { "id": "EARS-W008", "oldCode": "expr.ambiguous_term", "defaultSeverity": "warning" },
     { "id": "EARS-W009", "oldCode": "expr.mixed_unresolved_terms", "defaultSeverity": "warning" },
-    { "id": "EARS-W010", "oldCode": "expr.operator_precedence_warning", "defaultSeverity": "warning" },
+    {
+      "id": "EARS-W010",
+      "oldCode": "expr.operator_precedence_warning",
+      "defaultSeverity": "warning"
+    },
     { "id": "EARS-W011", "oldCode": "expr.unknown_term", "defaultSeverity": "warning" },
     { "id": "EARS-W012", "oldCode": "lint.alias_used", "defaultSeverity": "warning" },
     { "id": "EARS-W013", "oldCode": "lint.multiple_responses", "defaultSeverity": "warning" },

@@ -134,7 +134,10 @@ function renderPretty(candidates: readonly FacadeCandidate[], quiet: boolean): s
 export function extractCommand(context: CommandContext): CommandResult {
   const patterns = context.args.positionals;
   if (patterns.length === 0) {
-    throw usageError('extract.no_paths', 'Provide one or more files (or `-` for stdin) to extract.');
+    throw usageError(
+      'extract.no_paths',
+      'Provide one or more files (or `-` for stdin) to extract.',
+    );
   }
 
   const resolved = resolveProfile(context.global.profile);

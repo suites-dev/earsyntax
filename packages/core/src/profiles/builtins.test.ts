@@ -37,7 +37,11 @@ describe('built-in profiles', () => {
 });
 
 /** Whether ears-x's value for one dialect field is equal to or looser than strict's. */
-function fieldIsLooserOrEqual(strict: Profile, earsx: Profile, field: keyof Profile['dialect']): boolean {
+function fieldIsLooserOrEqual(
+  strict: Profile,
+  earsx: Profile,
+  field: keyof Profile['dialect'],
+): boolean {
   const s = strict.dialect;
   const x = earsx.dialect;
   switch (field) {
@@ -46,10 +50,15 @@ function fieldIsLooserOrEqual(strict: Profile, earsx: Profile, field: keyof Prof
       return s.keywordCase === 'strict' || x.keywordCase === s.keywordCase;
     case 'commaAfterLeadingClause':
       // required is the tightest; optional is looser.
-      return s.commaAfterLeadingClause === 'required' || x.commaAfterLeadingClause === s.commaAfterLeadingClause;
+      return (
+        s.commaAfterLeadingClause === 'required' ||
+        x.commaAfterLeadingClause === s.commaAfterLeadingClause
+      );
     case 'allowLiteralSystemName':
       // Superset of accepted literals is looser.
-      return s.allowLiteralSystemName.every((literal) => x.allowLiteralSystemName.includes(literal));
+      return s.allowLiteralSystemName.every((literal) =>
+        x.allowLiteralSystemName.includes(literal),
+      );
     case 'allowStoryWrapper':
     case 'allowFrameMetadata':
     case 'allowProhibition':

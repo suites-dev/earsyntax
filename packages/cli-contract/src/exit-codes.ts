@@ -30,8 +30,6 @@ export const EXIT_USAGE = 2;
  * @param findings The findings to inspect.
  * @returns {@link EXIT_OK} or {@link EXIT_LINT_ERRORS}.
  */
-export function exitCodeForFindings(
-  findings: Findings,
-): typeof EXIT_OK | typeof EXIT_LINT_ERRORS {
+export function exitCodeForFindings(findings: Findings): typeof EXIT_OK | typeof EXIT_LINT_ERRORS {
   return findings.summary.errors > 0 ? EXIT_LINT_ERRORS : EXIT_OK;
 }

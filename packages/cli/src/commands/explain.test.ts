@@ -45,7 +45,10 @@ import type { Emitter } from '../response.js';
 import { explainCommand } from './explain.js';
 
 /** Build a {@link CommandContext} for the handler with the given positional ids. */
-function makeContext(positionals: string[], options: { json?: boolean; quiet?: boolean } = {}): CommandContext {
+function makeContext(
+  positionals: string[],
+  options: { json?: boolean; quiet?: boolean } = {},
+): CommandContext {
   const args: ParsedArgs = { positionals, booleans: new Set(), values: new Map() };
   const global: GlobalOptions = {
     json: options.json ?? false,
@@ -56,7 +59,11 @@ function makeContext(positionals: string[], options: { json?: boolean; quiet?: b
     cwd: '/work',
     color: false,
   };
-  const emitter: Emitter = { json: global.json, painter: createPainter(false), write: () => undefined };
+  const emitter: Emitter = {
+    json: global.json,
+    painter: createPainter(false),
+    write: () => undefined,
+  };
   return { args, global, cwd: '/work', emitter };
 }
 
@@ -116,7 +123,9 @@ describe('explain — deprecated alias resolution', () => {
       expect(payload.id).toBe(entry.id);
       expect(payload.requestedId).toBe(entry.oldCode);
       expect(payload.alias).toBe(true);
-      expect(payload.deprecationNote).toBe(`${entry.oldCode} is a deprecated alias for ${entry.id}.`);
+      expect(payload.deprecationNote).toBe(
+        `${entry.oldCode} is a deprecated alias for ${entry.id}.`,
+      );
       // The resolved content is the same entry as the current-id path.
       expect(payload.meaning).toBe(entry.meaning);
     }
@@ -216,7 +225,10 @@ const EXAMPLE_CONTEXT: Record<string, ExampleContext> = {
         { id: 'F2', name: 'retries are enabled' },
       ],
     },
-    goodCatalog: { systems: SYSTEM, features: [{ id: 'F3', name: 'automatic retries are enabled' }] },
+    goodCatalog: {
+      systems: SYSTEM,
+      features: [{ id: 'F3', name: 'automatic retries are enabled' }],
+    },
   },
   'EARS-W004': {
     badCatalog: { systems: SYSTEM, features: [{ id: 'F1', name: 'the premium tier is enabled' }] },
@@ -244,7 +256,10 @@ const EXAMPLE_CONTEXT: Record<string, ExampleContext> = {
         { id: 'E2', name: 'the reset is triggered' },
       ],
     },
-    goodCatalog: { systems: SYSTEM, events: [{ id: 'E3', name: 'the watchdog reset is triggered' }] },
+    goodCatalog: {
+      systems: SYSTEM,
+      events: [{ id: 'E3', name: 'the watchdog reset is triggered' }],
+    },
   },
   'EARS-W009': {
     badCatalog: { systems: SYSTEM, states: [{ id: 'T1', name: 'A' }] },
@@ -307,9 +322,9 @@ const NON_EXECUTABLE: Record<string, { reason: string; guard: () => void }> = {
       const strict = codesFor('timer reset maybe when idle');
       expect(strict).not.toContain('EARS-W014');
       expect(strict).toContain('EARS-E010');
-      const guided = lintEars('timer reset maybe when idle', undefined, { mode: 'guided' }).diagnostics.map(
-        (diagnostic) => idForCode(diagnostic.code),
-      );
+      const guided = lintEars('timer reset maybe when idle', undefined, {
+        mode: 'guided',
+      }).diagnostics.map((diagnostic) => idForCode(diagnostic.code));
       expect(guided).toContain('EARS-W014');
     },
   },
@@ -346,7 +361,9 @@ describe('explain — the registry examples execute as documented', () => {
       const badCodes = codesFor(entry.badExample, context.badCatalog);
       const goodCodes = codesFor(entry.goodExample, context.goodCatalog);
       expect(badCodes, `${entry.id} bad example should emit ${entry.id}`).toContain(entry.id);
-      expect(goodCodes, `${entry.id} good example should not emit ${entry.id}`).not.toContain(entry.id);
+      expect(goodCodes, `${entry.id} good example should not emit ${entry.id}`).not.toContain(
+        entry.id,
+      );
     }
   });
 
@@ -395,7 +412,9 @@ describe('explain — errors, envelope, and purity', () => {
   it('exits 2 when more than one id is given', () => {
     const result = explainCommand(makeContext(['EARS-E001', 'EARS-E002'], { json: true }));
     expect(result.exitCode).toBe(2);
-    expect((result.response.diagnostics as { code: string }[])[0].code).toBe('explain.too_many_args');
+    expect((result.response.diagnostics as { code: string }[])[0].code).toBe(
+      'explain.too_many_args',
+    );
   });
 
   it('is pure JSON: the payload round-trips with no undefined or functions', () => {
@@ -403,7 +422,9 @@ describe('explain — errors, envelope, and purity', () => {
     const roundTripped = JSON.parse(JSON.stringify(result.response));
     expect(roundTripped.id).toBe('EARS-E007');
     expect(roundTripped.alias).toBe(true);
-    expect(roundTripped.deprecationNote).toBe('ears.missing_shall is a deprecated alias for EARS-E007.');
+    expect(roundTripped.deprecationNote).toBe(
+      'ears.missing_shall is a deprecated alias for EARS-E007.',
+    );
   });
 
   it('keeps the base envelope key order: version, command, ok, then payload, then next', () => {

@@ -50,7 +50,11 @@ function runDoctor(opts: { cwd: string; json?: boolean; quiet?: boolean }): Comm
     profile: 'strict',
     color: false,
   };
-  const emitter: Emitter = { json: global.json, painter: createPainter(false), write: () => undefined };
+  const emitter: Emitter = {
+    json: global.json,
+    painter: createPainter(false),
+    write: () => undefined,
+  };
   const context: CommandContext = { args, global, cwd: opts.cwd, emitter };
   return doctorCommand(context);
 }
@@ -163,13 +167,13 @@ describe('doctor: multi-host repo', () => {
         forAgent: true,
       },
       {
-        command:
-          'earsyntax validate "openspec/specs/**" "openspec/changes/**" --profile openspec',
+        command: 'earsyntax validate "openspec/specs/**" "openspec/changes/**" --profile openspec',
         reason: 'Validate OpenSpec specs and changes with the OpenSpec profile.',
         forAgent: true,
       },
       {
-        command: 'earsyntax init --agent claude,codex,cursor,copilot,gemini --host kiro,speckit,openspec',
+        command:
+          'earsyntax init --agent claude,codex,cursor,copilot,gemini --host kiro,speckit,openspec',
         reason: 'Render integration files for the detected hosts and agents.',
         forAgent: true,
       },
@@ -263,7 +267,9 @@ describe('doctor: pretty output', () => {
     expect(pretty).toContain('Agents:');
     expect(pretty).toContain('claude');
     expect(pretty).toContain('Recommended commands:');
-    expect(pretty).toContain('earsyntax init --agent claude,codex,cursor,copilot,gemini --host kiro,speckit,openspec');
+    expect(pretty).toContain(
+      'earsyntax init --agent claude,codex,cursor,copilot,gemini --host kiro,speckit,openspec',
+    );
   });
 
   it('reports no detections plainly for an empty repo', () => {

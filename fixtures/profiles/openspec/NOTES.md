@@ -31,10 +31,10 @@ matching key off).
 The profile uses two `block` locator rules (see `docs/contracts/profile.md`,
 "LocatorRule"):
 
-| Rule id | `blockPrefix` | Purpose |
-|---|---|---|
-| `openspec.requirement` | `### Requirement:` | Carries the one EARS requirement statement per requirement. |
-| `openspec.scenario` | `#### Scenario:` | Retained per the profile contract; contributes candidates only if a stray EARS-shaped line appears inside a scenario. |
+| Rule id                | `blockPrefix`      | Purpose                                                                                                               |
+| ---------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------- |
+| `openspec.requirement` | `### Requirement:` | Carries the one EARS requirement statement per requirement.                                                           |
+| `openspec.scenario`    | `#### Scenario:`   | Retained per the profile contract; contributes candidates only if a stray EARS-shaped line appears inside a scenario. |
 
 Candidate selection for a located block is its **first EARS-shaped body line** (a
 line beginning with `When` / `While` / `Where` / `If`, or matching the
@@ -114,12 +114,12 @@ correct for a near-strict profile.
 
 ## Expected-diagnostics matrix
 
-| Fixture | Profile | Candidates | Expected findings |
-|---|---|---|---|
-| `spec.md` | `openspec` | 5 (one per `### Requirement:`) | clean (zero findings) |
-| `change.md` | `openspec` | 4 (2 ADDED, 1 MODIFIED, 1 REMOVED) | clean (zero findings) |
-| `project.md` | `openspec` | 0 | clean, and no candidate is located |
-| `spec.md` / `change.md` | `strict` | 0 (markdown not in `strict.documentKinds`) | empty result, no findings |
+| Fixture                 | Profile    | Candidates                                 | Expected findings                  |
+| ----------------------- | ---------- | ------------------------------------------ | ---------------------------------- |
+| `spec.md`               | `openspec` | 5 (one per `### Requirement:`)             | clean (zero findings)              |
+| `change.md`             | `openspec` | 4 (2 ADDED, 1 MODIFIED, 1 REMOVED)         | clean (zero findings)              |
+| `project.md`            | `openspec` | 0                                          | clean, and no candidate is located |
+| `spec.md` / `change.md` | `strict`   | 0 (markdown not in `strict.documentKinds`) | empty result, no findings          |
 
 There is no strict-failure fixture because the dialect is not relaxed (see
 above). All extracted candidate statements were checked clean against the base

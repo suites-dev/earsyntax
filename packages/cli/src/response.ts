@@ -52,7 +52,12 @@ export interface Emitter {
 }
 
 /** Emit a command result: raw stdout if present, else JSON when `--json`, else the pretty string. */
-export function emitResult(emitter: Emitter, response: FacadeResponse, pretty: string, raw?: string): void {
+export function emitResult(
+  emitter: Emitter,
+  response: FacadeResponse,
+  pretty: string,
+  raw?: string,
+): void {
   if (raw !== undefined) {
     emitter.write(raw.endsWith('\n') ? raw : `${raw}\n`);
     return;

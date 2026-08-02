@@ -28,7 +28,12 @@ import {
   type PipelineNotice,
   runPipeline,
 } from '@earsyntax/extract';
-import { buildSarifLog, canonicalizeFindings, type Findings, serializeSarifLog } from '@earsyntax/cli-contract';
+import {
+  buildSarifLog,
+  canonicalizeFindings,
+  type Findings,
+  serializeSarifLog,
+} from '@earsyntax/cli-contract';
 import type { CommandContext, CommandResult } from '../context.js';
 import type { FacadeDiagnostic, FacadeResponse, NextAction } from '../facade-types.js';
 import { buildResponse } from '../response.js';
@@ -95,8 +100,7 @@ interface ResolvedFile {
 
 /** The outcome of resolving the positional inputs into pipeline files. */
 type ResolveInputsOutcome =
-  | { ok: true; files: PipelineFile[] }
-  | { ok: false; result: ValidateResult };
+  { ok: true; files: PipelineFile[] } | { ok: false; result: ValidateResult };
 
 /**
  * Run a stateless validation and frame the result.
@@ -110,12 +114,18 @@ type ResolveInputsOutcome =
  * @param deps Injectable disk and stdin access; defaults to real I/O.
  * @returns The response, pretty text, and exit code.
  */
-export function runValidate(inputs: ValidateInputs, deps: ValidateDeps = DEFAULT_DEPS): ValidateResult {
+export function runValidate(
+  inputs: ValidateInputs,
+  deps: ValidateDeps = DEFAULT_DEPS,
+): ValidateResult {
   // `--json` and `--sarif` are mutually exclusive. The dispatcher rejects the
   // combination before reaching a handler (cli.exclusive_flags); this in-band
   // guard covers direct callers of runValidate so the invariant holds either way.
   if (inputs.sarif && inputs.json) {
-    return usageResult('cli.conflicting_flags', 'The --json and --sarif flags are mutually exclusive.');
+    return usageResult(
+      'cli.conflicting_flags',
+      'The --json and --sarif flags are mutually exclusive.',
+    );
   }
 
   const resolved = resolveProfile(inputs.profileName);
@@ -273,7 +283,11 @@ function frame(
     { findings },
   );
 
-  const framed: ValidateResult = { response, pretty: prettyFindings(findings, diagnostics), exitCode };
+  const framed: ValidateResult = {
+    response,
+    pretty: prettyFindings(findings, diagnostics),
+    exitCode,
+  };
   if (sarif) {
     framed.raw = serializeSarifLog(buildSarifLog(findings));
   }
@@ -322,7 +336,9 @@ function prettyFindings(findings: Findings, diagnostics: FacadeDiagnostic[]): st
   }
   for (const diagnostic of diagnostics) {
     const at = diagnostic.line === undefined ? '' : `:${diagnostic.line}`;
-    lines.push(`${diagnostic.path ?? ''}${at} ${diagnostic.severity} ${diagnostic.code} ${diagnostic.message}`);
+    lines.push(
+      `${diagnostic.path ?? ''}${at} ${diagnostic.severity} ${diagnostic.code} ${diagnostic.message}`,
+    );
   }
   const { valid, requirements, files, errors, warnings } = findings.summary;
   lines.push(
@@ -339,7 +355,12 @@ function usageResult(code: string, message: string, path?: string): ValidateResu
     message,
     ...(path === undefined ? {} : { path }),
   };
-  const response = buildResponse({ command: 'validate', ok: false, diagnostics: [diagnostic], next: [] });
+  const response = buildResponse({
+    command: 'validate',
+    ok: false,
+    diagnostics: [diagnostic],
+    next: [],
+  });
   return { response, pretty: `error ${code}: ${message}`, exitCode: 2 };
 }
 

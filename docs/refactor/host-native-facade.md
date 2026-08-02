@@ -29,14 +29,14 @@ added.
 
 ## Global flags
 
-| Flag | Applies to | Meaning |
-|---|---|---|
-| `--profile <name>` | validate, extract, instructions | Select a built-in profile: `strict` (default), `ears-x`, `kiro`, `speckit`, `openspec`. |
-| `--json` | all | Emit the JSON contract instead of pretty text. |
-| `--sarif` | validate only | Emit SARIF 2.1.0 (projection of the findings model). Rejected on any other command with exit `2`. |
-| `--strict` | validate (and repair/review instructions that embed findings) | Upgrade warnings to errors at the findings layer (see `docs/contracts/findings.md`). |
-| `--quiet` | all | Suppress pretty non-essential output; JSON output is unaffected. |
-| `--cwd <dir>` | all | Directory to resolve relative paths and detect the repo root from. Defaults to the process working directory. |
+| Flag               | Applies to                                                    | Meaning                                                                                                       |
+| ------------------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `--profile <name>` | validate, extract, instructions                               | Select a built-in profile: `strict` (default), `ears-x`, `kiro`, `speckit`, `openspec`.                       |
+| `--json`           | all                                                           | Emit the JSON contract instead of pretty text.                                                                |
+| `--sarif`          | validate only                                                 | Emit SARIF 2.1.0 (projection of the findings model). Rejected on any other command with exit `2`.             |
+| `--strict`         | validate (and repair/review instructions that embed findings) | Upgrade warnings to errors at the findings layer (see `docs/contracts/findings.md`).                          |
+| `--quiet`          | all                                                           | Suppress pretty non-essential output; JSON output is unaffected.                                              |
+| `--cwd <dir>`      | all                                                           | Directory to resolve relative paths and detect the repo root from. Defaults to the process working directory. |
 
 `--profile` defaults to `strict`. `--sarif` and `--json` are mutually
 exclusive; passing both is a usage error (exit `2`). There is no `--work`,
@@ -45,11 +45,11 @@ exclusive; passing both is a usage error (exit `2`). There is no `--work`,
 
 ## Exit codes (frozen)
 
-| Code | Meaning |
-|---|---|
-| `0` | Success, or a findings run with no error-severity findings. |
-| `1` | A findings run produced at least one error-severity finding. `validate` is the command that returns `1`. |
-| `2` | Usage or environment failure: bad flag, unknown profile, unknown diagnostic id, missing path, unreadable file, `--sarif` on a non-validate command, `--from` on a non-author/convert mode. |
+| Code | Meaning                                                                                                                                                                                    |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `0`  | Success, or a findings run with no error-severity findings.                                                                                                                                |
+| `1`  | A findings run produced at least one error-severity finding. `validate` is the command that returns `1`.                                                                                   |
+| `2`  | Usage or environment failure: bad flag, unknown profile, unknown diagnostic id, missing path, unreadable file, `--sarif` on a non-validate command, `--from` on a non-author/convert mode. |
 
 Exit code `3` is removed. It existed only for workspace refusals (overwrite
 protection over managed state, the acceptance gate, stale-source refusal). With
@@ -64,17 +64,17 @@ keys, then `next`:
 
 ```ts
 interface Envelope {
-  version: string;              // installed @earsyntax/cli package version
-  command: string;              // "validate", "instructions author", ...
-  ok: boolean;                  // no error-severity finding and no usage error
-  root?: string;               // absolute repo root, when the command detects one
+  version: string; // installed @earsyntax/cli package version
+  command: string; // "validate", "instructions author", ...
+  ok: boolean; // no error-severity finding and no usage error
+  root?: string; // absolute repo root, when the command detects one
   // ...command-specific keys...
   diagnostics?: FacadeDiagnostic[]; // environment/usage notices, NOT lint findings
-  next: NextAction[];           // always present; may be empty
+  next: NextAction[]; // always present; may be empty
 }
 
 interface FacadeDiagnostic {
-  code: string;                 // "cli.unknown_profile", "validate.missing_file", ...
+  code: string; // "cli.unknown_profile", "validate.missing_file", ...
   severity: 'error' | 'warning';
   message: string;
   path?: string;
@@ -82,7 +82,7 @@ interface FacadeDiagnostic {
 }
 
 interface NextAction {
-  command: string;              // a runnable earsyntax command
+  command: string; // a runnable earsyntax command
   reason: string;
   forAgent?: boolean;
 }
@@ -234,12 +234,12 @@ Payload keys: `mode`, `file`, `profile`, optional `sourceFile` (see `--from`),
 
 Per-mode content:
 
-| Mode | `findings` present | `rules` focus |
-|---|---|---|
-| `author` | no | Write new EARS requirements into the host file's requirements region only. |
-| `convert` | no | Rewrite natural-language requirements already in the host file into EARS in place. |
-| `repair` | yes | Change only what the diagnostics justify, keyed to their ids. |
-| `review` | yes | Produce a human review summary; never approve, accept, or merge. |
+| Mode      | `findings` present | `rules` focus                                                                      |
+| --------- | ------------------ | ---------------------------------------------------------------------------------- |
+| `author`  | no                 | Write new EARS requirements into the host file's requirements region only.         |
+| `convert` | no                 | Rewrite natural-language requirements already in the host file into EARS in place. |
+| `repair`  | yes                | Change only what the diagnostics justify, keyed to their ids.                      |
+| `review`  | yes                | Produce a human review summary; never approve, accept, or merge.                   |
 
 The instruction body never tells an agent to approve, accept, or merge, and
 never references a workspace, work item, or manifest.
@@ -337,12 +337,8 @@ recommend exact commands. Works with no workspace. Exit `0`.
   "ok": true,
   "root": "/repo",
   "detected": {
-    "hosts": [
-      { "host": "kiro", "evidence": ".kiro/specs/", "profile": "kiro" }
-    ],
-    "agents": [
-      { "agent": "claude", "evidence": ".claude/" }
-    ]
+    "hosts": [{ "host": "kiro", "evidence": ".kiro/specs/", "profile": "kiro" }],
+    "agents": [{ "agent": "claude", "evidence": ".claude/" }]
   },
   "next": [
     {
@@ -414,7 +410,16 @@ Report the installed version and capability map. Never resolves a repo, so
   "ok": true,
   "features": {
     "facade": 1,
-    "commands": ["validate", "extract", "instructions", "explain", "profiles", "doctor", "init", "version"],
+    "commands": [
+      "validate",
+      "extract",
+      "instructions",
+      "explain",
+      "profiles",
+      "doctor",
+      "init",
+      "version"
+    ],
     "profiles": ["strict", "ears-x", "kiro", "speckit", "openspec"],
     "instructions": ["author", "convert", "repair", "review"],
     "hosts": ["kiro", "speckit", "openspec"],
@@ -446,21 +451,21 @@ delete an id. A new diagnostic takes the next free number in its severity band.
 
 ### Errors: 13 codes (`EARS-E001`-`EARS-E013`)
 
-| New id | Old code |
-|---|---|
-| `EARS-E001` | `catalog.system_ambiguous` |
-| `EARS-E002` | `catalog.system_unresolved` |
-| `EARS-E003` | `ears.empty_clause` |
-| `EARS-E004` | `ears.empty_response` |
-| `EARS-E005` | `ears.invalid_clause_order` |
-| `EARS-E006` | `ears.invalid_if_then_form` |
-| `EARS-E007` | `ears.missing_shall` |
-| `EARS-E008` | `ears.missing_system` |
-| `EARS-E009` | `ears.multiple_shall` |
-| `EARS-E010` | `ears.no_match` |
-| `EARS-E011` | `expr.empty_subexpression` |
+| New id      | Old code                         |
+| ----------- | -------------------------------- |
+| `EARS-E001` | `catalog.system_ambiguous`       |
+| `EARS-E002` | `catalog.system_unresolved`      |
+| `EARS-E003` | `ears.empty_clause`              |
+| `EARS-E004` | `ears.empty_response`            |
+| `EARS-E005` | `ears.invalid_clause_order`      |
+| `EARS-E006` | `ears.invalid_if_then_form`      |
+| `EARS-E007` | `ears.missing_shall`             |
+| `EARS-E008` | `ears.missing_system`            |
+| `EARS-E009` | `ears.multiple_shall`            |
+| `EARS-E010` | `ears.no_match`                  |
+| `EARS-E011` | `expr.empty_subexpression`       |
 | `EARS-E012` | `expr.invalid_operator_sequence` |
-| `EARS-E013` | `expr.unbalanced_parentheses` |
+| `EARS-E013` | `expr.unbalanced_parentheses`    |
 
 ### Introduced by the host-native grammar: 3 error codes (`EARS-E014`-`EARS-E016`)
 
@@ -469,10 +474,10 @@ work added them; each has no legacy code it replaces, but its dotted form
 registers as a deprecated alias like every other code. All three default to
 `error` and resolve as errors in strict mode.
 
-| New id | Dotted code | Introduced by |
-|---|---|---|
-| `EARS-E014` | `ears.keyword_case` | host-native grammar |
-| `EARS-E015` | `ears.missing_leading_comma` | host-native grammar |
+| New id      | Dotted code                    | Introduced by       |
+| ----------- | ------------------------------ | ------------------- |
+| `EARS-E014` | `ears.keyword_case`            | host-native grammar |
+| `EARS-E015` | `ears.missing_leading_comma`   | host-native grammar |
 | `EARS-E016` | `ears.prohibition_not_allowed` | host-native grammar |
 
 The `kiro` profile relaxes keyword case (`EARS-E014`) and the leading comma
@@ -481,24 +486,24 @@ The `kiro` profile relaxes keyword case (`EARS-E014`) and the leading comma
 
 ### Warnings: 16 codes (`EARS-W001`-`EARS-W016`)
 
-| New id | Old code |
-|---|---|
-| `EARS-W001` | `catalog.event_ambiguous` |
-| `EARS-W002` | `catalog.event_unresolved` |
-| `EARS-W003` | `catalog.feature_ambiguous` |
-| `EARS-W004` | `catalog.feature_unresolved` |
-| `EARS-W005` | `catalog.state_ambiguous` |
-| `EARS-W006` | `catalog.state_unresolved` |
-| `EARS-W007` | `catalog.term_unreferenced` |
-| `EARS-W008` | `expr.ambiguous_term` |
-| `EARS-W009` | `expr.mixed_unresolved_terms` |
+| New id      | Old code                           |
+| ----------- | ---------------------------------- |
+| `EARS-W001` | `catalog.event_ambiguous`          |
+| `EARS-W002` | `catalog.event_unresolved`         |
+| `EARS-W003` | `catalog.feature_ambiguous`        |
+| `EARS-W004` | `catalog.feature_unresolved`       |
+| `EARS-W005` | `catalog.state_ambiguous`          |
+| `EARS-W006` | `catalog.state_unresolved`         |
+| `EARS-W007` | `catalog.term_unreferenced`        |
+| `EARS-W008` | `expr.ambiguous_term`              |
+| `EARS-W009` | `expr.mixed_unresolved_terms`      |
 | `EARS-W010` | `expr.operator_precedence_warning` |
-| `EARS-W011` | `expr.unknown_term` |
-| `EARS-W012` | `lint.alias_used` |
-| `EARS-W013` | `lint.multiple_responses` |
-| `EARS-W014` | `lint.suspicious_text_shape` |
-| `EARS-W015` | `lint.unparsed_tail` |
-| `EARS-W016` | `lint.vague_response` |
+| `EARS-W011` | `expr.unknown_term`                |
+| `EARS-W012` | `lint.alias_used`                  |
+| `EARS-W013` | `lint.multiple_responses`          |
+| `EARS-W014` | `lint.suspicious_text_shape`       |
+| `EARS-W015` | `lint.unparsed_tail`               |
+| `EARS-W016` | `lint.vague_response`              |
 
 13 errors + 16 warnings = 29 ids in the original migration, one per old code, no
 gaps. The host-native grammar work then appended `EARS-E014`-`EARS-E016` (see

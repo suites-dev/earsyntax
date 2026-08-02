@@ -88,7 +88,11 @@ function runInstructions(opts: {
     profile: opts.profile ?? 'strict',
     color: false,
   };
-  const emitter: Emitter = { json: global.json, painter: createPainter(false), write: () => undefined };
+  const emitter: Emitter = {
+    json: global.json,
+    painter: createPainter(false),
+    write: () => undefined,
+  };
   const context: CommandContext = { args, global, cwd: opts.cwd ?? FIXTURES, emitter };
   return instructionsCommand(context);
 }
@@ -135,7 +139,13 @@ describe('instructions payload shape per mode', () => {
 
   for (const mode of FINDINGS_MODES) {
     it(`embeds findings for ${mode}`, () => {
-      const result = runInstructions({ mode, file: 'broken.md', profile: 'kiro', json: true, cwd: tmpDir });
+      const result = runInstructions({
+        mode,
+        file: 'broken.md',
+        profile: 'kiro',
+        json: true,
+        cwd: tmpDir,
+      });
       expect('findings' in result.response).toBe(true);
       const findings = result.response.findings as { summary: { requirements: number } };
       expect(findings.summary.requirements).toBe(2);
@@ -143,7 +153,13 @@ describe('instructions payload shape per mode', () => {
   }
 
   it('carries the instructions payload keys in the frozen order (repair)', () => {
-    const result = runInstructions({ mode: 'repair', file: 'broken.md', profile: 'kiro', json: true, cwd: tmpDir });
+    const result = runInstructions({
+      mode: 'repair',
+      file: 'broken.md',
+      profile: 'kiro',
+      json: true,
+      cwd: tmpDir,
+    });
     expect(Object.keys(result.response)).toEqual([
       'version',
       'command',
@@ -193,7 +209,13 @@ describe('instructions payload shape per mode', () => {
 describe('instructions --from validity matrix', () => {
   for (const mode of ['author', 'convert'] as const) {
     it(`accepts --from for ${mode} and adds a read-the-source rule`, () => {
-      const result = runInstructions({ mode, file: 'x.md', from: KIRO_DOC, profile: 'kiro', json: true });
+      const result = runInstructions({
+        mode,
+        file: 'x.md',
+        from: KIRO_DOC,
+        profile: 'kiro',
+        json: true,
+      });
       expect(result.exitCode).toBe(0);
       expect(result.response.sourceFile).toBe(KIRO_DOC);
       expect(result.response.editPolicy).toEqual({ editableFile: 'x.md', preserveStructure: true });
@@ -206,7 +228,15 @@ describe('instructions --from validity matrix', () => {
   for (const mode of ['repair', 'review'] as const) {
     it(`rejects --from for ${mode} with exit 2`, () => {
       expectUsageError(
-        () => runInstructions({ mode, file: 'broken.md', from: KIRO_DOC, profile: 'kiro', json: true, cwd: tmpDir }),
+        () =>
+          runInstructions({
+            mode,
+            file: 'broken.md',
+            from: KIRO_DOC,
+            profile: 'kiro',
+            json: true,
+            cwd: tmpDir,
+          }),
         'instructions.from_not_allowed',
       );
     });
@@ -215,7 +245,13 @@ describe('instructions --from validity matrix', () => {
 
 describe('instructions repair embeds real findings and keyed fix rules', () => {
   it('reports the seeded diagnostics and their per-id fix rules', () => {
-    const result = runInstructions({ mode: 'repair', file: 'broken.md', profile: 'kiro', json: true, cwd: tmpDir });
+    const result = runInstructions({
+      mode: 'repair',
+      file: 'broken.md',
+      profile: 'kiro',
+      json: true,
+      cwd: tmpDir,
+    });
     const findings = result.response.findings as {
       ok: boolean;
       summary: { errors: number };
@@ -260,7 +296,13 @@ describe('instructions never emits accept-style language', () => {
   }
 
   it('review states the assessment is read-only and defers to a human', () => {
-    const result = runInstructions({ mode: 'review', file: 'broken.md', profile: 'kiro', json: true, cwd: tmpDir });
+    const result = runInstructions({
+      mode: 'review',
+      file: 'broken.md',
+      profile: 'kiro',
+      json: true,
+      cwd: tmpDir,
+    });
     const rules = result.response.rules as string[];
     expect(rules.some((rule) => rule.includes('read-only'))).toBe(true);
     expect(rules.some((rule) => rule.includes('leave that decision to the human'))).toBe(true);
@@ -275,12 +317,18 @@ describe('instructions locator and dialect are derived from profile data', () =>
     const result = runInstructions({ mode: 'author', file: KIRO_DOC, profile: 'kiro', json: true });
     expect(result.response.locator).toEqual({
       documentKinds: ['markdown'],
-      summary: 'Bullet and numbered items under #### Acceptance Criteria headings in requirements.md.',
+      summary:
+        'Bullet and numbered items under #### Acceptance Criteria headings in requirements.md.',
     });
   });
 
   it('renders a fallback every-line summary for strict', () => {
-    const result = runInstructions({ mode: 'author', file: 'strict/valid.ears', profile: 'strict', json: true });
+    const result = runInstructions({
+      mode: 'author',
+      file: 'strict/valid.ears',
+      profile: 'strict',
+      json: true,
+    });
     expect(result.response.locator).toEqual({
       documentKinds: ['ears', 'text'],
       summary: 'Every non-empty line of ears, text files.',
@@ -310,11 +358,18 @@ describe('instructions locator and dialect are derived from profile data', () =>
 
 describe('instructions next action', () => {
   it('points at validate with the matching profile and --json', () => {
-    const result = runInstructions({ mode: 'repair', file: 'broken.md', profile: 'kiro', json: true, cwd: tmpDir });
+    const result = runInstructions({
+      mode: 'repair',
+      file: 'broken.md',
+      profile: 'kiro',
+      json: true,
+      cwd: tmpDir,
+    });
     expect(result.response.next).toEqual([
       {
         command: 'earsyntax validate broken.md --profile kiro --json',
-        reason: 'Validate the host file after editing and repeat until no error-severity finding remains.',
+        reason:
+          'Validate the host file after editing and repeat until no error-severity finding remains.',
         forAgent: true,
       },
     ]);
@@ -344,13 +399,24 @@ describe('instructions file-existence policy by mode', () => {
   });
 
   it('allows a not-yet-existing host file for author', () => {
-    const result = runInstructions({ mode: 'author', file: 'brand/new.md', profile: 'kiro', json: true });
+    const result = runInstructions({
+      mode: 'author',
+      file: 'brand/new.md',
+      profile: 'kiro',
+      json: true,
+    });
     expect(result.exitCode).toBe(0);
     expect(result.response.file).toBe('brand/new.md');
   });
 
   it('allows a not-yet-existing host file for convert with a source', () => {
-    const result = runInstructions({ mode: 'convert', file: 'brand/new.md', from: KIRO_DOC, profile: 'kiro', json: true });
+    const result = runInstructions({
+      mode: 'convert',
+      file: 'brand/new.md',
+      from: KIRO_DOC,
+      profile: 'kiro',
+      json: true,
+    });
     expect(result.exitCode).toBe(0);
     expect(result.response.sourceFile).toBe(KIRO_DOC);
   });
@@ -358,7 +424,10 @@ describe('instructions file-existence policy by mode', () => {
 
 describe('instructions usage and envelope errors', () => {
   it('exits 2 when the mode is missing', () => {
-    expectUsageError(() => runInstructions({ file: 'x.md', json: true }), 'instructions.missing_mode');
+    expectUsageError(
+      () => runInstructions({ file: 'x.md', json: true }),
+      'instructions.missing_mode',
+    );
   });
 
   it('exits 2 on an unknown mode', () => {
@@ -369,7 +438,10 @@ describe('instructions usage and envelope errors', () => {
   });
 
   it('exits 2 when --file is absent', () => {
-    expectUsageError(() => runInstructions({ mode: 'author', json: true }), 'instructions.missing_file_flag');
+    expectUsageError(
+      () => runInstructions({ mode: 'author', json: true }),
+      'instructions.missing_file_flag',
+    );
   });
 
   it('exits 2 on an unknown profile', () => {
@@ -382,7 +454,13 @@ describe('instructions usage and envelope errors', () => {
 
 describe('instructions output purity and pretty rendering', () => {
   it('serializes to valid JSON with no undefined leakage', () => {
-    const result = runInstructions({ mode: 'repair', file: 'broken.md', profile: 'kiro', json: true, cwd: tmpDir });
+    const result = runInstructions({
+      mode: 'repair',
+      file: 'broken.md',
+      profile: 'kiro',
+      json: true,
+      cwd: tmpDir,
+    });
     const text = serialize(result.response);
     expect(text).not.toContain('undefined');
     expect(() => JSON.parse(text)).not.toThrow();

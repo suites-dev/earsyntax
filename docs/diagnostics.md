@@ -43,19 +43,19 @@ Codes are grouped by prefix. The `ID` column is the primary public identifier; t
 
 These report defects in the outer EARS sentence shape. All are mode-dependent. `EARS-E014`, `EARS-E015`, and `EARS-E016` were introduced by the host-native grammar work and have no legacy code they migrate from. A relaxing dialect suppresses them: the `kiro` profile relaxes keyword case (`EARS-E014`) and the leading comma (`EARS-E015`), and the `ears-x` profile legalizes prohibition (`EARS-E016`).
 
-| ID          | Deprecated alias            | Meaning                                                     | strict  | guided    | Example trigger                                                     |
-| ----------- | --------------------------- | ----------------------------------------------------------- | ------- | --------- | ------------------------------------------------------------------- |
-| `EARS-E010` | `ears.no_match`             | The text does not match any supported EARS shell pattern.   | `error` | `warning` | `quick brown fox`                                                   |
-| `EARS-E005` | `ears.invalid_clause_order` | Shell clauses appear in an unsupported order.               | `error` | `warning` | `When the timer fires, while idle, the system shall reset.`         |
-| `EARS-E008` | `ears.missing_system`       | The system name before `shall` is absent or empty.          | `error` | `warning` | `When the timer fires, shall reset.`                                |
-| `EARS-E007` | `ears.missing_shall`        | The requirement has no single `shall` response boundary.    | `error` | `warning` | `The system resets the timer.`                                      |
-| `EARS-E009` | `ears.multiple_shall`       | The requirement contains more than one shell-level `shall`. | `error` | `warning` | `The system shall reset and shall log the event.`                   |
-| `EARS-E006` | `ears.invalid_if_then_form` | An `If` clause is missing its required `then` boundary.     | `error` | `warning` | `If the signature is invalid, the system shall reject the webhook.` |
-| `EARS-E003` | `ears.empty_clause`         | A `While`, `Where`, `When`, or `If` clause body is empty.   | `error` | `warning` | `When , the system shall reset.`                                    |
-| `EARS-E004` | `ears.empty_response`       | The response after `shall` is empty.                        | `error` | `warning` | `The system shall .`                                                |
-| `EARS-E014` | `ears.keyword_case`         | A keyword violates strict canonical casing.                 | `error` | `warning` | `when the timer fires, the system Shall reset.`                     |
-| `EARS-E015` | `ears.missing_leading_comma` | A leading clause is not comma-delimited where required.    | `error` | `warning` | `When the timer fires the system shall reset.`                      |
-| `EARS-E016` | `ears.prohibition_not_allowed` | `shall not` is used where the dialect forbids prohibition. | `error` | `warning` | `The system shall not log the payment token.`                       |
+| ID          | Deprecated alias               | Meaning                                                     | strict  | guided    | Example trigger                                                     |
+| ----------- | ------------------------------ | ----------------------------------------------------------- | ------- | --------- | ------------------------------------------------------------------- |
+| `EARS-E010` | `ears.no_match`                | The text does not match any supported EARS shell pattern.   | `error` | `warning` | `quick brown fox`                                                   |
+| `EARS-E005` | `ears.invalid_clause_order`    | Shell clauses appear in an unsupported order.               | `error` | `warning` | `When the timer fires, while idle, the system shall reset.`         |
+| `EARS-E008` | `ears.missing_system`          | The system name before `shall` is absent or empty.          | `error` | `warning` | `When the timer fires, shall reset.`                                |
+| `EARS-E007` | `ears.missing_shall`           | The requirement has no single `shall` response boundary.    | `error` | `warning` | `The system resets the timer.`                                      |
+| `EARS-E009` | `ears.multiple_shall`          | The requirement contains more than one shell-level `shall`. | `error` | `warning` | `The system shall reset and shall log the event.`                   |
+| `EARS-E006` | `ears.invalid_if_then_form`    | An `If` clause is missing its required `then` boundary.     | `error` | `warning` | `If the signature is invalid, the system shall reject the webhook.` |
+| `EARS-E003` | `ears.empty_clause`            | A `While`, `Where`, `When`, or `If` clause body is empty.   | `error` | `warning` | `When , the system shall reset.`                                    |
+| `EARS-E004` | `ears.empty_response`          | The response after `shall` is empty.                        | `error` | `warning` | `The system shall .`                                                |
+| `EARS-E014` | `ears.keyword_case`            | A keyword violates strict canonical casing.                 | `error` | `warning` | `when the timer fires, the system Shall reset.`                     |
+| `EARS-E015` | `ears.missing_leading_comma`   | A leading clause is not comma-delimited where required.     | `error` | `warning` | `When the timer fires the system shall reset.`                      |
+| `EARS-E016` | `ears.prohibition_not_allowed` | `shall not` is used where the dialect forbids prohibition.  | `error` | `warning` | `The system shall not log the payment token.`                       |
 
 ### `expr.*` clause expressions
 
@@ -75,17 +75,17 @@ These report defects inside the boolean-like body of a clause. The three structu
 
 The `system` role is mode-dependent (an unknown or ambiguous system is a hard error in strict mode). The `state`, `event`, and `feature` roles, and the coverage check, are always warnings.
 
-| ID          | Deprecated alias             | Meaning                                                       | strict    | guided    | Example trigger                                                  |
-| ----------- | ---------------------------- | ------------------------------------------------------------- | --------- | --------- | ---------------------------------------------------------------- |
-| `EARS-E002` | `catalog.system_unresolved`  | The system name matches no known system.                      | `error`   | `warning` | `The invoicing engine shall ...` when only `BFF` is cataloged.   |
-| `EARS-E001` | `catalog.system_ambiguous`   | The system name matches more than one known system.           | `error`   | `warning` | A system name that two catalog entries share.                    |
-| `EARS-W006` | `catalog.state_unresolved`   | A state term matches no known state.                          | `warning` | `warning` | `While the queue is draining, ...` with no such state.           |
-| `EARS-W005` | `catalog.state_ambiguous`    | A state term matches more than one known state.               | `warning` | `warning` | A state name two entries share.                                  |
-| `EARS-W002` | `catalog.event_unresolved`   | An event term matches no known event.                         | `warning` | `warning` | `When a refund is requested, ...` with no such event.            |
-| `EARS-W001` | `catalog.event_ambiguous`    | An event term matches more than one known event.              | `warning` | `warning` | An event name two entries share.                                 |
-| `EARS-W004` | `catalog.feature_unresolved` | A feature term matches no known feature.                      | `warning` | `warning` | `Where retries are enabled, ...` with no such feature.           |
-| `EARS-W003` | `catalog.feature_ambiguous`  | A feature term matches more than one known feature.           | `warning` | `warning` | A feature name two entries share.                                |
-| `EARS-W007` | `catalog.term_unreferenced`  | A cataloged term is never referenced by any requirement text. | `warning` | `warning` | A cataloged event no requirement mentions (coverage check).      |
+| ID          | Deprecated alias             | Meaning                                                       | strict    | guided    | Example trigger                                                |
+| ----------- | ---------------------------- | ------------------------------------------------------------- | --------- | --------- | -------------------------------------------------------------- |
+| `EARS-E002` | `catalog.system_unresolved`  | The system name matches no known system.                      | `error`   | `warning` | `The invoicing engine shall ...` when only `BFF` is cataloged. |
+| `EARS-E001` | `catalog.system_ambiguous`   | The system name matches more than one known system.           | `error`   | `warning` | A system name that two catalog entries share.                  |
+| `EARS-W006` | `catalog.state_unresolved`   | A state term matches no known state.                          | `warning` | `warning` | `While the queue is draining, ...` with no such state.         |
+| `EARS-W005` | `catalog.state_ambiguous`    | A state term matches more than one known state.               | `warning` | `warning` | A state name two entries share.                                |
+| `EARS-W002` | `catalog.event_unresolved`   | An event term matches no known event.                         | `warning` | `warning` | `When a refund is requested, ...` with no such event.          |
+| `EARS-W001` | `catalog.event_ambiguous`    | An event term matches more than one known event.              | `warning` | `warning` | An event name two entries share.                               |
+| `EARS-W004` | `catalog.feature_unresolved` | A feature term matches no known feature.                      | `warning` | `warning` | `Where retries are enabled, ...` with no such feature.         |
+| `EARS-W003` | `catalog.feature_ambiguous`  | A feature term matches more than one known feature.           | `warning` | `warning` | A feature name two entries share.                              |
+| `EARS-W007` | `catalog.term_unreferenced`  | A cataloged term is never referenced by any requirement text. | `warning` | `warning` | A cataloged event no requirement mentions (coverage check).    |
 
 ### `lint.*` style advice
 

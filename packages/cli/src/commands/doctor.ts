@@ -95,7 +95,9 @@ function detectHosts(root: string): DetectedHost[] {
   const hosts: DetectedHost[] = [];
 
   const kiro =
-    detectDir(root, '.kiro/specs') ?? detectDir(root, '.kiro/steering') ?? detectDir(root, '.kiro/hooks');
+    detectDir(root, '.kiro/specs') ??
+    detectDir(root, '.kiro/steering') ??
+    detectDir(root, '.kiro/hooks');
   if (kiro !== undefined) {
     hosts.push({ host: 'kiro', evidence: kiro, profile: 'kiro' });
   }
@@ -197,7 +199,9 @@ function renderPretty(
     if (hosts.length > 0) {
       lines.push('Hosts:');
       for (const host of hosts) {
-        lines.push(`  ${host.host.padEnd(10)} ${host.evidence.padEnd(24)} (profile ${host.profile})`);
+        lines.push(
+          `  ${host.host.padEnd(10)} ${host.evidence.padEnd(24)} (profile ${host.profile})`,
+        );
       }
     }
     if (agents.length > 0) {

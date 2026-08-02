@@ -53,7 +53,16 @@ export interface Features {
 /** Capability map returned by `version --features`. */
 export const FEATURES: Features = {
   facade: FACADE_CONTRACT,
-  commands: ['validate', 'extract', 'instructions', 'explain', 'profiles', 'doctor', 'init', 'version'],
+  commands: [
+    'validate',
+    'extract',
+    'instructions',
+    'explain',
+    'profiles',
+    'doctor',
+    'init',
+    'version',
+  ],
   profiles: ['strict', 'ears-x', 'kiro', 'speckit', 'openspec'],
   instructions: ['author', 'convert', 'repair', 'review'],
   hosts: ['kiro', 'speckit', 'openspec'],

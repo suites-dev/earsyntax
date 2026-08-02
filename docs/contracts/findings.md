@@ -41,15 +41,15 @@ interface Diagnostic {
 
 ### `Findings`
 
-| Field | Type | Meaning |
-|---|---|---|
-| `ok` | `boolean` | `true` when zero diagnostics have severity `error` after all severity resolution (profile overrides and `--strict`). See "The `ok` rule". |
-| `summary.files` | `number` | Count of source files the pipeline located and read. Stdin counts as one file. |
-| `summary.requirements` | `number` | Count of requirement candidates the extractor produced across all files. |
-| `summary.valid` | `number` | Count of requirements carrying no error-severity diagnostic. `valid <= requirements`. |
-| `summary.errors` | `number` | Total count of diagnostics with effective severity `error`. Equal to `diagnostics.filter(d => d.severity === 'error').length`. |
-| `summary.warnings` | `number` | Total count of diagnostics with effective severity `warning`. |
-| `diagnostics` | `Diagnostic[]` | Every finding across every file, in stable order (see "Ordering"). Always present; may be empty. |
+| Field                  | Type           | Meaning                                                                                                                                   |
+| ---------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `ok`                   | `boolean`      | `true` when zero diagnostics have severity `error` after all severity resolution (profile overrides and `--strict`). See "The `ok` rule". |
+| `summary.files`        | `number`       | Count of source files the pipeline located and read. Stdin counts as one file.                                                            |
+| `summary.requirements` | `number`       | Count of requirement candidates the extractor produced across all files.                                                                  |
+| `summary.valid`        | `number`       | Count of requirements carrying no error-severity diagnostic. `valid <= requirements`.                                                     |
+| `summary.errors`       | `number`       | Total count of diagnostics with effective severity `error`. Equal to `diagnostics.filter(d => d.severity === 'error').length`.            |
+| `summary.warnings`     | `number`       | Total count of diagnostics with effective severity `warning`.                                                                             |
+| `diagnostics`          | `Diagnostic[]` | Every finding across every file, in stable order (see "Ordering"). Always present; may be empty.                                          |
 
 `summary.errors` and `summary.warnings` count effective severities, the same
 values written to each `Diagnostic.severity`. There is no `info` severity in
@@ -57,23 +57,23 @@ the Findings model. `summary` has no `infos` field.
 
 ### `Diagnostic`
 
-| Field | Type | Meaning |
-|---|---|---|
-| `id` | `string` | The registry ID: `EARS-E###` or `EARS-W###`. The prefix reflects the registry's default severity, not necessarily the effective severity on this diagnostic (see below). |
-| `severity` | `'error' \| 'warning'` | The EFFECTIVE severity after profile severity overrides and `--strict`. This is what `ok` and the summary counts derive from. |
-| `file` | `string` | Path to the source file, relative to `--cwd` (POSIX separators), or `-` for stdin. Never absolute unless the caller passed an absolute path. |
-| `line` | `number` | 1-based line in `file`, mapped back to the original host document position through every pipeline stage. Required. |
-| `col` | `number` (optional) | 1-based column, when the finding maps to a specific column. Omitted when only line resolution is available. |
-| `message` | `string` | One factual sentence describing the finding. Third-person, neutral. No fix instructions here; use `fix`. |
-| `fix` | `string` (optional) | One suggested remediation sentence, when the diagnostic has a deterministic repair hint. Omitted otherwise. Advisory only; the core never edits files. |
-| `requirementId` | `string` (optional) | The requirement's own ID (for example a `REQ-001` frame ID under `ears-x`), when the extractor found one. Distinct from the diagnostic `id`. |
+| Field           | Type                   | Meaning                                                                                                                                                                  |
+| --------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `id`            | `string`               | The registry ID: `EARS-E###` or `EARS-W###`. The prefix reflects the registry's default severity, not necessarily the effective severity on this diagnostic (see below). |
+| `severity`      | `'error' \| 'warning'` | The EFFECTIVE severity after profile severity overrides and `--strict`. This is what `ok` and the summary counts derive from.                                            |
+| `file`          | `string`               | Path to the source file, relative to `--cwd` (POSIX separators), or `-` for stdin. Never absolute unless the caller passed an absolute path.                             |
+| `line`          | `number`               | 1-based line in `file`, mapped back to the original host document position through every pipeline stage. Required.                                                       |
+| `col`           | `number` (optional)    | 1-based column, when the finding maps to a specific column. Omitted when only line resolution is available.                                                              |
+| `message`       | `string`               | One factual sentence describing the finding. Third-person, neutral. No fix instructions here; use `fix`.                                                                 |
+| `fix`           | `string` (optional)    | One suggested remediation sentence, when the diagnostic has a deterministic repair hint. Omitted otherwise. Advisory only; the core never edits files.                   |
+| `requirementId` | `string` (optional)    | The requirement's own ID (for example a `REQ-001` frame ID under `ears-x`), when the extractor found one. Distinct from the diagnostic `id`.                             |
 
 ## The `ok` rule
 
 `ok` is `true` if and only if no diagnostic has effective severity `error`:
 
 ```ts
-findings.ok === (findings.summary.errors === 0)
+findings.ok === (findings.summary.errors === 0);
 ```
 
 Effective severity is computed in this order, and `severity` on each emitted

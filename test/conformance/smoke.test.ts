@@ -180,16 +180,22 @@ describe('init idempotency', () => {
   it('skips every managed file on a second run and never creates .earsyntax/', () => {
     const dir = makeTempDir('earsyntax-conf-init-');
 
-    const first = runCliJson(['init', '--agent', 'claude', '--host', 'kiro', '--cwd', dir, '--json'], {
-      cwd: dir,
-    });
+    const first = runCliJson(
+      ['init', '--agent', 'claude', '--host', 'kiro', '--cwd', dir, '--json'],
+      {
+        cwd: dir,
+      },
+    );
     expect(first.result.code).toBe(0);
     const firstWritten = first.json.written as unknown[];
     expect(firstWritten.length).toBeGreaterThan(0);
 
-    const second = runCliJson(['init', '--agent', 'claude', '--host', 'kiro', '--cwd', dir, '--json'], {
-      cwd: dir,
-    });
+    const second = runCliJson(
+      ['init', '--agent', 'claude', '--host', 'kiro', '--cwd', dir, '--json'],
+      {
+        cwd: dir,
+      },
+    );
     expect(second.result.code).toBe(0);
     expect(second.json.ok).toBe(true);
     expect(second.json.written).toEqual([]);

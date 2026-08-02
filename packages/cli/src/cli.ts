@@ -132,7 +132,10 @@ function dispatch(
 
     const global = resolveGlobals(args, color);
     if (global.json && global.sarif) {
-      throw usageError('cli.exclusive_flags', 'The --json and --sarif flags are mutually exclusive.');
+      throw usageError(
+        'cli.exclusive_flags',
+        'The --json and --sarif flags are mutually exclusive.',
+      );
     }
 
     const cwd = global.cwd ? resolveInput(baseCwd, global.cwd) : baseCwd;

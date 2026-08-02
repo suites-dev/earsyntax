@@ -369,7 +369,8 @@ const ENTRIES: DiagnosticRegistryEntry[] = [
     rationale:
       'A catalog entry that no requirement mentions is either dead vocabulary or a sign that a requirement is missing.',
     badExample: 'The billing service shall retain the audit log.',
-    goodExample: 'When a payment webhook is received, the billing service shall retain the audit log.',
+    goodExample:
+      'When a payment webhook is received, the billing service shall retain the audit log.',
     profileNotes: COVERAGE_PROFILE_NOTE,
   },
   {

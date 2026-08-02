@@ -317,7 +317,9 @@ class ExprParser {
       // the inner term.
       const span: Span | undefined =
         node.span === undefined ? undefined : { start: notStarts[k], end: node.span.end };
-      const notExpr: NotExpr = span ? { kind: 'not', item: node, span } : { kind: 'not', item: node };
+      const notExpr: NotExpr = span
+        ? { kind: 'not', item: node, span }
+        : { kind: 'not', item: node };
       node = notExpr;
     }
     return node;
@@ -368,7 +370,11 @@ class ExprParser {
       }
       // The group span covers its parentheses, from the opening paren to the
       // closing one (or the end of the recovered body when it is unterminated).
-      const group: GroupExpr = { kind: 'group', item: inner, span: { start: open.start, end: closeEnd } };
+      const group: GroupExpr = {
+        kind: 'group',
+        item: inner,
+        span: { start: open.start, end: closeEnd },
+      };
       return group;
     }
 

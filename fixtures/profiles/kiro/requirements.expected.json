@@ -77,9 +77,7 @@
       "kiro": { "ok": true, "expect": [] },
       "strict": {
         "ok": false,
-        "expect": [
-          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" }
-        ]
+        "expect": [{ "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" }]
       }
     },
     {
