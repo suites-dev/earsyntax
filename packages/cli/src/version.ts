@@ -10,6 +10,9 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { BUILTIN_PROFILE_NAMES } from '@earsyntax/core';
+import { AGENTS } from './renderers/agents.js';
+import { HOSTS } from './renderers/hosts.js';
 
 function readPackageVersion(): string {
   // From dist/version.js (built) or src/version.ts (vitest), the package root
@@ -63,10 +66,10 @@ export const FEATURES: Features = {
     'init',
     'version',
   ],
-  profiles: ['strict', 'ears-x', 'kiro', 'speckit', 'openspec'],
+  profiles: [...BUILTIN_PROFILE_NAMES],
   instructions: ['author', 'convert', 'repair', 'review'],
-  hosts: ['kiro', 'speckit', 'openspec'],
-  agents: ['claude', 'codex', 'cursor', 'copilot', 'gemini', 'generic'],
+  hosts: [...HOSTS],
+  agents: [...AGENTS],
   inputFormats: ['ears', 'text', 'markdown', 'yaml', 'json'],
   outputFormats: ['pretty', 'json', 'sarif'],
   sarif: true,

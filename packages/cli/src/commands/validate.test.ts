@@ -321,7 +321,7 @@ describe('runValidate — inputs and exit codes', () => {
       fakeDeps({ [`${CWD}/clean.ears`]: CLEAN_LINE }),
     );
     expect(r.exitCode).toBe(2);
-    expect((r.response.diagnostics as { code: string }[])[0]?.code).toBe('cli.conflicting_flags');
+    expect((r.response.diagnostics as { code: string }[])[0]?.code).toBe('cli.exclusive_flags');
   });
 });
 
@@ -379,7 +379,6 @@ function makeContext(
     quiet: options.quiet ?? false,
     profile: options.profile ?? 'strict',
     cwd: options.cwd,
-    color: false,
   };
   const emitter: Emitter = {
     json: global.json,

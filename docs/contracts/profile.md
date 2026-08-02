@@ -122,6 +122,14 @@ severity is never hard-coded in the linter.
 | `required` | When `true`, a requirement without an ID is a finding. When `false`, IDs are optional.                                      |
 | `pattern`  | Optional regular expression a present ID must match (for example `^REQ-\d+$`). Applied whether or not `required` is `true`. |
 
+**RESERVED, not yet enforced.** `validateProfile` accepts `idFormat` and
+type-checks its shape (rule 5 below), but no pipeline stage reads it yet.
+Locating, extracting, parsing, and linting are unaffected by `required` or
+`pattern`: a requirement without an id, or with an id that does not match
+`pattern`, produces no diagnostic today. Enforcing `idFormat` requires a
+future registry diagnostic code; until that code exists, this field only
+documents intent.
+
 ## Validation rules
 
 1. Unknown top-level keys, or unknown keys inside `dialect`, `locator`, or

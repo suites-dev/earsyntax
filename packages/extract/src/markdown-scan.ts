@@ -2,17 +2,12 @@
  * Shared Markdown scanning primitives for `@earsyntax/extract`. Not part of the
  * public API.
  *
- * Two structures are shared by the legacy Markdown extractor and the
- * profile-driven locator so fenced-code and table handling stay consistent:
- *
- * 1. {@link FenceTracker}, a CommonMark-aware fenced-code-block tracker that
- *    records the opening marker's character and length and closes only on a
- *    matching-or-longer run of the same character with no info string. A `~~~`
- *    fence is never closed by a ``` line, and a ` ``` ` fence is never closed by
- *    a shorter run.
- * 2. {@link splitTableRow}, a GFM pipe-row splitter that ignores escaped pipes
- *    (`\|`) and pipes inside inline code spans (`` `a | b` ``), and tolerates
- *    rows with or without leading and trailing pipes.
+ * {@link FenceTracker} is a CommonMark-aware fenced-code-block tracker used by
+ * the profile-driven locator to keep fenced-code handling consistent. It
+ * records the opening marker's character and length and closes only on a
+ * matching-or-longer run of the same character with no info string. A `~~~`
+ * fence is never closed by a ``` line, and a ` ``` ` fence is never closed by
+ * a shorter run.
  */
 
 /** Where a line sits relative to fenced code blocks. */
@@ -65,11 +60,6 @@ export class FenceTracker {
     }
     return 'inside';
   }
-
-  /** Whether the tracker is currently inside an unclosed fence. */
-  get isOpen(): boolean {
-    return this.open !== null;
-  }
 }
 
 /**
@@ -85,67 +75,4 @@ export class FenceTracker {
 export function classifyFences(lines: readonly string[]): FenceState[] {
   const tracker = new FenceTracker();
   return lines.map((line) => tracker.feed(line));
-}
-
-/**
- * Split a GFM pipe-table row into trimmed cells.
- *
- * Pipes escaped as `\|` and pipes inside inline code spans are not treated as
- * cell separators. A single leading and a single trailing pipe (the common GFM
- * form) are dropped; rows without them are still split correctly.
- *
- * @param row The trimmed row text.
- * @returns The row's cells, trimmed, in order.
- */
-export function splitTableRow(row: string): string[] {
-  const cells: string[] = [];
-  let current = '';
-  let codeRun = 0; // length of the backtick run that opened the current code span
-  let i = 0;
-
-  while (i < row.length) {
-    const ch = row[i];
-
-    if (ch === '\\' && codeRun === 0 && i + 1 < row.length) {
-      // A backslash escape outside code spans: keep the escaped character whole
-      // so an escaped pipe never splits the cell.
-      current += ch + row[i + 1];
-      i += 2;
-      continue;
-    }
-
-    if (ch === '`') {
-      let run = 0;
-      while (i + run < row.length && row[i + run] === '`') {
-        run++;
-      }
-      if (codeRun === 0) {
-        codeRun = run;
-      } else if (run === codeRun) {
-        codeRun = 0;
-      }
-      current += '`'.repeat(run);
-      i += run;
-      continue;
-    }
-
-    if (ch === '|' && codeRun === 0) {
-      cells.push(current);
-      current = '';
-      i++;
-      continue;
-    }
-
-    current += ch;
-    i++;
-  }
-  cells.push(current);
-
-  if (cells.length > 0 && cells[0].trim() === '' && row.startsWith('|')) {
-    cells.shift();
-  }
-  if (cells.length > 0 && cells[cells.length - 1].trim() === '' && row.endsWith('|')) {
-    cells.pop();
-  }
-  return cells.map((cell) => cell.trim());
 }

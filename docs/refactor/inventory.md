@@ -11,18 +11,17 @@ host-native refactor removes.
 
 ## Package layout
 
-| Package                   | Role                                                                                                                                                            |
-| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `@earsyntax/core`         | Parser, linter, diagnostics, catalog matching. Pure, no I/O, no LLM. (`packages/core/src/`)                                                                     |
-| `@earsyntax/extract`      | Turns `.ears`, Markdown, YAML, JSON files into `RequirementInput`. Only `extractFromFile` touches disk. (`packages/extract/src/`)                               |
-| `@earsyntax/cli-contract` | Report projections: JSON report, SARIF, pretty, exit codes, diagnostic registry descriptions. Pure serializers, no I/O, no argv. (`packages/cli-contract/src/`) |
-| `@earsyntax/cli`          | Command dispatcher and the workspace-backed command handlers. (`packages/cli/src/`)                                                                             |
+| Package                   | Role                                                                                                                                   |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `@earsyntax/core`         | Parser, linter, diagnostics, catalog matching. Pure, no I/O, no LLM. (`packages/core/src/`)                                            |
+| `@earsyntax/extract`      | Turns `.ears`, Markdown, YAML, JSON files into `RequirementInput`, and locates candidates in host documents. (`packages/extract/src/`) |
+| `@earsyntax/cli-contract` | Report projections: Findings serialization, SARIF, exit codes. Pure serializers, no I/O, no argv. (`packages/cli-contract/src/`)       |
+| `@earsyntax/cli`          | Command dispatcher and the workspace-backed command handlers. (`packages/cli/src/`)                                                    |
 
-Note: `@earsyntax/cli-contract` already contains a `JsonReport`, a `SarifLog`
-builder, an exit-code helper, and a `DIAGNOSTIC_DESCRIPTIONS` registry keyed by
-the 29-code `DiagnosticCode` union. The CLI does not currently consume these
-projections; `validate` builds its own `ValidationResult[]` shape directly. See
-the findings contract for how these converge.
+Note: `@earsyntax/cli-contract` contains a `Findings` serializer, a `SarifLog`
+builder, and an exit-code helper, all built from the Findings model. `validate`
+consumes these projections directly. See the findings contract for how these
+converge.
 
 ## The dispatcher
 
@@ -237,9 +236,8 @@ Rule bodies live in `packages/cli/src/rules.ts`: `ALLOWED_PATTERNS`
   `findRoot(cwd) ?? cwd` so it runs outside a workspace too (`validate.ts:122`).
 - `expandFiles()` (`validate.ts:31`): literal paths must exist
   (`validate.missing_file`, exit `2`); globs expand via `globSync`, sorted.
-- Extraction via `extractFromFile` (`validate.ts:136`); unreadable file with
-  errors throws `validate.unreadable` (exit `2`).
-- Lint via `lintEarsBatch` (`validate.ts:144`).
+- Extraction, parsing, and linting via `runPipeline` (`validate.ts:151`);
+  unreadable file with errors throws `validate.unreadable` (exit `2`).
 - Facade-level duplicate-ID check emits `facade.duplicate_id` error diagnostics
   (`validate.ts:166-183`).
 - Output keys: `summary { files, requirements, valid, errors, warnings }`,
@@ -323,15 +321,15 @@ Staleness is computed from content hashes (`workspace.ts:124-143`), never
 stored. Hashing: `hashContent` in `packages/cli/src/hash.ts` (`sha256:` +
 64 hex).
 
-## Diagnostic registry (current, 29 codes)
+## Diagnostic registry (current, 32 codes)
 
-`packages/core/src/types.ts:191-228` defines the `DiagnosticCode` union.
-`packages/cli-contract/src/diagnostic-registry.ts:19-57` maps each to a
-one-line description. `docs/diagnostics.md` documents severity by mode.
+`packages/core/src/types.ts:191-234` defines the `DiagnosticCode` union.
+`packages/core/src/catalog.ts`'s `DIAGNOSTIC_REGISTRY` maps each to a title and
+meaning. `docs/diagnostics.md` documents severity by mode.
 
-Groups: `ears.*` (8), `expr.*` (7), `catalog.*` (9), `lint.*` (5). Total 29.
-The full list and its new-ID migration is in
-`docs/refactor/host-native-facade.md`.
+Groups: `ears.*` (8), `expr.*` (7), `catalog.*` (9), `lint.*` (5), plus 3
+host-native grammar codes with no legacy migration. Total 32. The full list and
+its new-ID migration is in `docs/refactor/host-native-facade.md`.
 
 Strict-mode severities (`docs/diagnostics.md:20-89`): the 8 `ears.*`, the 3
 structural `expr.*` (`unbalanced_parentheses`, `invalid_operator_sequence`,

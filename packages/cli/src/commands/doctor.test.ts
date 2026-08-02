@@ -1,12 +1,9 @@
 /**
  * Tests for `earsyntax doctor`.
  *
- * The dispatcher (cli.ts/args.ts) is owned by another agent; these drive
- * {@link doctorCommand} directly with a hand-built {@link CommandContext} and
- * assert against the returned {@link CommandResult}. Once the dispatcher routes
- * `doctor`, the acceptance gate
- * `node packages/cli/bin/run.js doctor --cwd fixtures/host-repos/kiro --json`
- * exercises the same path end to end.
+ * These drive {@link doctorCommand} directly with a hand-built
+ * {@link CommandContext} and assert against the returned {@link CommandResult},
+ * separately from dispatcher routing.
  *
  * Detection runs against real fixture trees under `fixtures/host-repos/*`, plus a
  * few `mkdtemp` scratch repos for marker-precedence cases the fixtures do not
@@ -48,7 +45,6 @@ function runDoctor(opts: { cwd: string; json?: boolean; quiet?: boolean }): Comm
     strict: false,
     quiet: opts.quiet ?? false,
     profile: 'strict',
-    color: false,
   };
   const emitter: Emitter = {
     json: global.json,

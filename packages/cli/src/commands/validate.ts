@@ -31,6 +31,8 @@ import {
 import {
   buildSarifLog,
   canonicalizeFindings,
+  EXIT_USAGE,
+  exitCodeForFindings,
   type Findings,
   serializeSarifLog,
 } from '@earsyntax/cli-contract';
@@ -119,11 +121,12 @@ export function runValidate(
   deps: ValidateDeps = DEFAULT_DEPS,
 ): ValidateResult {
   // `--json` and `--sarif` are mutually exclusive. The dispatcher rejects the
-  // combination before reaching a handler (cli.exclusive_flags); this in-band
-  // guard covers direct callers of runValidate so the invariant holds either way.
+  // combination before reaching a handler; this in-band guard covers direct
+  // callers of runValidate so the invariant holds either way. Same code as the
+  // dispatcher's guard (cli.exclusive_flags), so the two never diverge.
   if (inputs.sarif && inputs.json) {
     return usageResult(
-      'cli.conflicting_flags',
+      'cli.exclusive_flags',
       'The --json and --sarif flags are mutually exclusive.',
     );
   }
@@ -270,7 +273,7 @@ function frame(
   const diagnostics = notices.map(noticeToDiagnostic);
   const environmentError = notices.some((notice) => notice.severity === 'error');
   const ok = !environmentError && findings.summary.errors === 0;
-  const exitCode = environmentError ? 2 : findings.summary.errors > 0 ? 1 : 0;
+  const exitCode = environmentError ? EXIT_USAGE : exitCodeForFindings(findings);
 
   const next = buildNext(findings, profile);
   const response = buildResponse(

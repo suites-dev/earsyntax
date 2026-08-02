@@ -1,12 +1,9 @@
 /**
  * Tests for `earsyntax extract`.
  *
- * The command dispatcher (cli.ts/args.ts) is owned by another agent; these drive
- * {@link extractCommand} directly with a hand-built {@link CommandContext} and
- * assert against the returned {@link CommandResult}. Once the dispatcher routes
- * `extract`, the acceptance gate
- * `node packages/cli/bin/run.js extract fixtures/profiles/kiro/requirements.md --profile kiro --json`
- * exercises the same path end to end.
+ * These drive {@link extractCommand} directly with a hand-built
+ * {@link CommandContext} and assert against the returned {@link CommandResult},
+ * separately from dispatcher routing.
  *
  * Snapshot coverage diffs the projected facade candidates against the profile
  * fixture sidecars (`fixtures/profiles/*.candidates.json`). Every agreeing
@@ -49,7 +46,6 @@ function runExtract(opts: {
     strict: false,
     quiet: opts.quiet ?? false,
     profile: opts.profile ?? 'strict',
-    color: false,
   };
   const emitter: Emitter = {
     json: global.json,

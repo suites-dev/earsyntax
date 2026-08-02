@@ -65,11 +65,6 @@ export function emitResult(
   emitter.write(`${emitter.json ? serialize(response) : pretty}\n`);
 }
 
-/** Emit a response: JSON when `--json`, otherwise the pretty string. */
-export function emit(emitter: Emitter, response: FacadeResponse, pretty: string): void {
-  emitResult(emitter, response, pretty);
-}
-
 /** Build the response for a {@link CliError} so the dispatcher can emit it uniformly. */
 export function errorResponse(
   command: string,
@@ -81,6 +76,5 @@ export function errorResponse(
     ok: false,
     root,
     diagnostics: [error.diagnostic],
-    next: error.next,
   });
 }

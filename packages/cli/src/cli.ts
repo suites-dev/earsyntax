@@ -31,7 +31,6 @@ import { versionCommand } from './commands/version.js';
 export interface RunOptions {
   cwd?: string;
   stdout?: (text: string) => void;
-  stderr?: (text: string) => void;
 }
 
 /** A routed command: its handler and the flags it accepts beyond the universal set. */
@@ -130,7 +129,7 @@ function dispatch(
     const args = parseArgs(rest);
     checkFlags(command, spec, args);
 
-    const global = resolveGlobals(args, color);
+    const global = resolveGlobals(args);
     if (global.json && global.sarif) {
       throw usageError(
         'cli.exclusive_flags',

@@ -53,7 +53,14 @@ export function parseArgs(argv: string[]): ParsedArgs {
     // `--flag=value` form. Last assignment wins for a repeated flag.
     const eq = body.indexOf('=');
     if (eq !== -1) {
-      values.set(body.slice(0, eq), body.slice(eq + 1));
+      const name = body.slice(0, eq);
+      if (!VALUE_FLAGS.has(name)) {
+        throw usageError(
+          'cli.flag_takes_no_value',
+          `Option --${name} does not take a value; use --${name} on its own.`,
+        );
+      }
+      values.set(name, body.slice(eq + 1));
       continue;
     }
 
@@ -83,12 +90,10 @@ export interface GlobalOptions {
   /** The active profile name; defaults to `strict`. Commands validate it against the registry. */
   profile: string;
   cwd?: string;
-  /** Whether pretty output may use ANSI color. Set by the dispatcher, not a user flag. */
-  color: boolean;
 }
 
-/** Extract global options from parsed args. `color` is supplied by the dispatcher. */
-export function resolveGlobals(args: ParsedArgs, color: boolean): GlobalOptions {
+/** Extract global options from parsed args. */
+export function resolveGlobals(args: ParsedArgs): GlobalOptions {
   return {
     json: args.booleans.has('json'),
     sarif: args.booleans.has('sarif'),
@@ -96,6 +101,5 @@ export function resolveGlobals(args: ParsedArgs, color: boolean): GlobalOptions 
     quiet: args.booleans.has('quiet'),
     profile: args.values.get('profile') ?? 'strict',
     cwd: args.values.get('cwd'),
-    color,
   };
 }

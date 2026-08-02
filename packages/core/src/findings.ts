@@ -96,7 +96,7 @@ export type SeverityOverrides = Readonly<Record<string, SeverityOverride>>;
 
 /**
  * One linted requirement: the requirement that went in and the result that came
- * out, mirroring `@earsyntax/cli-contract`'s report input item.
+ * out.
  */
 export interface FindingsInputItem {
   /** The requirement that was linted (`id`, `text`, and optional `source`). */

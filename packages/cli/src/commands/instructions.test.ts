@@ -3,10 +3,8 @@
  *
  * These drive {@link instructionsCommand} directly with a hand-built
  * {@link CommandContext} and assert against the returned {@link CommandResult},
- * mirroring `extract.test.ts`. The dispatcher (cli.ts/args.ts) is covered
- * separately; the acceptance gate
- * `node packages/cli/bin/run.js instructions repair --file fixtures/profiles/kiro/requirements.md --profile kiro --json`
- * exercises the same path end to end.
+ * mirroring `extract.test.ts`. Dispatcher routing (cli.ts/args.ts) is covered
+ * separately.
  *
  * The command is deterministic data: no clock, no LLM, no host-file mutation. It
  * returns rules, the profile locator and dialect, an edit policy, and (for
@@ -86,7 +84,6 @@ function runInstructions(opts: {
     strict: opts.strict ?? false,
     quiet: opts.quiet ?? false,
     profile: opts.profile ?? 'strict',
-    color: false,
   };
   const emitter: Emitter = {
     json: global.json,

@@ -3,6 +3,8 @@
  *
  * Never resolves a repo, so `root` is absent. The response always carries the
  * {@link FEATURES} capability map; `--features` only expands the pretty output.
+ * `--quiet` suppresses the pretty text like every other command; it has no
+ * effect on `--json`.
  */
 
 import type { CommandContext, CommandResult } from '../context.js';
@@ -30,5 +32,6 @@ export function versionCommand(context: CommandContext): CommandResult {
       ].join('\n')
     : `earsyntax ${CLI_VERSION}`;
 
-  return { response, pretty, exitCode: 0 };
+  const result = { response, pretty, exitCode: 0 };
+  return context.global.quiet && !context.global.json ? { ...result, pretty: '' } : result;
 }

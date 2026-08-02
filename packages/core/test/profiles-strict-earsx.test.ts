@@ -41,6 +41,11 @@ interface StrictInvalidExpected {
   }[];
 }
 
+interface StrictValidExpected {
+  findings: { ok: boolean; errors: number; warnings: number };
+  lines: { line: number; pattern: string; expect: { code: string }[] }[];
+}
+
 interface PerProfileExpected {
   lines: {
     line: number;
@@ -58,15 +63,22 @@ function readText(relPath: string): string {
 
 describe('strict/valid.ears', () => {
   const lines = nonEmptyLines('strict/valid.ears');
+  const expected = JSON.parse(readText('strict/valid.expected.json')) as StrictValidExpected;
   const dialect = dialectOf('strict');
 
-  test('every line is valid under strict with no diagnostics', () => {
-    for (const text of lines) {
+  expect(expected.findings.ok, 'sidecar findings.ok').toBe(true);
+
+  for (const entry of expected.lines) {
+    const text = lines[entry.line - 1];
+    const want = entry.expect.map((d) => d.code).sort();
+
+    test(`line ${entry.line} (${entry.pattern}) is valid under strict with no diagnostics`, () => {
       const result = lintEars(text, undefined, { dialect });
       expect(result.valid, text).toBe(true);
-      expect(result.diagnostics, text).toHaveLength(0);
-    }
-  });
+      const actual = result.diagnostics.map((d) => d.code).sort();
+      expect(actual, text).toEqual(want);
+    });
+  }
 });
 
 describe('strict/invalid.ears', () => {
@@ -102,9 +114,14 @@ describe('ears-x/prohibition.ears', () => {
       );
 
       const underEarsX = lintEars(entry.text, undefined, { dialect: earsx });
-      expect(underEarsX.valid, entry.text).toBe(true);
-      expect(underEarsX.diagnostics, entry.text).toHaveLength(0);
-      expect(underEarsX.ast?.prohibition, entry.text).toBe(true);
+      expect(underEarsX.valid, entry.text).toBe(entry['ears-x'].ok);
+      const earsXCodes = underEarsX.diagnostics.map((d) => d.code).sort();
+      expect(earsXCodes, entry.text).toEqual(
+        (entry['ears-x'].expect ?? []).map((d) => d.code).sort(),
+      );
+      expect(underEarsX.ast?.prohibition, entry.text).toBe(
+        entry['ears-x'].prohibition ?? entry.prohibition,
+      );
       if (entry.pattern) {
         expect(underEarsX.pattern, entry.text).toBe(entry.pattern);
       }
@@ -129,8 +146,11 @@ describe('ears-x/frame-metadata.ears', () => {
       );
 
       const underEarsX = lintEars(entry.text, undefined, { dialect: earsx });
-      expect(underEarsX.valid, entry.text).toBe(true);
-      expect(underEarsX.diagnostics, entry.text).toHaveLength(0);
+      expect(underEarsX.valid, entry.text).toBe(entry['ears-x'].ok);
+      const earsXCodes = underEarsX.diagnostics.map((d) => d.code).sort();
+      expect(earsXCodes, entry.text).toEqual(
+        (entry['ears-x'].expect ?? []).map((d) => d.code).sort(),
+      );
       if (entry.pattern) {
         expect(underEarsX.pattern, entry.text).toBe(entry.pattern);
       }

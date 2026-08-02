@@ -176,6 +176,12 @@ const FROM_RULES: readonly string[] = [
  * reported. An id absent from this map still appears in the embedded findings
  * (each finding may carry its own `fix`); the map is a compact per-id summary,
  * not the sole source of remediation.
+ *
+ * The catalog-term entries below (EARS-W001 through EARS-W012) and any
+ * `expr.*` term codes only ever surface when the pipeline runs with a catalog
+ * supplied. The CLI has no `--catalog` flag today, so `earsyntax` never
+ * triggers them; they stay in this map because library callers can pass a
+ * catalog into the pipeline directly and still want the fix guidance.
  */
 export const FIX_BY_ID: Readonly<Record<string, string>> = {
   'EARS-E001': 'Use the specific canonical system name so it matches exactly one catalog entry.',

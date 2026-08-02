@@ -8,19 +8,17 @@
  * workspace to refuse writes over, so exit `3` no longer exists.
  */
 
-import type { FacadeDiagnostic, NextAction } from './facade-types.js';
+import type { FacadeDiagnostic } from './facade-types.js';
 
 export class CliError extends Error {
   readonly exitCode: number;
   readonly diagnostic: FacadeDiagnostic;
-  readonly next: NextAction[];
 
-  constructor(exitCode: number, diagnostic: FacadeDiagnostic, next: NextAction[] = []) {
+  constructor(exitCode: number, diagnostic: FacadeDiagnostic) {
     super(diagnostic.message);
     this.name = 'CliError';
     this.exitCode = exitCode;
     this.diagnostic = diagnostic;
-    this.next = next;
   }
 }
 

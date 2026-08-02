@@ -1,21 +1,16 @@
 /**
  * `@earsyntax/extract` public API surface.
  *
- * Turns files people author (`.ears`, Markdown, YAML, JSON) into the frozen
- * {@link RequirementInput} shape from `@earsyntax/core`. Every parser is a pure
- * function of its input string; only {@link extractFromFile} touches the disk.
+ * The host-native pipeline (locate + extract stages, composed with core's
+ * findings assembly) is the only extraction surface this package exposes.
+ * Every extractor is a pure function of its input string; nothing here touches
+ * the disk.
  *
  * This package never lints or parses EARS semantics and has no dependency on
  * the core parser internals; it imports types only.
  */
 
 export type { ExtractError, ExtractResult } from './types.js';
-
-export { extractEars } from './ears.js';
-export { extractMarkdown } from './markdown.js';
-export { extractYaml } from './yaml.js';
-export { extractJson } from './json.js';
-export { extractFromContent, extractFromFile } from './dispatch.js';
 
 // --- Host-native pipeline (Agent W2). Locate + extract stages plus the full
 // pipeline composed with @earsyntax/core's findings assembly. ---

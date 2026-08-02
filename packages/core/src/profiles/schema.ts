@@ -111,7 +111,17 @@ export interface ProfileLocator {
   codeFences: CodeFences;
 }
 
-/** Whether requirements must carry an id and its shape. */
+/**
+ * Whether requirements must carry an id and its shape.
+ *
+ * RESERVED: `validateProfile` accepts and type-checks this field (required
+ * boolean, pattern compiles as a regex), but no pipeline stage enforces it
+ * yet. Locating, extracting, parsing, and linting do not read `idFormat`, so
+ * a requirement missing an id or mismatching `pattern` produces no
+ * diagnostic today. Enforcement needs a future registry diagnostic code
+ * (see `docs/contracts/profile.md`, `idFormat` section) before this field
+ * has any runtime effect.
+ */
 export interface ProfileIdFormat {
   /** When `true`, a requirement without an id is a finding. */
   required: boolean;

@@ -1,48 +1,36 @@
 # Input Formats
 
-`@earsyntax/extract` turns the files people actually write into the
-`RequirementInput` shape that `@earsyntax/core` lints. It supports four formats:
-`.ears`, Markdown, YAML, and JSON. Every extractor is a pure function of its
-input string, returns items in document order, and records a 1-based source
-line for each requirement.
+`@earsyntax/extract` turns the files people actually write into requirement
+candidates that `@earsyntax/core` lints. It supports four formats: `.ears`,
+Markdown, YAML, and JSON. The host-native pipeline (`extractCandidates`,
+`runPipeline`) is the only extraction surface this package exposes; a profile
+decides which regions of a document become candidates, and every stage is a
+pure function of the content string. Only the caller (the CLI) reads files.
 
 ```ts
-import { extractFromContent } from '@earsyntax/extract';
+import { extractCandidates } from '@earsyntax/extract';
+import { BUILTIN_PROFILES } from '@earsyntax/core';
 
 const md =
   '- REQ-001: When a payment webhook is received, the billing service shall verify the HMAC signature.';
-const { items, errors } = extractFromContent(md, 'requirements.md');
-// items[0] === {
-//   id: 'REQ-001',
+const { candidates, notices } = extractCandidates({
+  files: [{ path: '.kiro/specs/checkout/requirements.md', content: md }],
+  profile: BUILTIN_PROFILES.kiro,
+});
+// candidates[0] === {
+//   file: '.kiro/specs/checkout/requirements.md',
+//   line: 1,
+//   col: 3,
 //   text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
-//   source: { file: 'requirements.md', line: 1 },
+//   profile: 'kiro',
+//   locatorRuleId: 'kiro.acceptance-criteria',
+//   requirementId: 'REQ-001',
 // }
 ```
 
-This package extracts requirements only. It never lints them or parses EARS
-grammar; pass the extracted `items` to `@earsyntax/core` for that.
-
-## What every extractor returns
-
-Each extractor returns an `ExtractResult`:
-
-```ts
-interface ExtractResult {
-  items: RequirementInput[]; // in document order
-  errors: ExtractError[]; // empty on a clean extraction
-}
-
-interface ExtractError {
-  message: string;
-  file?: string;
-  line?: number;
-}
-```
-
-Extraction is tolerant. A malformed file or a single bad entry produces an
-`ExtractError` rather than a thrown exception, and the good entries around it
-are still returned. IDs are always optional: when a source provides one it is
-lifted into `item.id`, otherwise the item carries `text` and `source` only.
+This package locates and extracts requirements only. It never lints them or
+parses EARS grammar; `runPipeline` hands the extracted text to
+`@earsyntax/core` for that.
 
 ## `.ears`
 
@@ -56,17 +44,9 @@ REQ-001: When a payment webhook is received, the billing service shall verify th
 REQ-002: If the HMAC signature is invalid, then the billing service shall reject the webhook.
 ```
 
-```ts
-import { extractEars } from '@earsyntax/extract';
-
-const { items } = extractEars(content, 'billing.ears');
-// items[0].id === 'REQ-001'
-// items[0].source === { file: 'billing.ears', line: 2 }
-```
-
-A colon inside the requirement text is not mistaken for an ID prefix, because an
-ID cannot contain spaces. `When the report is ready, the billing service shall
-emit: a summary.` extracts with no `id` and its full text intact.
+Under the `strict` and `ears-x` profiles this is the every-line locator rule:
+every non-empty, non-comment line becomes a candidate, with `col` at the line
+start.
 
 ### Metadata prefix
 
@@ -79,77 +59,37 @@ REQ-001 [source: specs/checkout.md:14]: When a payment webhook is received, the 
 REQ-002 [source: specs/checkout.md:12-14]: If the HMAC signature is invalid, then the billing service shall reject the webhook.
 ```
 
-The id and the `[source: ...]` segment are stripped from the text before it is
-handed to the linter, so the requirement classifies correctly. When a
-`[source: path:line]` reference is present it becomes the item's source
-location, overriding the physical `.ears` file and line:
-
-```ts
-const line =
-  'REQ-001 [source: specs/checkout.md:14]: When a payment webhook is received, the billing service shall verify the HMAC signature.';
-const { items } = extractEars(line, 'requirements.ears');
-// items[0] === {
-//   id: 'REQ-001',
-//   text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
-//   source: { file: 'specs/checkout.md', line: 14 },
-// }
-```
-
-For a `line-line` range the start line is used. Because `SourceLocation` holds a
-single file and line, the physical `.ears` position is not retained separately
-once a declared reference is present. A malformed `[source: ...]` segment (one
-that does not parse as `path:line`) is stripped from the text, the id is still
-extracted, and the source falls back to the physical `.ears` file and line.
+Under a profile whose dialect sets `allowFrameMetadata` (`ears-x`), the `ID:`
+and `[source: ...]` segment stay in the candidate's `text` and `col` stays at
+the line start; only `requirementId` is lifted. The linter strips the frame
+prefix at parse time, so the reported position stays at the physical line and
+column where the text sits. Under a profile that does not allow frame metadata
+(for example `strict`), a leading `REQ-001:` is left untouched in the text and
+the linter reports it.
 
 ## Markdown
 
-The Markdown extractor reads requirements from three structures and ignores
-everything else. Prose paragraphs, headings, and fenced code blocks (both
-` ``` ` and `~~~`) are skipped entirely.
+The Markdown locator reads requirements from headings, list items, and
+`blockPrefix` blocks, as the active profile's locator rules declare; see
+[Host-native pipeline](#host-native-pipeline) below. Prose paragraphs and
+fenced code blocks (both ` ``` ` and `~~~`) are skipped unless the profile sets
+`locator.codeFences` to `include`.
 
 ### Bullet and numbered lists
 
 Bullets (`-`, `*`, `+`) and numbered items (`1.`, `1)`) each become one
-requirement. The same metadata prefix as `.ears` applies inside the item: a bare
-`REQ-001:` id, or `REQ-001 [source: path:line]:` with a declared source
-reference that becomes the item's source location.
+candidate, honoring the profile's `listMarker` and `underHeading` filters. A
+markdown bold requirement label (`- **FR-001**: <sentence>`) is host
+formatting, not part of the EARS sentence: the locator strips both the list
+marker and the `**FR-001**:` label, sets `requirementId` to `FR-001`, and puts
+`col` at the first character of the sentence.
 
 ```md
-- REQ-001: When a payment webhook is received, the billing service shall verify the HMAC signature.
+- **FR-001**: When a payment webhook is received, the billing service shall verify the HMAC signature.
 - If the HMAC signature is invalid, then the billing service shall reject the webhook.
-
-1. REQ-003 [source: specs/checkout.md:20]: The billing service shall retain receipts for seven years.
 ```
 
-The first item extracts as `id: 'REQ-001'`; the second has no id; the third
-carries `id: 'REQ-003'` with `source: { file: 'specs/checkout.md', line: 20 }`.
-
-### Tables
-
-GFM pipe tables are supported in two forms. A table with `ID` and `Requirement`
-columns takes the id from the `ID` column:
-
-```md
-| ID      | Requirement                                                                              |
-| ------- | ---------------------------------------------------------------------------------------- |
-| REQ-001 | When a payment webhook is received, the billing service shall verify the HMAC signature. |
-| REQ-002 | If the HMAC signature is invalid, then the billing service shall reject the webhook.     |
-```
-
-A single-column requirement table also works, and an `ID:` prefix inside a cell
-is lifted just like in a bullet:
-
-```md
-| Requirement                                                   |
-| ------------------------------------------------------------- |
-| REQ-001: The billing service shall verify the HMAC signature. |
-| The billing service shall reject invalid webhooks.            |
-```
-
-Column headers are matched case-insensitively. `ID` selects the id column;
-`Requirement`, `Requirements`, `Text`, or `Statement` selects the text column.
-A table needs a separator row (`| --- |`) with a header row directly above it;
-pipe lines without one are treated as prose and ignored.
+The first item extracts with `requirementId: 'FR-001'`; the second has no id.
 
 ## YAML
 
@@ -163,27 +103,13 @@ requirements:
   - text: The billing service shall retain receipts for seven years.
 ```
 
-```ts
-import { extractYaml } from '@earsyntax/extract';
-
-const { items, errors } = extractYaml(content, 'requirements.yaml');
-```
-
-The first entry extracts with `id: 'REQ-001'`; the second is kept even though it
-has no id. Source lines are a best-effort lookup: the extractor locates each
-entry's id or text in the raw document.
-
-Malformed YAML, a missing `requirements` key, or an entry without a non-empty
-string `text` are reported in `errors`. Malformed YAML stops extraction; a
-single bad entry is skipped while the others are still returned.
-
-```ts
-// requirements:
-//   - id: REQ-001
-//     text: "unterminated
-// errors[0].message === 'Malformed YAML: ...'
-// errors[0].line   === 3
-```
+The first entry extracts with `requirementId: 'REQ-001'`; the second is kept
+even though it has no id. Source lines are a best-effort lookup: the extractor
+locates each entry's id or text in the raw document. Malformed YAML, a missing
+`requirements` key, or an entry without a non-empty string `text` are reported
+as a `PipelineNotice` (`extract.malformed_yaml`) rather than thrown; malformed
+YAML stops extraction for that file, while a single bad entry is skipped and
+the others are still returned.
 
 ## JSON
 
@@ -204,48 +130,11 @@ optional `id`.
 }
 ```
 
-```ts
-import { extractJson } from '@earsyntax/extract';
-
-const { items, errors } = extractJson(content, 'requirements.json');
-```
-
 As with YAML, missing ids are tolerated, source lines are located by searching
-the raw document, and malformed JSON or the wrong top-level shape is reported in
-`errors` rather than thrown.
-
-## Dispatch by extension
-
-`extractFromContent` picks the right extractor from a file name's extension and
-records that name as each item's source file:
-
-| Extension          | Extractor         |
-| ------------------ | ----------------- |
-| `.ears`            | `extractEars`     |
-| `.md`, `.markdown` | `extractMarkdown` |
-| `.yaml`, `.yml`    | `extractYaml`     |
-| `.json`            | `extractJson`     |
-
-An unsupported extension returns no items and a single `ExtractError`.
-
-```ts
-import { extractFromContent, extractFromFile } from '@earsyntax/extract';
-
-// From a string you already hold:
-const result = extractFromContent(content, 'requirements.md');
-
-// Or read from disk. This is the only function in the package that touches
-// the file system; a read failure is reported in `errors`, not thrown.
-const fromDisk = extractFromFile('specs/requirements.yaml');
-```
+the raw document, and malformed JSON or the wrong top-level shape is reported
+as an `extract.malformed_json` notice rather than thrown.
 
 ## Host-native pipeline
-
-The `extractEars`/`extractMarkdown`/`extractYaml`/`extractJson` functions above
-are the non-profile surface: they read every list item, table row, and structured
-entry regardless of context. The host-native commands (`validate`, `extract`)
-use a profile-driven pipeline instead, so a profile controls which regions of a
-host document become requirement candidates.
 
 Two entry points cover the pipeline:
 
@@ -253,7 +142,7 @@ Two entry points cover the pipeline:
 import { extractCandidates, runPipeline } from '@earsyntax/extract';
 import { BUILTIN_PROFILES } from '@earsyntax/core';
 
-// Stage 1-2 only: locate candidates (what `extract` prints).
+// Locate candidates only (what `extract` prints).
 const { candidates, notices } = extractCandidates({
   files: [{ path: '.kiro/specs/checkout/requirements.md', content }],
   profile: BUILTIN_PROFILES.kiro,
@@ -291,26 +180,6 @@ JSON are structured requirement lists: no built-in profile declares them in
 `documentKinds`, so they are extracted profile-agnostically and their candidates
 carry a synthetic `locatorRuleId` of `structured.yaml` or `structured.json`. The
 active dialect still applies when their text is linted.
-
-### Requirement ids under the pipeline
-
-Two id conventions apply, and they are handled differently on purpose:
-
-- A markdown bold requirement label (`- **FR-001**: <sentence>`) is host
-  formatting, not part of the EARS sentence. The locator strips both the list
-  marker and the `**FR-001**:` label, sets `requirementId` to `FR-001`, and puts
-  `col` at the first character of the sentence. Speckit and Kiro use this form.
-- An `ears-x` frame prefix (`REQ-001:` and an optional `[source: path:line]`
-  tag) is retained in the candidate `text`, with `col` at the line start. Only
-  `requirementId` is lifted. The linter strips the frame prefix at parse time
-  under `allowFrameMetadata`, so the extractor must not move the reported
-  position: findings point at the physical line and column where the text sits.
-  This differs from the non-profile `extractEars`, which removes the prefix from
-  `text` and lets a `[source: ...]` reference override the item's source
-  location.
-
-Under a profile that allows neither (for example `strict`), a leading `REQ-001:`
-is left untouched in the text and the linter reports it.
 
 ### Never throws
 

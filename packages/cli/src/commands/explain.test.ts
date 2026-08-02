@@ -57,7 +57,6 @@ function makeContext(
     quiet: options.quiet ?? false,
     profile: 'strict',
     cwd: '/work',
-    color: false,
   };
   const emitter: Emitter = {
     json: global.json,

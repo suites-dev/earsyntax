@@ -247,10 +247,14 @@ export function buildSarifLog(findings: Findings, options: BuildSarifOptions = {
   const ruleIndexById = new Map(distinctIds.map((id, index): [string, number] => [id, index]));
   const rules = distinctIds.map(buildRule);
 
-  const results = findings.diagnostics.map((diagnostic) =>
-    // Every finding id is in distinctIds by construction, so the index is defined.
-    buildResult(diagnostic, ruleIndexById.get(diagnostic.id) ?? 0),
-  );
+  const results = findings.diagnostics.map((diagnostic) => {
+    const ruleIndex = ruleIndexById.get(diagnostic.id);
+    if (ruleIndex === undefined) {
+      // Unreachable: distinctIds is derived from these same diagnostics.
+      throw new Error(`No SARIF rule index for diagnostic id "${diagnostic.id}".`);
+    }
+    return buildResult(diagnostic, ruleIndex);
+  });
 
   const driver = {} as SarifDriver;
   driver.name = SARIF_TOOL_NAME;

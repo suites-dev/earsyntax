@@ -17,20 +17,14 @@ export const HOSTS = ['kiro', 'speckit', 'openspec'] as const;
 export type Host = (typeof HOSTS)[number];
 
 /** The exact validate command each host suggests, used in steering docs and `next`. */
-export const HOST_VALIDATE: Record<Host, { glob: string; command: string }> = {
-  kiro: {
-    glob: '.kiro/specs/**/requirements.md',
-    command: 'earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro',
-  },
-  speckit: {
-    glob: 'specs/**/spec.md',
-    command: 'earsyntax validate "specs/**/spec.md" --profile speckit',
-  },
-  openspec: {
-    glob: 'openspec/specs/**/*.md',
-    command: 'earsyntax validate "openspec/specs/**/*.md" --profile openspec',
-  },
+export const HOST_VALIDATE: Record<Host, { command: string }> = {
+  kiro: { command: 'earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro' },
+  speckit: { command: 'earsyntax validate "specs/**/spec.md" --profile speckit' },
+  openspec: { command: 'earsyntax validate "openspec/specs/**/*.md" --profile openspec' },
 };
+
+/** The glob the Kiro validation hook watches; only Kiro's hook needs a raw pattern. */
+const KIRO_HOOK_GLOB = '.kiro/specs/**/requirements.md';
 
 /** The four-phase steering body a host document carries, with the profile pinned. */
 function steeringBody(profile: Host, fileToken: string): string[] {
@@ -73,7 +67,7 @@ function kiroHook(): { path: string; content: string } {
     'on:',
     '  fileEdited:',
     '    patterns:',
-    `      - "${HOST_VALIDATE.kiro.glob}"`,
+    `      - "${KIRO_HOOK_GLOB}"`,
     'run: >-',
     `  ${HOST_VALIDATE.kiro.command} --json`,
     '',
@@ -125,8 +119,6 @@ export function renderHost(host: Host): Contribution {
       contribution.managed = [
         { file: 'AGENTS.md', id: 'openspec-validate', block: openspecBlock() },
       ];
-      return contribution;
-    default:
       return contribution;
   }
 }

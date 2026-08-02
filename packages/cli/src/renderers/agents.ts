@@ -130,7 +130,5 @@ export function renderAgent(agent: Agent, hosts: readonly string[]): Contributio
         { file: 'GEMINI.md', id: 'agent-loop', block: agentLoopBlock(profile, note) },
       ];
       return contribution;
-    default:
-      return contribution;
   }
 }

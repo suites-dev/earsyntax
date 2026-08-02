@@ -31,7 +31,6 @@ function makeContext(
     quiet: options.quiet ?? false,
     profile: options.profile ?? 'strict',
     cwd: '/work',
-    color: false,
   };
   const emitter: Emitter = {
     json: global.json,
@@ -129,6 +128,19 @@ describe('profilesCommand — pretty rendering derives from the same data', () =
   });
 });
 
+describe('profilesCommand — --quiet suppresses pretty output', () => {
+  it('empties pretty under --quiet without --json', () => {
+    const result = profilesCommand(makeContext({ quiet: true }));
+    expect(result.pretty).toBe('');
+    expect(result.exitCode).toBe(0);
+  });
+
+  it('leaves the JSON payload untouched when --quiet is combined with --json', () => {
+    const result = profilesCommand(makeContext({ json: true, quiet: true }));
+    expect(result.response.profiles).toEqual(summarizeProfiles());
+  });
+});
+
 describe('profiles — through the dispatcher', () => {
   function capture(argv: string[]): { out: string; code: number } {
     let out = '';
@@ -162,5 +174,18 @@ describe('profiles — through the dispatcher', () => {
     const { out, code } = capture(['profiles', '--profile', 'kiro']);
     expect(code).toBe(2);
     expect(out).toContain('cli.flag_not_allowed');
+  });
+
+  it('emits nothing under --quiet without --json', () => {
+    const { out, code } = capture(['profiles', '--quiet']);
+    expect(code).toBe(0);
+    expect(out).toBe('\n');
+  });
+
+  it('leaves --json output unaffected by --quiet', () => {
+    const { out, code } = capture(['profiles', '--json', '--quiet']);
+    expect(code).toBe(0);
+    const parsed = JSON.parse(out);
+    expect(parsed.profiles).toEqual(summarizeProfiles());
   });
 });

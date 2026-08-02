@@ -11,7 +11,8 @@
  *
  * The `profiles` key of the `--json` envelope is exactly the `ProfileDiff[]`
  * array in the frozen order `strict`, `ears-x`, `kiro`, `speckit`, `openspec`.
- * The command resolves no repo and never fails: exit `0`.
+ * The command resolves no repo and never fails: exit `0`. `--quiet` suppresses
+ * the pretty text like every other command; it has no effect on `--json`.
  */
 
 import { type ProfileDiff, summarizeProfiles } from '@earsyntax/core';
@@ -43,9 +44,10 @@ function prettyProfile(diff: ProfileDiff): string {
  * write. Takes no positionals or flags beyond the universal set, resolves no
  * repo, and always exits `0`.
  */
-export function profilesCommand(_context: CommandContext): CommandResult {
+export function profilesCommand(context: CommandContext): CommandResult {
   const profiles = summarizeProfiles();
   const response = buildResponse({ command: 'profiles', ok: true, next: [] }, { profiles });
   const pretty = profiles.map(prettyProfile).join('\n\n');
-  return { response, pretty, exitCode: 0 };
+  const result = { response, pretty, exitCode: 0 };
+  return context.global.quiet && !context.global.json ? { ...result, pretty: '' } : result;
 }

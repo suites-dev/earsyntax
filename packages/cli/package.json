@@ -27,6 +27,7 @@
   },
   "scripts": {
     "predev": "pnpm rimraf dist tsconfig.build.tsbuildinfo",
+    "prepack": "pnpm rimraf dist tsconfig.build.tsbuildinfo && pnpm build",
     "build": "pnpm tsc -p tsconfig.build.json",
     "dev": "pnpm tsc -p tsconfig.build.json --watch --incremental",
     "lint": "pnpm eslint \"src/**/*.ts\"",

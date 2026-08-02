@@ -249,43 +249,7 @@ Every group is optional. Matching is deterministic: exact canonical name, then e
 
 `@earsyntax/extract` turns files people write into the `RequirementInput` shape core lints. It supports `.ears`, Markdown, YAML, and JSON, and never lints or parses EARS grammar itself. See the [input formats guide](input-formats.md) for every format.
 
-`extractFromContent` dispatches on the file name's extension:
-
-```ts
-import { extractFromContent } from '@earsyntax/extract';
-
-const md = [
-  '# Billing requirements',
-  '',
-  '- REQ-001: When a payment webhook is received, the billing service shall verify the HMAC signature.',
-  '- If the HMAC signature is invalid, then the billing service shall reject the webhook.',
-].join('\n');
-
-const { items, errors } = extractFromContent(md, 'requirements.md');
-```
-
-```json
-{
-  "items": [
-    {
-      "id": "REQ-001",
-      "text": "When a payment webhook is received, the billing service shall verify the HMAC signature.",
-      "source": { "file": "requirements.md", "line": 3 }
-    },
-    {
-      "text": "If the HMAC signature is invalid, then the billing service shall reject the webhook.",
-      "source": { "file": "requirements.md", "line": 4 }
-    }
-  ],
-  "errors": []
-}
-```
-
-The heading is ignored, the first bullet's `REQ-001:` prefix becomes the item `id`, and the second bullet keeps its text with no id. Pass the `items` to `lintEarsBatch` to lint them. `extractFromFile` reads from disk instead of a string and is the only function in the package that touches the file system.
-
-### Host-native pipeline
-
-The `extractFromContent`/`extractEars`/`extractMarkdown`/`extractYaml`/`extractJson` functions above are the non-profile surface: they read every list item, table row, and structured entry. The host-native pipeline is profile-driven, so a profile controls which regions of a host document become candidates. Two entry points cover it:
+The pipeline is profile-driven: a profile controls which regions of a host document become candidates. Two entry points cover it:
 
 ```ts
 import { extractCandidates, runPipeline } from '@earsyntax/extract';
@@ -340,7 +304,6 @@ serializeFindings(findings); // byte-stable JSON string of the canonical finding
 For the `If`-without-`then` line above, `findings.diagnostics[0]` is
 `{ id: 'EARS-E006', severity: 'error', file: 'requirements.ears', line: 1, col: 1, message: "The 'If' clause is missing the required 'then' boundary." }`,
 and the SARIF log carries a matching `EARS-E006` rule and result. The package also
-exports `serializeSarifLog`, `canonicalizeFindings`, the `EXIT_OK`/`EXIT_LINT_ERRORS`/`EXIT_USAGE`
-constants, and `DIAGNOSTIC_CODES`/`DIAGNOSTIC_DESCRIPTIONS`. This is the same
-projection the CLI uses; `earsyntax validate --sarif` and `--json` are thin
-wrappers over these serializers.
+exports `serializeSarifLog`, `canonicalizeFindings`, and the `EXIT_OK`/`EXIT_LINT_ERRORS`/`EXIT_USAGE`
+constants. This is the same projection the CLI uses; `earsyntax validate --sarif` and `--json` are
+thin wrappers over these serializers.

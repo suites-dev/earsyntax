@@ -14,35 +14,10 @@
  * preserve input order, so identical input always produces identical output.
  */
 
-export type {
-  Findings,
-  FindingsDiagnostic,
-  FindingsSummary,
-  FindingsSeverity,
-} from '@earsyntax/core';
+export type { Findings } from '@earsyntax/core';
 
 export { canonicalizeFindings, serializeFindings } from './findings-report.js';
 
 export { EXIT_LINT_ERRORS, EXIT_OK, EXIT_USAGE, exitCodeForFindings } from './exit-codes.js';
 
-export { DIAGNOSTIC_CODES, DIAGNOSTIC_DESCRIPTIONS } from './diagnostic-registry.js';
-
-export type {
-  BuildSarifOptions,
-  SarifDriver,
-  SarifLevel,
-  SarifLocation,
-  SarifLog,
-  SarifPhysicalLocation,
-  SarifRegion,
-  SarifResult,
-  SarifRule,
-  SarifRun,
-} from './sarif.js';
-export {
-  buildSarifLog,
-  serializeSarifLog,
-  SARIF_SCHEMA,
-  SARIF_TOOL_NAME,
-  SARIF_VERSION,
-} from './sarif.js';
+export { buildSarifLog, serializeSarifLog } from './sarif.js';

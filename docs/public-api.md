@@ -8,8 +8,8 @@ worked examples of the four lint functions and the report serializers, see the
 the [input formats guide](input-formats.md).
 
 Every function here is deterministic: no LLM calls, no network, no file system
-access (the one exception is `extractFromFile`, which reads a path), no fuzzy
-matching. Diagnostics are stably sorted; batch and pipeline order is preserved.
+access, no fuzzy matching. Diagnostics are stably sorted; batch and pipeline
+order is preserved.
 
 ## `@earsyntax/core`
 
@@ -146,24 +146,10 @@ and a profile and returns Findings. The locate and extract stages live in
 
 ## `@earsyntax/extract`
 
-### Format extractors
-
-```ts
-import {
-  extractEars,
-  extractMarkdown,
-  extractYaml,
-  extractJson,
-  extractFromContent,
-  extractFromFile,
-} from '@earsyntax/extract';
-import type { ExtractError, ExtractResult } from '@earsyntax/extract';
-```
-
-Each extractor turns one authored format into `RequirementInput` items. Every
-parser is pure; `extractFromContent` dispatches on the file extension, and
-`extractFromFile` is the only function that reads disk. The formats are documented
-in the [input formats guide](input-formats.md).
+The host-native pipeline is the only extraction surface this package exposes.
+Every stage is pure over the content strings the caller supplies; only the
+caller (the CLI) reads files. The formats are documented in the
+[input formats guide](input-formats.md).
 
 ### Host-native pipeline
 
