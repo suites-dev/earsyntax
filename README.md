@@ -343,6 +343,7 @@ Boundaries:
 
 The maintained design briefs in this repository are:
 
-- [EARSYNTAX-CLI-FACADE-ALPHA-0.md](EARSYNTAX-CLI-FACADE-ALPHA-0.md)
+- [docs/refactor/host-native-facade.md](docs/refactor/host-native-facade.md) (frozen authority for the host-native contracts)
 - [EARSYNTAX-HOST-NATIVE-CLI-IMPLEMENTATION-PLAN-FABLE.md](EARSYNTAX-HOST-NATIVE-CLI-IMPLEMENTATION-PLAN-FABLE.md)
 - [GRAMMAR-AGENT-BRIEF-FABLE.md](GRAMMAR-AGENT-BRIEF-FABLE.md)
+- [EARSYNTAX-CLI-FACADE-ALPHA-0.md](EARSYNTAX-CLI-FACADE-ALPHA-0.md) (superseded by `docs/refactor/host-native-facade.md`)

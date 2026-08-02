@@ -173,22 +173,8 @@ in `docs/refactor/host-native-facade.md`; this document fixes only the
 
 ## Relationship to the current code
 
-The current CLI does not emit this model. `validate` today builds a
-`ValidationResult[]` shape (`packages/cli/src/facade-types.ts:110-119`) with
-`references`, `ast`, and core `Diagnostic` objects keyed by the old
-`DiagnosticCode` union. The current `@earsyntax/cli-contract` `JsonReport`
-(`packages/cli-contract/src/json-report.ts`) is a separate projection with an
-`infos` count and `span` offsets.
-
-Findings v1 replaces both as the canonical result:
-
-- `Diagnostic.id` is the new `EARS-E###` / `EARS-W###` ID, not the old dotted
-  code. The migration table is in `docs/refactor/host-native-facade.md`.
-- Positions are `file` + `line` (+ `col`), mapped to the original host
-  document, replacing the character `span` offsets that only made sense for
-  single-requirement input.
-- There is no `references`, `ast`, `pattern`, or `infos` in the Findings model.
-  A command MAY expose parser detail (pattern, AST) as its own optional
-  command-specific data, but that data is not part of the frozen Findings
-  contract and `ok` never depends on it.
-- `summary` gains `valid` (count of clean requirements) and drops `infos`.
+The CLI emits this model today. `validate` builds a `Findings` object and
+serializes it through `canonicalizeFindings` and `serializeFindings` from
+`@earsyntax/cli-contract` (`packages/cli/src/commands/validate.ts`). SARIF output
+is a projection of the same `Findings` object, produced by `buildSarifLog` in the
+same package.

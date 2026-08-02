@@ -311,42 +311,9 @@ const { findings } = runPipeline({
 
 `@earsyntax/cli-contract` holds the report serializers so external tools can render
 linting results the way the CLI does, without depending on the CLI binary. It is
-pure data and serializers: no I/O, no argument parsing. It works from two shapes:
-a `ReportInput` (files of `{ input, result }` items) for terminal rendering, and a
-`Findings` object (from `@earsyntax/core` or `@earsyntax/extract`) for JSON, SARIF,
-and the exit code.
-
-### Terminal model from a `ReportInput`
-
-Collect one item per requirement, group them by file, and pass the array to
-`buildPrettyModel`:
-
-```ts
-import { lintEars } from '@earsyntax/core';
-import { buildPrettyModel } from '@earsyntax/cli-contract';
-
-const inputs = [
-  {
-    id: 'REQ-001',
-    text: 'When a payment webhook is received, the billing service shall verify the HMAC signature.',
-    source: { file: 'requirements.ears', line: 1 },
-  },
-  {
-    id: 'REQ-002',
-    text: 'If the HMAC signature is invalid, the billing service shall reject the webhook.',
-    source: { file: 'requirements.ears', line: 2 },
-  },
-];
-
-const model = buildPrettyModel([
-  {
-    path: 'requirements.ears',
-    items: inputs.map((input) => ({ input, result: lintEars(input.text) })),
-  },
-]);
-
-// model.summary === { files: 1, requirements: 2, errors: 1, warnings: 0, infos: 0, valid: false }
-```
+pure data and serializers: no I/O, no argument parsing. It works from a `Findings`
+object (from `@earsyntax/core` or `@earsyntax/extract`) to produce the JSON report,
+SARIF, and the exit code.
 
 ### Findings, SARIF, and the exit code
 
