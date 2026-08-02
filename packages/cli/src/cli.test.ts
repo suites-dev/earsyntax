@@ -3,8 +3,7 @@
  *
  * These exercise the command surface `run()` owns: routing across the eight
  * commands, flag validation against the closed surface, help and version text,
- * the response envelope, and the not-yet-reimplemented stubs. Command bodies
- * (validate, extract, and the W4/W5 commands) are tested in their own suites;
+ * and the response envelope. Command bodies are tested in their own suites;
  * here we only prove the shell routes to them and enforces their flags.
  */
 
@@ -146,25 +145,6 @@ describe('routing', () => {
       expect(res.code).toBe(2);
       expect((res.json().diagnostics as { code: string }[])[0]?.code).toBe('cli.unknown_command');
     }
-  });
-});
-
-describe('not-yet-reimplemented stubs', () => {
-  it('returns exit 2 with cli.not_implemented for the W4/W5 commands', () => {
-    for (const command of ['init', 'doctor', 'explain', 'profiles']) {
-      const res = runCli(command, '--json');
-      expect(res.code).toBe(2);
-      const body = res.json();
-      expect(body.command).toBe(command);
-      expect(body.ok).toBe(false);
-      expect((body.diagnostics as { code: string }[])[0]?.code).toBe('cli.not_implemented');
-    }
-  });
-
-  it('carries the instructions mode into the stub command label', () => {
-    const res = runCli('instructions', 'repair', '--file', 'x.md', '--json');
-    expect(res.code).toBe(2);
-    expect(res.json().command).toBe('instructions repair');
   });
 });
 

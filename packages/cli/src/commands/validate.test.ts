@@ -202,13 +202,48 @@ describe('runValidate — inputs and exit codes', () => {
     expect((r.response.diagnostics as { code: string }[])[0]?.code).toBe('validate.no_files');
   });
 
-  it('stubs --sarif with exit 2 until the SARIF phase lands', () => {
+  it('emits a valid, empty SARIF log as raw stdout on a clean run (exit 0)', () => {
     const r = runValidate(
       { paths: ['clean.ears'], profileName: 'strict', strict: false, sarif: true, json: false, cwd: CWD },
       fakeDeps({ [`${CWD}/clean.ears`]: CLEAN_LINE }),
     );
-    expect(r.exitCode).toBe(2);
-    expect((r.response.diagnostics as { code: string }[])[0]?.code).toBe('validate.sarif_pending');
+    expect(r.exitCode).toBe(0);
+    const log = JSON.parse(r.raw ?? '') as {
+      version: string;
+      runs: { results: unknown[]; tool: { driver: { name: string; rules: unknown[] } } }[];
+    };
+    expect(log.version).toBe('2.1.0');
+    expect(log.runs[0]?.tool.driver.name).toBe('earsyntax');
+    expect(log.runs[0]?.results).toEqual([]);
+    expect(log.runs[0]?.tool.driver.rules).toEqual([]);
+  });
+
+  it('emits SARIF results with EARS ids, levels, and positions on a failing run (exit 1)', () => {
+    const r = runValidate(
+      { paths: ['bad.ears'], profileName: 'strict', strict: false, sarif: true, json: false, cwd: CWD },
+      fakeDeps({ [`${CWD}/bad.ears`]: 'The system resets the timer.\n' }),
+    );
+    expect(r.exitCode).toBe(1);
+    const log = JSON.parse(r.raw ?? '') as {
+      runs: {
+        results: {
+          ruleId: string;
+          ruleIndex: number;
+          level: string;
+          locations: { physicalLocation: { artifactLocation: { uri: string }; region: { startLine: number } } }[];
+        }[];
+        tool: { driver: { rules: { id: string }[] } };
+      }[];
+    };
+    const results = log.runs[0]?.results ?? [];
+    expect(results.length).toBeGreaterThan(0);
+    const missingShall = results.find((result) => result.ruleId === 'EARS-E007');
+    expect(missingShall).toBeDefined();
+    expect(missingShall?.level).toBe('error');
+    expect(missingShall?.locations[0]?.physicalLocation.artifactLocation.uri).toBe('bad.ears');
+    expect(missingShall?.locations[0]?.physicalLocation.region.startLine).toBe(1);
+    // The referenced rule id is declared on the driver.
+    expect(log.runs[0]?.tool.driver.rules.map((rule) => rule.id)).toContain('EARS-E007');
   });
 
   it('rejects --json --sarif together as a flag conflict', () => {

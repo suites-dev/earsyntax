@@ -28,7 +28,7 @@ import {
   type PipelineNotice,
   runPipeline,
 } from '@earsyntax/extract';
-import { canonicalizeFindings, type Findings } from '@earsyntax/cli-contract';
+import { buildSarifLog, canonicalizeFindings, type Findings, serializeSarifLog } from '@earsyntax/cli-contract';
 import type { CommandContext, CommandResult } from '../context.js';
 import type { FacadeDiagnostic, FacadeResponse, NextAction } from '../facade-types.js';
 import { buildResponse } from '../response.js';
@@ -60,7 +60,7 @@ export interface ValidateInputs {
   profileName: string;
   /** `--strict`: upgrade surviving warnings to errors at the findings layer. */
   strict: boolean;
-  /** `--sarif`: SARIF output (a later-phase seam; see {@link runValidate}). */
+  /** `--sarif`: emit a SARIF 2.1.0 log as raw stdout instead of the envelope. */
   sarif: boolean;
   /** `--json`: JSON output. Used only to reject the `--json --sarif` conflict in-band. */
   json: boolean;
@@ -73,6 +73,11 @@ export interface ValidateResult {
   response: FacadeResponse;
   pretty: string;
   exitCode: number;
+  /**
+   * Raw stdout that replaces the envelope entirely, set only under `--sarif`: a
+   * serialized SARIF 2.1.0 log. The dispatcher writes it verbatim.
+   */
+  raw?: string;
 }
 
 /** The default deps: real disk and stdin access. */
@@ -113,14 +118,6 @@ export function runValidate(inputs: ValidateInputs, deps: ValidateDeps = DEFAULT
     return usageResult('cli.conflicting_flags', 'The --json and --sarif flags are mutually exclusive.');
   }
 
-  // `--sarif` is a later-phase seam. The existing cli-contract SARIF builder
-  // consumes the legacy ReportInput shape, not the Findings model, so it is not
-  // wired here; Agent W5-sarif replaces this branch with a Findings projection
-  // returned as `CommandResult.raw`.
-  if (inputs.sarif) {
-    return usageResult('validate.sarif_pending', 'SARIF output lands in a later phase.');
-  }
-
   const resolved = resolveProfile(inputs.profileName);
   if (!resolved.ok) {
     return usageResult('cli.unknown_profile', resolved.error.message);
@@ -145,7 +142,7 @@ export function runValidate(inputs: ValidateInputs, deps: ValidateDeps = DEFAULT
     strict: inputs.strict,
   });
 
-  return frame(canonicalizeFindings(findings), notices, profile);
+  return frame(canonicalizeFindings(findings), notices, profile, inputs.sarif);
 }
 
 /** Resolve the positional inputs into pipeline files, or an exit-2 result. */
@@ -247,8 +244,19 @@ function stdinKind(profile: Profile): DocumentKind {
   return 'text';
 }
 
-/** Frame a completed pipeline run into a response, pretty text, and exit code. */
-function frame(findings: Findings, notices: PipelineNotice[], profile: Profile): ValidateResult {
+/**
+ * Frame a completed pipeline run into a response, pretty text, and exit code.
+ *
+ * Under `--sarif`, a serialized SARIF 2.1.0 projection of the findings is set as
+ * `raw`, which the dispatcher writes verbatim in place of the envelope. The exit
+ * code stays findings-driven regardless of output format.
+ */
+function frame(
+  findings: Findings,
+  notices: PipelineNotice[],
+  profile: Profile,
+  sarif: boolean,
+): ValidateResult {
   const diagnostics = notices.map(noticeToDiagnostic);
   const environmentError = notices.some((notice) => notice.severity === 'error');
   const ok = !environmentError && findings.summary.errors === 0;
@@ -265,7 +273,11 @@ function frame(findings: Findings, notices: PipelineNotice[], profile: Profile):
     { findings },
   );
 
-  return { response, pretty: prettyFindings(findings, diagnostics), exitCode };
+  const framed: ValidateResult = { response, pretty: prettyFindings(findings, diagnostics), exitCode };
+  if (sarif) {
+    framed.raw = serializeSarifLog(buildSarifLog(findings));
+  }
+  return framed;
 }
 
 /** Map a pipeline notice onto the facade-level diagnostic channel. */

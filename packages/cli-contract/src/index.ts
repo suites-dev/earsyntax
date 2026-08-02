@@ -7,9 +7,10 @@
  * assumptions about command names or flags.
  *
  * The canonical result is the Findings model, built in `@earsyntax/core`
- * (`toFindings`) and serialized here by {@link serializeFindings}. SARIF and the
- * pretty model are legacy projections kept compiling; they will be rebuilt from
- * Findings by a later agent.
+ * (`toFindings`) and serialized here by {@link serializeFindings}. SARIF is a
+ * projection of that same Findings model ({@link buildSarifLog}); the pretty
+ * model is a legacy projection kept compiling, to be rebuilt from Findings by a
+ * later agent.
  *
  * Determinism contract: serializers construct object keys in a fixed order and
  * preserve input order, so identical input always produces identical output.
@@ -26,6 +27,7 @@ export type { ReportInput, ReportInputFile, ReportInputItem } from './input.js';
 export { DIAGNOSTIC_CODES, DIAGNOSTIC_DESCRIPTIONS } from './diagnostic-registry.js';
 
 export type {
+  BuildSarifOptions,
   SarifDriver,
   SarifLevel,
   SarifLocation,
@@ -36,7 +38,7 @@ export type {
   SarifRule,
   SarifRun,
 } from './sarif.js';
-export { buildSarifLog, SARIF_SCHEMA, SARIF_TOOL_NAME, SARIF_VERSION } from './sarif.js';
+export { buildSarifLog, serializeSarifLog, SARIF_SCHEMA, SARIF_TOOL_NAME, SARIF_VERSION } from './sarif.js';
 
 export type { PrettyModel, PrettyRecord, PrettySummary } from './pretty.js';
 export { buildPrettyModel } from './pretty.js';
