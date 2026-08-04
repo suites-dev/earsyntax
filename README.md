@@ -462,10 +462,10 @@ Use `--json` when another tool consumes findings. Use `--sarif` for code-scannin
 `@earsyntax/core` exposes the deterministic parser and linter:
 
 ```ts
-import { lintEars } from "@earsyntax/core";
+import { lintEars } from '@earsyntax/core';
 
 const result = lintEars(
-  "When a payment webhook arrives, the billing service shall verify the signature.",
+  'When a payment webhook arrives, the billing service shall verify the signature.',
 );
 
 console.log(result.valid);
