@@ -1,200 +1,198 @@
 # earsyntax
 
-**Deterministic EARS validation for humans, coding agents, and CI.**
+**Deterministic EARS extraction, validation, and agent instructions for requirements that already live in Kiro, Spec Kit, OpenSpec, or plain files.**
 
-`earsyntax` finds requirements where they already live, checks them against an explicit EARS profile, and returns stable diagnostics that people and automation can act on.
-
-It works with plain requirement files, Kiro, Spec Kit, and OpenSpec.
-
-**No new workspace. No hidden lifecycle. No LLM inside the validator.**
-
-```bash
-npx @earsyntax/cli validate "specs/**/spec.md" --profile speckit
-```
-
-```text
-12/12 valid across 3 file(s), 0 error(s), 0 warning(s)
-```
+`earsyntax` locates requirement candidates, validates them against an explicit profile, and returns stable diagnostics for humans, coding agents, and CI.
 
 > [!WARNING]
-> `earsyntax` is currently alpha. Node.js 22 or newer is required. Run `earsyntax version --features` to inspect the exact commands, profiles, hosts, agents, and output formats available in your build.
+> `earsyntax` is currently alpha. Node.js 22 or newer is required. Run `earsyntax version --features` to inspect the exact commands, profiles, agents, hosts, and output formats available in your build.
 
-## Why earsyntax
+## What EARS checks
 
-Spec-driven development moves intent into explicit artifacts, but natural-language requirements are still difficult to validate consistently.
+EARS is the Easy Approach to Requirements Syntax: a small set of sentence patterns for writing requirements as explicit system obligations.
 
-Humans can tolerate ambiguity. Coding agents and CI systems need a smaller, more constrained interface.
-
-EARS, the Easy Approach to Requirements Syntax, provides a compact family of requirement patterns:
+Valid EARS requirements name the system and the response it shall perform. In plain files, write each requirement on one line:
 
 ```text
 The billing service shall verify the HMAC signature.
 
-When a payment webhook arrives,
-the billing service shall verify the HMAC signature.
+When a payment webhook arrives, the billing service shall verify the HMAC signature.
 
-While the payment provider is unavailable,
-the billing service shall queue retryable events.
-
-If the HMAC signature is invalid,
-then the billing service shall reject the webhook.
+If the HMAC signature is invalid, then the billing service shall reject the webhook.
 ```
 
-`earsyntax` makes those patterns operational.
-
-It can:
-
-- locate requirement candidates inside existing host documents
-- parse and lint EARS requirements
-- apply explicit host and dialect profiles
-- report stable diagnostic IDs
-- emit human, JSON, and SARIF output
-- provide deterministic authoring and repair instructions to coding agents
-- install managed integrations for agents and SDD hosts
-- act as a reproducible CI gate
-
-It does **not** decide what a requirement should mean.
-
-> Coding agents perform the language work.  
-> `earsyntax` checks whether the result satisfies the declared grammar.
-
-## How it works
+This is not structurally valid under `strict` because it does not name a bounded `shall` obligation:
 
 ```text
-Kiro / Spec Kit / OpenSpec / plain files
-                    ↓
-          host-aware extraction
-                    ↓
-             EARS validation
-                    ↓
-        stable findings and exit code
-                    ↓
-       human or agent repairs the file
-                    ↓
-                  CI gate
+Payments should be handled quickly.
 ```
 
-The CLI is deterministic. Agents and host tools call `earsyntax`; `earsyntax` never calls them.
+## Run this first
 
-## Quick start
-
-### Validate a plain EARS file
+This command does not depend on repository files or a host-specific layout:
 
 ```bash
 printf 'The billing service shall verify the HMAC signature.\n' \
   | npx @earsyntax/cli validate - --profile strict
 ```
 
+Expected output:
+
 ```text
 1/1 valid across 1 file(s), 0 error(s), 0 warning(s)
 ```
 
-### Validate requirements in an SDD host
+> [!NOTE]
+> A clean result means the extracted requirements are structurally valid under the selected profile. It does not mean they are semantically complete, mutually consistent, approved, or implemented correctly.
+
+## Install
+
+The npm package is named `@earsyntax/cli`. It installs a binary named `earsyntax`.
+
+Before installing, invoke the package directly:
 
 ```bash
-# Spec Kit
-npx @earsyntax/cli validate "specs/**/spec.md" --profile speckit
-
-# Kiro
-npx @earsyntax/cli validate ".kiro/specs/**/requirements.md" --profile kiro
-
-# OpenSpec
-npx @earsyntax/cli validate \
-  "openspec/specs/**/*.md" \
-  "openspec/changes/**/*.md" \
-  --profile openspec
+npx @earsyntax/cli version --features
 ```
 
-### Install in a repository
+Install it in a repository:
 
 ```bash
 npm install --save-dev @earsyntax/cli
 ```
 
-Then call the local binary from package scripts, CI, or your package manager:
+After installation, invoke the local binary through your package manager:
 
 ```bash
-npx earsyntax validate "specs/**/spec.md" --profile speckit
+npx earsyntax version --features
 ```
 
-## Choose a workflow
+The rest of this README uses `earsyntax` as the binary name. Prefix it with `npx`, `pnpm exec`, or the equivalent for your package manager when needed.
 
-| Goal | Command | Result |
-| --- | --- | --- |
-| Validate a plain EARS file | `earsyntax validate requirements.ears --profile strict` | Human output and a CI-ready exit code |
-| Validate Spec Kit requirements | `earsyntax validate "specs/**/spec.md" --profile speckit` | Findings for extracted requirement sections |
-| Validate Kiro acceptance criteria | `earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro` | Findings for acceptance-criteria list items |
-| Validate OpenSpec documents | `earsyntax validate "openspec/specs/**/*.md" "openspec/changes/**/*.md" --profile openspec` | Findings for requirement and scenario blocks |
-| Inspect extraction | `earsyntax extract <paths...> --profile <name> --json` | Candidate locations, text, and locator rule IDs |
-| Convert prose with an agent | `earsyntax instructions convert --file requirements.ears --from feature.md --profile strict --json` | Deterministic conversion rules and the next command |
-| Repair findings with an agent | `earsyntax instructions repair --file requirements.ears --profile strict --json` | Diagnostic-specific repair instructions |
-| Install integrations | `earsyntax init --agent claude,codex --host speckit` | Managed agent and host files, with no spec edits |
-| Discover capabilities | `earsyntax version --features` | Machine-readable facade capabilities |
+## Contract
 
-## EARS in one minute
+### What earsyntax does
 
-EARS requirements name a system and the response it shall perform. Optional clauses describe the context in which that response applies.
+- extracts requirement candidates from supported files and host documents
+- validates candidates against a named EARS profile
+- reports stable diagnostic IDs
+- emits human-readable, JSON, and SARIF output
+- provides deterministic authoring, conversion, repair, and review instructions for agents
+- installs managed integrations for supported agents and SDD hosts
+- returns stable exit codes for CI
 
-### Ubiquitous
+### What earsyntax does not do
+
+- call an LLM
+- infer natural-language intent
+- decide whether a requirement is correct or complete
+- detect semantic contradictions between otherwise valid requirements
+- approve changes
+- create an `.earsyntax/` workspace
+- edit specifications during `init`
+- prove that an implementation satisfies a requirement
+
+Agents and host tools call `earsyntax`; `earsyntax` never calls them.
+
+## What extraction means
+
+Extraction is the read-only step before validation. `earsyntax` selects candidate requirement text from supported files, then validates only those candidates.
+
+It does not rewrite prose, call an LLM, or move requirements between files. Use `extract` when a validation run finds too few, too many, or surprising candidates:
+
+```bash
+earsyntax extract ".kiro/specs/**/requirements.md" \
+  --profile kiro \
+  --json
+```
+
+`validate` and `extract` use the same locator rules, so extraction output explains exactly what validation is checking.
+
+## Choose your input
+
+`--profile` controls extraction and validation. `--host` is only used by `init` to render host integration files.
+
+| You have        | Requirements stay in                            | Validate with        | Init with         |
+| --------------- | ----------------------------------------------- | -------------------- | ----------------- |
+| Plain EARS/text | `requirements.ears`, `.txt`, or stdin           | `--profile strict`   | no host required  |
+| EARS extensions | `requirements.ears`, `.txt`, or stdin           | `--profile ears-x`   | no host required  |
+| Kiro            | `.kiro/specs/**/requirements.md`                | `--profile kiro`     | `--host kiro`     |
+| Spec Kit        | `specs/**/spec.md`                              | `--profile speckit`  | `--host speckit`  |
+| OpenSpec        | `openspec/specs/**/*.md`, `openspec/changes/**` | `--profile openspec` | `--host openspec` |
+
+## Requirements can evolve
+
+In agentic development, a requirement is not a one-shot blueprint. It is a versioned intent artifact that can change as implementation, review, and new information expose gaps or ambiguity.
+
+`earsyntax` gives that loop a deterministic checkpoint. Agents may author, convert, or repair requirements, but the CLI only validates their structure under a declared profile. It does not infer intent, approve semantics, or verify the implementation.
+
+## Common workflows
+
+| Need                           | Start with                                                                                  | Result                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| Validate a plain EARS file     | `earsyntax validate requirements.ears --profile strict`                                     | Human output and a CI-ready exit code               |
+| Validate Kiro requirements     | `earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro`                        | Findings for extracted acceptance-criteria items    |
+| Validate Spec Kit requirements | `earsyntax validate "specs/**/spec.md" --profile speckit`                                   | Findings for extracted requirement lines            |
+| Validate OpenSpec requirements | `earsyntax validate "openspec/specs/**/*.md" "openspec/changes/**/*.md" --profile openspec` | Findings only for EARS-shaped candidates            |
+| Inspect extraction             | `earsyntax extract <paths...> --profile <name> --json`                                      | Candidate locations, text, and locator rule IDs     |
+| Convert prose with an agent    | `earsyntax instructions convert --file <target> --from <source> --profile <name> --json`    | Deterministic conversion rules and the next command |
+| Repair findings with an agent  | `earsyntax instructions repair --file <target> --profile <name> --json`                     | Diagnostic-specific repair rules                    |
+| Install integrations           | `earsyntax init --agent claude,codex --host speckit`                                        | Managed integration files, with no spec edits       |
+| Discover capabilities          | `earsyntax version --features`                                                              | Machine-readable facade capabilities                |
+
+## Agent and host setup
+
+`init` installs managed integration files. It does not create `.earsyntax/`, edit specs, validate as a side effect, or call an LLM.
+
+For example:
+
+```bash
+earsyntax init --agent codex --host kiro
+```
+
+May write or update:
 
 ```text
-The billing service shall verify the HMAC signature.
+AGENTS.md
+.kiro/steering/earsyntax.md
+.kiro/hooks/ears-validate.yaml
 ```
 
-### Event-driven
+Supported `--agent` values:
 
-```text
-When a payment webhook arrives,
-the billing service shall process the webhook.
-```
+| Agent value        | Managed files                                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `claude`           | `.claude/commands/earsyntax-author.md`, `earsyntax-convert.md`, `earsyntax-repair.md`, `earsyntax-review.md` |
+| `codex`, `generic` | Managed `AGENTS.md` section                                                                                  |
+| `cursor`           | `.cursor/rules/earsyntax.mdc`                                                                                |
+| `copilot`          | `.github/prompts/earsyntax.prompt.md`                                                                        |
+| `gemini`           | Managed `GEMINI.md` section                                                                                  |
 
-### State-driven
+Supported `--host` values:
 
-```text
-While the payment provider is unavailable,
-the billing service shall queue retryable events.
-```
+| Host value | Managed files                                                   |
+| ---------- | --------------------------------------------------------------- |
+| `kiro`     | `.kiro/steering/earsyntax.md`, `.kiro/hooks/ears-validate.yaml` |
+| `speckit`  | `.specify/extensions/earsyntax.md`                              |
+| `openspec` | Managed `AGENTS.md` section with OpenSpec validation commands   |
 
-### Optional feature
-
-```text
-Where dunning management is enabled,
-the billing service shall retry declined charges.
-```
-
-### Unwanted behavior
-
-```text
-If the HMAC signature is invalid,
-then the billing service shall reject the webhook.
-```
-
-### Combined state and event
-
-```text
-While the payment provider is unavailable,
-when a payment webhook arrives,
-the billing service shall queue retryable events.
-```
-
-The `strict` profile follows canonical EARS. Other profiles are explicit adapters. Every extension or relaxation is named in profile data and covered by fixtures.
+Rerunning the same `init` command is idempotent: unchanged managed files are skipped.
 
 ## Profiles
 
-A profile defines two things:
+Profiles are closed built-ins. Each profile combines a dialect with rules for locating candidates inside a host document.
 
-1. the EARS dialect to validate
-2. the sections of a host document that `earsyntax` is allowed to scan
+Use `strict` for plain `.ears` or text files. Use `ears-x` only when you want named extensions such as `shall not`. Use host profiles for Markdown owned by Kiro, Spec Kit, or OpenSpec.
 
-| Profile | Intended use | Candidate locator |
-| --- | --- | --- |
-| `strict` | Canonical EARS | Every non-empty line in `.ears`, text, or stdin |
-| `ears-x` | Named `earsyntax` extensions | Plain inputs, plus frame metadata and prohibitions |
-| `kiro` | Kiro requirements | List items under `#### Acceptance Criteria` |
-| `speckit` | Spec Kit specs | Requirement sections in `specs/**/spec.md` |
-| `openspec` | OpenSpec specs and changes | `### Requirement:` and `#### Scenario:` blocks |
+| Profile    | Dialect                                                                 | Candidate location                                                                                                              |
+| ---------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `strict`   | Canonical EARS. Prohibitions such as `shall not` are not accepted.      | Every non-empty, non-comment line in `.ears`, text, or stdin                                                                    |
+| `ears-x`   | Named `earsyntax` extensions, including prohibitions and frame metadata | The same plain inputs as `strict`                                                                                               |
+| `kiro`     | Kiro-oriented EARS                                                      | List items under an `Acceptance Criteria` heading                                                                               |
+| `speckit`  | Spec Kit-oriented EARS                                                  | Requirement sections in `specs/**/spec.md`                                                                                      |
+| `openspec` | OpenSpec-oriented EARS                                                  | Scans `### Requirement:` and `#### Scenario:` sections, but returns only EARS-shaped lines. Ordinary Gherkin steps are skipped. |
 
-Inspect the exact built-in profile behavior:
+Inspect the exact built-in profile definitions:
 
 ```bash
 earsyntax profiles
@@ -221,122 +219,157 @@ Example candidate:
 }
 ```
 
-## The agentic loop
+### Host shapes
 
-`earsyntax` is designed to be called by coding agents without making the validator probabilistic.
+Kiro extracts list items under an `Acceptance Criteria` heading:
 
-A typical conversion loop looks like this:
+```md
+#### Acceptance Criteria
 
-```text
-natural-language source, read only
-                 ↓
-       agent requests instructions
-                 ↓
-       agent writes EARS target
-                 ↓
-      earsyntax validates target
-                 ↓
- stable diagnostics and next action
-                 ↓
-        agent repairs and retries
+- WHEN a payment webhook arrives THE SYSTEM SHALL verify the signature.
 ```
 
-Start the loop:
+Spec Kit extracts requirement lines from requirement sections and strips bold `FR-###` labels:
+
+```md
+## Requirements
+
+### Functional Requirements
+
+- **FR-001**: The billing service shall verify the HMAC signature.
+```
+
+OpenSpec extracts EARS-shaped statements under `### Requirement:`. Ordinary Gherkin scenario steps are skipped:
+
+```md
+### Requirement: Payment webhooks
+
+The billing service shall verify the HMAC signature.
+
+#### Scenario: Valid webhook
+
+- **WHEN** a webhook arrives
+- **THEN** it is accepted
+```
+
+## Agent loop
+
+The CLI never invokes a coding agent. Your agent, wrapper, or script calls `earsyntax`, gives the returned instructions to the agent, and validates the edited file.
+
+### Wire the loop
+
+1. Ask for `author` or `convert` instructions with `--file <target>` and, when there is separate source material, `--from <source>`.
+2. Give the JSON response and source material to the agent.
+3. The agent edits only `editPolicy.editableFile`.
+4. Run the `next[0].command`, normally `earsyntax validate <target> --profile <name> --json`.
+5. If validation exits `0`, stop automatic repair and send the result for human review.
+6. If validation exits `1`, run `earsyntax instructions repair --file <target> --profile <name> --json`.
+7. `instructions repair` reads `--file`, reruns validation internally, embeds the current findings, and returns repair rules.
+8. If any step exits `2`, stop and fix the usage or environment problem.
+
+Humans remain responsible for intent, ambiguity, tradeoffs, and approval. Agents may restructure requirements to satisfy the selected grammar, but they should not invent behavior.
+
+### File roles
+
+| Mode                                  | Editable target | Read-only source | Notes                                                                      |
+| ------------------------------------- | --------------- | ---------------- | -------------------------------------------------------------------------- |
+| `author --file target`                | `target`        | none             | Add new requirements directly into the target file                         |
+| `author --file target --from source`  | `target`        | `source`         | Read source material, then add requirements into target                    |
+| `convert --file target`               | `target`        | none             | Rewrite natural-language requirements already in target; target must exist |
+| `convert --file target --from source` | `target`        | `source`         | Convert source material into EARS in target                                |
+| `repair --file target`                | `target`        | none             | Recompute findings from target and return diagnostic-specific repair rules |
+| `review --file target`                | none            | `target`         | Recompute findings and summarize without editing                           |
+
+`--from` is valid only with `author` and `convert`. The CLI records the source path for the agent; it does not read or transform the source file.
+
+### Host-native example: Kiro
+
+Assume product intent exists in `docs/checkout-intent.md` and the editable Kiro target is `.kiro/specs/checkout/requirements.md`.
+
+Ask for conversion instructions:
 
 ```bash
 earsyntax instructions convert \
-  --file requirements.ears \
-  --from feature.md \
-  --profile strict \
+  --file ".kiro/specs/checkout/requirements.md" \
+  --from "docs/checkout-intent.md" \
+  --profile kiro \
   --json
 ```
 
-The response tells the agent to:
-
-1. treat the source as read-only
-2. write requirements only into the target
-3. choose the narrowest EARS pattern that fits
-4. write one obligation per requirement
-5. avoid inventing behavior not present in the source
-6. preserve the target file structure
-7. validate the result
-8. repair diagnostics until the file is clean
-
-Then run:
+To add new requirements from the same source instead of rewriting existing prose, use `author`:
 
 ```bash
-earsyntax validate requirements.ears --profile strict --json
+earsyntax instructions author \
+  --file ".kiro/specs/checkout/requirements.md" \
+  --from "docs/checkout-intent.md" \
+  --profile kiro \
+  --json
 ```
 
-When validation fails, the response can provide the next deterministic action:
+Abridged response:
 
 ```json
 {
-  "command": "earsyntax instructions repair --file requirements.ears --profile strict --json",
-  "reason": "Get repair rules for the reported diagnostics.",
-  "forAgent": true
+  "version": "<installed-version>",
+  "command": "instructions convert",
+  "ok": true,
+  "mode": "convert",
+  "file": ".kiro/specs/checkout/requirements.md",
+  "profile": "kiro",
+  "sourceFile": "docs/checkout-intent.md",
+  "sourcePolicy": "read-only",
+  "locator": {
+    "summary": "Bullet and numbered items under Acceptance Criteria headings"
+  },
+  "rules": [
+    "Choose the narrowest EARS pattern that preserves the stated behavior.",
+    "Write one obligation per requirement.",
+    "Do not invent behavior that the source does not state."
+  ],
+  "editPolicy": {
+    "editableFile": ".kiro/specs/checkout/requirements.md",
+    "preserveStructure": true
+  },
+  "outputPolicy": "edit-in-place",
+  "next": [
+    {
+      "command": "earsyntax validate .kiro/specs/checkout/requirements.md --profile kiro --json",
+      "forAgent": true
+    }
+  ]
 }
 ```
 
-### Instruction modes
-
-| Mode | Agent responsibility |
-| --- | --- |
-| `author` | Add new EARS requirements to an existing host section or target file |
-| `convert` | Convert read-only natural-language source material into EARS |
-| `repair` | Fix diagnostics returned by `validate` |
-| `review` | Summarize status, changed requirements, and open questions without editing |
-
-`author` and `convert` can use `--from <source>` to identify a read-only source document.
-
-> [!IMPORTANT]
-> The agent may author or repair text. The validator remains deterministic. `earsyntax` does not infer intent, approve requirements, or silently change the specification lifecycle.
-
-## Agent and host setup
-
-Install managed integrations without creating a proprietary workspace:
+The agent edits the target, then validates it:
 
 ```bash
-earsyntax init --agent claude,codex --host speckit
+earsyntax validate \
+  ".kiro/specs/checkout/requirements.md" \
+  --profile kiro \
+  --json
 ```
 
-Depending on the selected integrations, `init` may write files such as:
+When validation fails, request repair instructions:
 
-```text
-.claude/commands/earsyntax-author.md
-.claude/commands/earsyntax-convert.md
-.claude/commands/earsyntax-repair.md
-.claude/commands/earsyntax-review.md
-AGENTS.md
-.specify/extensions/earsyntax.md
+```bash
+earsyntax instructions repair \
+  --file ".kiro/specs/checkout/requirements.md" \
+  --profile kiro \
+  --json
 ```
 
-Supported agent targets include:
+The same loop works with plain files, Spec Kit, and OpenSpec. The profile controls both the accepted dialect and where candidates may be extracted.
 
-- Claude
-- Codex
-- Cursor
-- GitHub Copilot
-- Gemini
-- generic `AGENTS.md` consumers
+### Instruction modes
 
-Supported host targets include:
+| Mode      | Agent responsibility                                                                                            |
+| --------- | --------------------------------------------------------------------------------------------------------------- |
+| `author`  | Add new EARS requirements to an existing target                                                                 |
+| `convert` | Rewrite natural-language requirements in `--file` into EARS; with `--from`, treat the source as read-only input |
+| `repair`  | Fix diagnostics returned by `validate`                                                                          |
+| `review`  | Summarize status and open questions without editing                                                             |
 
-- Kiro
-- Spec Kit
-- OpenSpec
-
-`init` is idempotent. Whole-file integrations are rendered deterministically. Shared files use managed begin and end markers, so rerunning the same setup should produce no diff.
-
-`init` does not:
-
-- create `.earsyntax/`
-- create work items
-- edit requirements or specs
-- run validation as a side effect
-- call an LLM
-- approve changes
-- manage a workspace lifecycle
+`author` and `convert` may use `--from <source>` to identify a read-only source document.
 
 ## Diagnostics and automation
 
@@ -347,20 +380,11 @@ requirements.ears:2:1 EARS-E006 error The 'If' clause is missing the required 't
 3/4 valid across 1 file(s), 1 error(s), 0 warning(s)
 ```
 
-Diagnostic IDs are stable and namespaced:
-
-| Prefix | Meaning |
-| --- | --- |
-| `EARS-E###` | Error diagnostics that can make validation fail |
-| `EARS-W###` | Warning diagnostics that keep a requirement valid by default |
-
-Explain any diagnostic:
+Explain a diagnostic:
 
 ```bash
 earsyntax explain EARS-E006
 ```
-
-### JSON
 
 JSON is the automation contract:
 
@@ -368,17 +392,7 @@ JSON is the automation contract:
 earsyntax validate requirements.ears --profile strict --json
 ```
 
-Use it in:
-
-- coding-agent repair loops
-- custom CI checks
-- editor integrations
-- host adapters
-- repository tooling
-
-### SARIF
-
-SARIF is available for code-scanning systems:
+SARIF is available from `validate`:
 
 ```bash
 earsyntax validate requirements.ears \
@@ -386,19 +400,34 @@ earsyntax validate requirements.ears \
   --sarif > earsyntax.sarif
 ```
 
-### Exit codes
+Exit codes:
 
-| Code | Meaning |
-| --- | --- |
-| `0` | The command succeeded and validation found no error diagnostics |
-| `1` | Validation completed and found at least one error diagnostic |
-| `2` | Usage or environment failure, such as a missing file or unknown profile |
+| Code | Meaning                                                      |
+| ---- | ------------------------------------------------------------ |
+| `0`  | Command succeeded and validation found no error diagnostics  |
+| `1`  | Validation completed and found at least one error diagnostic |
+| `2`  | Usage or environment failure                                 |
 
-Warnings do not return `1` unless `--strict` upgrades surviving warnings to errors.
+Warnings do not return `1` unless `validate --strict` upgrades surviving warnings to errors.
+
+## Command-scoped options
+
+Options belong to commands rather than to one universal flag set.
+
+| Command                         | Relevant options                                                          |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `validate`                      | `--profile`, `--json`, `--sarif`, `--strict`, `--quiet`, `--cwd`          |
+| `extract`                       | `--profile`, `--json`, `--quiet`, `--cwd`                                 |
+| `instructions`                  | `--file`, `--from`, `--profile`, `--strict`, `--json`, `--quiet`, `--cwd` |
+| `init`                          | `--agent`, `--host`, `--cwd`                                              |
+| `version`                       | `--features`, `--json`                                                    |
+| `doctor`, `explain`, `profiles` | `--json`, `--quiet`, `--cwd`                                              |
+
+`--json`, `--quiet`, and `--cwd` are the broadly shared facade options. Other flags are command-specific.
 
 ## CI
 
-Use `validate` as a repository gate:
+Example for Kiro requirements:
 
 ```yaml
 name: requirements
@@ -422,184 +451,35 @@ jobs:
 
       - run: npm ci
 
-      - name: Validate Spec Kit requirements
-        run: npx earsyntax validate "specs/**/spec.md" --profile speckit
+      - name: Validate Kiro requirements
+        run: npx earsyntax validate ".kiro/specs/**/requirements.md" --profile kiro
 ```
 
-Use JSON or SARIF when another system consumes the findings:
-
-```bash
-earsyntax validate "specs/**/spec.md" --profile speckit --json
-
-earsyntax validate "specs/**/spec.md" \
-  --profile speckit \
-  --sarif > earsyntax.sarif
-```
-
-## CLI reference
-
-| Command | Purpose |
-| --- | --- |
-| `validate <paths...>` | Locate, extract, parse, lint, and report findings |
-| `extract <paths...>` | Show requirement candidates found by the selected profile |
-| `instructions <mode> --file <path>` | Return deterministic rules for an agent-loop step |
-| `explain <diagnostic-id>` | Explain a diagnostic with examples and repair guidance |
-| `profiles` | List built-in profiles and their exact behavior |
-| `doctor` | Detect host and agent setup, then recommend commands |
-| `init --agent <agents> --host <hosts>` | Install managed agent and host integration files |
-| `version --features` | Print package and facade capabilities |
-
-Global options:
-
-| Option | Meaning |
-| --- | --- |
-| `--profile <name>` | Select `strict`, `ears-x`, `kiro`, `speckit`, or `openspec` |
-| `--json` | Emit the facade JSON envelope |
-| `--sarif` | Emit SARIF from `validate` |
-| `--strict` | Treat surviving warnings as validation errors |
-| `--quiet` | Suppress pretty output where supported |
-| `--cwd <dir>` | Resolve paths and globs from another working directory |
-
-## Design principles
-
-### Deterministic core
-
-The parser, extraction pipeline, profiles, diagnostics, and CLI do not call an LLM.
-
-### Host-native adoption
-
-Requirements stay in Kiro, Spec Kit, OpenSpec, or ordinary files. `earsyntax` does not introduce a competing workspace or lifecycle.
-
-### Explicit profiles
-
-Host extraction rules and grammar differences are visible, named, and testable.
-
-### One automation contract
-
-Humans get readable diagnostics. Agents get JSON. Code-scanning systems get SARIF. CI gets stable exit codes.
-
-### Agents are consumers, not oracles
-
-Agents may author, convert, repair, and review. The CLI checks structure. Humans remain responsible for intent.
+Use `--json` when another tool consumes findings. Use `--sarif` for code-scanning integrations.
 
 ## Library API
 
-`@earsyntax/core` exposes the deterministic parser, linter, profile data, diagnostics, and findings helpers:
+`@earsyntax/core` exposes the deterministic parser and linter:
 
 ```ts
-import {
-  lintEars,
-  lintEarsBatch,
-  parseEars,
-  resolveProfile,
-  summarizeProfiles,
-  toFindings,
-} from '@earsyntax/core';
+import { lintEars } from "@earsyntax/core";
 
 const result = lintEars(
-  'When a payment webhook arrives, the billing service shall verify the signature.',
+  "When a payment webhook arrives, the billing service shall verify the signature.",
 );
-
-const profile = resolveProfile('strict');
 
 console.log(result.valid);
 console.log(result.pattern);
-console.log(profile.ok ? profile.profile.name : profile.error.message);
 ```
 
-Additional packages:
+Packages:
 
-| Package | Responsibility |
-| --- | --- |
-| `@earsyntax/cli` | Public command facade |
-| `@earsyntax/core` | Parser, linter, diagnostics, findings, and profile data |
-| `@earsyntax/extract` | Candidate extraction from text, Markdown, YAML, and JSON |
-| `@earsyntax/cli-contract` | Shared JSON, findings, exit-code, and SARIF contracts |
-
-## From valid intent to runtime proof
-
-`earsyntax` validates how a requirement is expressed. It does not prove that a running system implements it.
-
-For selected requirements, a runtime verification tool such as Suites Blackbox can provide the next gate:
-
-```text
-human-authored requirement
-          ↓
-validated EARS structure
-          ↓
-human-reviewed proof binding
-          ↓
-executable system scenario
-          ↓
-runtime boundary evidence
-          ↓
-deterministic verification result
-```
-
-The boundary remains explicit:
-
-- `earsyntax` validates requirement structure
-- a human decides which requirements need system-level proof
-- a human authors or ratifies the mapping to concrete runtime effects
-- Blackbox executes the system and verifies the observed evidence
-
-For example, `earsyntax` can validate:
-
-```text
-If the user does not exist,
-then the subscription service shall not initiate payment.
-```
-
-It does not automatically decide that “initiate payment” maps to:
-
-```yaml
-forbids:
-  - boundary: http
-    op: POST
-    key: /v1/payment_intents
-```
-
-That proof binding remains human-authored or human-ratified.
-
-## Status and limits
-
-Current boundaries are intentional:
-
-- deterministic parsing, extraction, linting, and reporting only
-- no semantic contradiction checking
-- no natural-language intent inference in the CLI
-- no LLM calls from the core, extraction, contracts, or CLI packages
-- no `.earsyntax/` workspace lifecycle
-- no CLI acceptance or approval command
-- no hidden host-specific behavior outside explicit profiles
-
-`earsyntax` checks whether a requirement is structurally valid under a declared profile.
-
-It does not decide:
-
-- whether the requirement is correct
-- whether the requirement is complete
-- whether two valid requirements contradict one another
-- whether the implementation satisfies the requirement
-- whether a human should approve the change
-
-## Development
-
-Install dependencies:
-
-```bash
-pnpm install
-```
-
-Run the repository checks:
-
-```bash
-pnpm build
-pnpm typecheck
-pnpm test
-pnpm --filter @earsyntax/cli test
-pnpm format:check
-```
+| Package                   | Role                                                    |
+| ------------------------- | ------------------------------------------------------- |
+| `@earsyntax/cli`          | Public command facade and `earsyntax` binary            |
+| `@earsyntax/core`         | Parser, linter, diagnostics, findings, and profile data |
+| `@earsyntax/extract`      | Candidate extraction and host-aware validation pipeline |
+| `@earsyntax/cli-contract` | Shared JSON, exit-code, findings, and SARIF contracts   |
 
 ## Documentation
 
@@ -610,6 +490,17 @@ pnpm format:check
 - [Input formats](docs/input-formats.md)
 - [Library API](docs/api.md)
 - [Facade API](docs/facade-api.md)
+
+## Development
+
+```bash
+pnpm install
+pnpm build
+pnpm typecheck
+pnpm test
+pnpm --filter @earsyntax/cli test
+pnpm format:check
+```
 
 ## License
 
