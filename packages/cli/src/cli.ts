@@ -26,11 +26,36 @@ import { instructionsCommand } from './commands/instructions.js';
 import { profilesCommand } from './commands/profiles.js';
 import { validateCommand } from './commands/validate.js';
 import { versionCommand } from './commands/version.js';
+import type { FacadeResponse } from './facade-types.js';
 
 /** Injection points for tests and the bin wrapper. */
 export interface RunOptions {
   cwd?: string;
   stdout?: (text: string) => void;
+  /**
+   * Stdin content for commands that read `-`. When provided, handlers use it in
+   * place of reading file descriptor 0, so callers (tests, embedders) can drive
+   * the stdin path without a real pipe.
+   */
+  stdin?: string;
+}
+
+/** Options for the public in-process executor. */
+export interface ExecuteOptions {
+  /** Working directory used as the base for `--cwd` and relative paths. */
+  cwd?: string;
+  /** Stdin content for commands that read `-`. */
+  stdin?: string;
+}
+
+/** The public in-process result for embedding and e2e tests. */
+export interface ExecuteResult {
+  /** The same exit code the binary would return. */
+  exitCode: number;
+  /** The exact stdout text the binary would write, including the trailing newline. */
+  stdout: string;
+  /** Parsed facade JSON when `--json` was requested and stdout is valid JSON. */
+  json?: FacadeResponse;
 }
 
 /** A routed command: its handler and the flags it accepts beyond the universal set. */
@@ -103,10 +128,41 @@ export function run(argv: string[], options: RunOptions = {}): number {
     return command === undefined ? 2 : 0;
   }
   if (command === '--version' || command === '-v') {
-    return dispatch('version', [], baseCwd, color, write);
+    return dispatch('version', [], baseCwd, color, write, options.stdin);
   }
 
-  return dispatch(command, rest, baseCwd, color, write);
+  return dispatch(command, rest, baseCwd, color, write, options.stdin);
+}
+
+/**
+ * Execute the same command surface in-process and return stdout instead of
+ * writing it. This is the public embedding/e2e API; it goes through the same
+ * parser, dispatcher, handlers, JSON/SARIF emission, and error normalization as
+ * the binary.
+ */
+export function execute(argv: readonly string[], options: ExecuteOptions = {}): ExecuteResult {
+  let stdout = '';
+  const exitCode = run([...argv], {
+    cwd: options.cwd,
+    stdin: options.stdin,
+    stdout: (text) => {
+      stdout += text;
+    },
+  });
+
+  if (!argv.includes('--json') || stdout.trim() === '') {
+    return { exitCode, stdout };
+  }
+
+  try {
+    return {
+      exitCode,
+      stdout,
+      json: JSON.parse(stdout) as FacadeResponse,
+    };
+  } catch {
+    return { exitCode, stdout };
+  }
 }
 
 function dispatch(
@@ -115,6 +171,7 @@ function dispatch(
   baseCwd: string,
   color: boolean,
   write: (text: string) => void,
+  stdin?: string,
 ): number {
   const emitter = { json: rest.includes('--json'), painter: createPainter(color), write };
 
@@ -138,7 +195,7 @@ function dispatch(
     }
 
     const cwd = global.cwd ? resolveInput(baseCwd, global.cwd) : baseCwd;
-    const context: CommandContext = { args, global, cwd, emitter };
+    const context: CommandContext = { args, global, cwd, emitter, stdin };
     const result = spec.handler(context);
     emitResult(emitter, result.response, result.pretty, result.raw);
     return result.exitCode;

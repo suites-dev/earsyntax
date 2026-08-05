@@ -147,6 +147,12 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Business e2e
+        run: pnpm test:e2e
+
+      - name: CLI e2e
+        run: bash scripts/cli-e2e.sh
+
   deps:
     name: Dependency Boundaries
     runs-on: ubuntu-latest

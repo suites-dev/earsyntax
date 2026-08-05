@@ -18,6 +18,11 @@ export interface CommandContext {
   cwd: string;
   /** Carries `json` and the `painter`; handlers use the painter for pretty color but never write. */
   emitter: Emitter;
+  /**
+   * Optional stdin content injected by programmatic callers. When absent,
+   * commands that support `-` read from file descriptor 0 like the real CLI.
+   */
+  stdin?: string;
 }
 
 /** What a command handler returns; the dispatcher performs the single write. */

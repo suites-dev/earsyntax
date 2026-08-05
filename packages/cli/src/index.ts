@@ -6,6 +6,6 @@
  * can type responses they parse.
  */
 
-export { run, type RunOptions } from './cli.js';
+export { execute, run, type ExecuteOptions, type ExecuteResult, type RunOptions } from './cli.js';
 export { CLI_VERSION, FACADE_CONTRACT, FEATURES } from './version.js';
 export type * from './facade-types.js';

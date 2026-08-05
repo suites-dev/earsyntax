@@ -59,8 +59,14 @@ interface Source {
  */
 function resolveSources(cwd: string, patterns: readonly string[]): Source[] {
   const sources: Source[] = [];
+  let readStdin = false;
+
   for (const pattern of patterns) {
     if (pattern === STDIN) {
+      if (readStdin) {
+        throw usageError('extract.duplicate_stdin', 'Read stdin (-) at most once.');
+      }
+      readStdin = true;
       sources.push({ path: STDIN });
       continue;
     }
@@ -82,7 +88,10 @@ function resolveSources(cwd: string, patterns: readonly string[]): Source[] {
 }
 
 /** Read a source's content, throwing a usage error (exit `2`) on an unreadable file. */
-function readSource(source: Source): string {
+function readSource(source: Source, stdin?: string): string {
+  if (source.abs === undefined && stdin !== undefined) {
+    return stdin;
+  }
   try {
     // fd 0 is stdin; `readFileSync(0, ...)` drains it synchronously for `-`.
     return source.abs === undefined ? readFileSync(0, 'utf8') : readFileSync(source.abs, 'utf8');
@@ -149,7 +158,7 @@ export function extractCommand(context: CommandContext): CommandResult {
   const sources = resolveSources(context.cwd, patterns);
   const files: PipelineFile[] = sources.map((source) => ({
     path: source.path,
-    content: readSource(source),
+    content: readSource(source, context.stdin),
   }));
 
   const { candidates, notices } = extractCandidates({ files, profile });

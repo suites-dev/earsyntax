@@ -1,21 +1,30 @@
 import { defineConfig } from 'vitest/config';
+import { fileURLToPath } from 'node:url';
 
 /**
- * Conformance suite config.
+ * Business-case e2e suite config.
  *
- * The conformance tests are a separate vitest project from the per-package unit
- * suites. They spawn the real built binary (packages/cli/bin/run.js) and never
- * import command internals, so they must run after `pnpm build`. `pnpm test`
- * (which filters to packages/**) does not pick these up; only `pnpm conformance`
- * runs them, via `vitest run --config vitest.conformance.config.ts`.
+ * The e2e tests are separate from the per-package unit suites. They import
+ * public package entrypoints through source aliases, never built dist artifacts.
+ * The real binary is exercised by scripts/cli-e2e.sh.
  */
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@earsyntax/cli': fileURLToPath(new URL('./packages/cli/src/index.ts', import.meta.url)),
+      '@earsyntax/cli-contract': fileURLToPath(
+        new URL('./packages/cli-contract/src/index.ts', import.meta.url),
+      ),
+      '@earsyntax/core': fileURLToPath(new URL('./packages/core/src/index.ts', import.meta.url)),
+      '@earsyntax/extract': fileURLToPath(
+        new URL('./packages/extract/src/index.ts', import.meta.url),
+      ),
+    },
+  },
   test: {
-    include: ['test/conformance/**/*.test.ts'],
+    include: ['packages/cli/src/e2e/**/*.test.ts'],
     environment: 'node',
     globals: false,
-    // Each smoke test spawns the CLI (and the demo test runs a shell script),
-    // so give the slow spawners room without failing on the default 5s timeout.
     testTimeout: 120_000,
     hookTimeout: 120_000,
   },

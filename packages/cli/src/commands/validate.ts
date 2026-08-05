@@ -375,13 +375,24 @@ function usageResult(code: string, message: string, path?: string): ValidateResu
  */
 export function validateCommand(context: CommandContext): CommandResult {
   const { global } = context;
-  const result = runValidate({
-    paths: context.args.positionals,
-    profileName: global.profile,
-    strict: global.strict,
-    sarif: global.sarif,
-    json: global.json,
-    cwd: context.cwd,
-  });
+  const stdin = context.stdin;
+  const result = runValidate(
+    {
+      paths: context.args.positionals,
+      profileName: global.profile,
+      strict: global.strict,
+      sarif: global.sarif,
+      json: global.json,
+      cwd: context.cwd,
+    },
+    stdin === undefined
+      ? undefined
+      : {
+          exists: (absPath) => existsSync(absPath),
+          readFile: (absPath) => readFileSync(absPath, 'utf8'),
+          glob: (pattern, cwd) => globSync(pattern, { cwd }),
+          readStdin: () => stdin,
+        },
+  );
   return global.quiet && !global.json ? { ...result, pretty: '' } : result;
 }

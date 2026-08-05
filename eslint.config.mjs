@@ -79,7 +79,7 @@ export default [
     plugins: {
       '@typescript-eslint': tseslint.plugin,
       'import-x': importPlugin,
-      'unicorn': unicornPlugin,
+      unicorn: unicornPlugin,
     },
     rules: {
       // TypeScript strict rules
@@ -180,8 +180,7 @@ export default [
         {
           // No "I" prefix on interfaces (TypeScript structural typing)
           selector: 'TSInterfaceDeclaration[id.name=/^I[A-Z]/]',
-          message:
-            'Do not prefix interfaces with "I". TypeScript uses structural typing.',
+          message: 'Do not prefix interfaces with "I". TypeScript uses structural typing.',
         },
         // Optional properties, optional parameters, and optional chaining are
         // intentionally allowed. The frozen @earsyntax/core contract in
@@ -216,9 +215,13 @@ export default [
                 'Import from the package entry point, not /src paths. Use the @earsyntax/<package> export.',
             },
             {
-              group: ['../../../*'],
+              group: ['**/dist/**', '@earsyntax/*/dist', '@earsyntax/*/dist/**'],
               message:
-                'Avoid deep relative imports. Use workspace package imports.',
+                'Do not import built dist artifacts from TypeScript source or tests. Import a package entry point instead.',
+            },
+            {
+              group: ['../../../*'],
+              message: 'Avoid deep relative imports. Use workspace package imports.',
             },
           ],
         },
@@ -236,8 +239,8 @@ export default [
       'no-debugger': 'error',
       'prefer-const': 'error',
       'no-var': 'error',
-      'eqeqeq': ['error', 'always'],
-      'curly': ['error', 'all'],
+      eqeqeq: ['error', 'always'],
+      curly: ['error', 'all'],
       // Immutability: do not mutate received values. `no-param-reassign` with
       // `props: true` forbids both reassigning a parameter and mutating its
       // properties; combined with the `delete` ban above this pushes the code
@@ -264,6 +267,11 @@ export default [
               group: ['@earsyntax/*/src/*', '@earsyntax/*/src'],
               message:
                 'Import from the package entry point, not /src paths. Use the @earsyntax/<package> export.',
+            },
+            {
+              group: ['**/dist/**', '@earsyntax/*/dist', '@earsyntax/*/dist/**'],
+              message:
+                'Do not import built dist artifacts from TypeScript source or tests. Import a package entry point instead.',
             },
             {
               group: ['../../../../*'],
@@ -324,7 +332,7 @@ export default [
       ],
       'prefer-const': 'error',
       'no-var': 'error',
-      'eqeqeq': ['error', 'always'],
+      eqeqeq: ['error', 'always'],
     },
   },
 ];
