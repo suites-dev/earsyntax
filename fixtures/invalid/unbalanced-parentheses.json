@@ -1,0 +1,13 @@
+{
+  "id": "INV-009",
+  "text": "While (the payment provider is available and the retry queue is not full, the billing service shall queue retryable events.",
+  "expected": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "expr.unbalanced_parentheses",
+        "severity": "error"
+      }
+    ]
+  }
+}

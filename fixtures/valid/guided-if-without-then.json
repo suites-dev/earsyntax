@@ -1,0 +1,12 @@
+{
+  "id": "VAL-036",
+  "text": "If the HMAC signature is invalid, the billing service shall reject the webhook.",
+  "options": {
+    "mode": "guided"
+  },
+  "expected": {
+    "valid": true,
+    "pattern": "unwanted-behaviour",
+    "diagnostics": [{ "code": "ears.invalid_if_then_form", "severity": "warning" }]
+  }
+}

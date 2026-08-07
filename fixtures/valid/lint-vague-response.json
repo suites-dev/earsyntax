@@ -1,0 +1,22 @@
+{
+  "id": "VAL-027",
+  "text": "The billing service shall retry failed charges as needed.",
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [
+      {
+        "code": "lint.vague_response",
+        "severity": "warning"
+      }
+    ],
+    "ast": {
+      "pattern": "ubiquitous",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": ["retry failed charges as needed"]
+  }
+}

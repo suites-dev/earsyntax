@@ -1,0 +1,25 @@
+{
+  "id": "VAL-031",
+  "text": "While the payment provider is available, when a payment webhook is received, the billing service shall verify the HMAC signature.",
+  "expected": {
+    "valid": true,
+    "pattern": "complex",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "complex",
+      "preconditions": {
+        "kind": "term",
+        "text": "the payment provider is available"
+      },
+      "trigger": {
+        "kind": "term",
+        "text": "a payment webhook is received"
+      },
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": ["verify the HMAC signature"]
+  }
+}

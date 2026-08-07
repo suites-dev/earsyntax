@@ -1,0 +1,13 @@
+{
+  "id": "INV-004",
+  "text": "The billing service shall .",
+  "expected": {
+    "valid": false,
+    "diagnostics": [
+      {
+        "code": "ears.empty_response",
+        "severity": "error"
+      }
+    ]
+  }
+}

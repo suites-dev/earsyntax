@@ -1,0 +1,41 @@
+{
+  "description": "Frozen append-only diagnostic id migration table. Mirrors docs/refactor/host-native-facade.md. Each row is one old DiagnosticCode mapped to its stable EARS-E###/EARS-W### id and the default severity implied by the band. packages/core/src/registry.test.ts asserts the registry equals this table exactly, so any drift (a renumbered, reused, deleted, or reseverified id) fails the test.",
+  "rows": [
+    { "id": "EARS-E001", "oldCode": "catalog.system_ambiguous", "defaultSeverity": "error" },
+    { "id": "EARS-E002", "oldCode": "catalog.system_unresolved", "defaultSeverity": "error" },
+    { "id": "EARS-E003", "oldCode": "ears.empty_clause", "defaultSeverity": "error" },
+    { "id": "EARS-E004", "oldCode": "ears.empty_response", "defaultSeverity": "error" },
+    { "id": "EARS-E005", "oldCode": "ears.invalid_clause_order", "defaultSeverity": "error" },
+    { "id": "EARS-E006", "oldCode": "ears.invalid_if_then_form", "defaultSeverity": "error" },
+    { "id": "EARS-E007", "oldCode": "ears.missing_shall", "defaultSeverity": "error" },
+    { "id": "EARS-E008", "oldCode": "ears.missing_system", "defaultSeverity": "error" },
+    { "id": "EARS-E009", "oldCode": "ears.multiple_shall", "defaultSeverity": "error" },
+    { "id": "EARS-E010", "oldCode": "ears.no_match", "defaultSeverity": "error" },
+    { "id": "EARS-E011", "oldCode": "expr.empty_subexpression", "defaultSeverity": "error" },
+    { "id": "EARS-E012", "oldCode": "expr.invalid_operator_sequence", "defaultSeverity": "error" },
+    { "id": "EARS-E013", "oldCode": "expr.unbalanced_parentheses", "defaultSeverity": "error" },
+    { "id": "EARS-E014", "oldCode": "ears.keyword_case", "defaultSeverity": "error" },
+    { "id": "EARS-E015", "oldCode": "ears.missing_leading_comma", "defaultSeverity": "error" },
+    { "id": "EARS-E016", "oldCode": "ears.prohibition_not_allowed", "defaultSeverity": "error" },
+    { "id": "EARS-W001", "oldCode": "catalog.event_ambiguous", "defaultSeverity": "warning" },
+    { "id": "EARS-W002", "oldCode": "catalog.event_unresolved", "defaultSeverity": "warning" },
+    { "id": "EARS-W003", "oldCode": "catalog.feature_ambiguous", "defaultSeverity": "warning" },
+    { "id": "EARS-W004", "oldCode": "catalog.feature_unresolved", "defaultSeverity": "warning" },
+    { "id": "EARS-W005", "oldCode": "catalog.state_ambiguous", "defaultSeverity": "warning" },
+    { "id": "EARS-W006", "oldCode": "catalog.state_unresolved", "defaultSeverity": "warning" },
+    { "id": "EARS-W007", "oldCode": "catalog.term_unreferenced", "defaultSeverity": "warning" },
+    { "id": "EARS-W008", "oldCode": "expr.ambiguous_term", "defaultSeverity": "warning" },
+    { "id": "EARS-W009", "oldCode": "expr.mixed_unresolved_terms", "defaultSeverity": "warning" },
+    {
+      "id": "EARS-W010",
+      "oldCode": "expr.operator_precedence_warning",
+      "defaultSeverity": "warning"
+    },
+    { "id": "EARS-W011", "oldCode": "expr.unknown_term", "defaultSeverity": "warning" },
+    { "id": "EARS-W012", "oldCode": "lint.alias_used", "defaultSeverity": "warning" },
+    { "id": "EARS-W013", "oldCode": "lint.multiple_responses", "defaultSeverity": "warning" },
+    { "id": "EARS-W014", "oldCode": "lint.suspicious_text_shape", "defaultSeverity": "warning" },
+    { "id": "EARS-W015", "oldCode": "lint.unparsed_tail", "defaultSeverity": "warning" },
+    { "id": "EARS-W016", "oldCode": "lint.vague_response", "defaultSeverity": "warning" }
+  ]
+}

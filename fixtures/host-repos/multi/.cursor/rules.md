@@ -1,0 +1,3 @@
+# Cursor rules
+
+Project rules.

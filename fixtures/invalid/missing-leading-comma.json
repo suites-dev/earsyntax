@@ -1,0 +1,9 @@
+{
+  "id": "INV-D001",
+  "text": "When a payment webhook is received the billing service shall verify the HMAC signature.",
+  "expected": {
+    "valid": false,
+    "pattern": "event-driven",
+    "diagnostics": [{ "code": "ears.missing_leading_comma", "severity": "error" }]
+  }
+}

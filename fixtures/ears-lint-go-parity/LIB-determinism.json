@@ -1,0 +1,68 @@
+{
+  "id": "LIB-determinism",
+  "text": "When reverse thrust is commanded and, the unknown system shall do something appropriate.",
+  "options": {
+    "mode": "strict"
+  },
+  "catalog": {
+    "systems": [
+      {
+        "id": "SYS-ENGINE",
+        "name": "engine control system",
+        "aliases": ["engine ctrl system"]
+      }
+    ],
+    "events": [
+      {
+        "id": "EVT-REV",
+        "name": "reverse thrust is commanded"
+      },
+      {
+        "id": "EVT-EMB",
+        "name": "emergency braking is active"
+      }
+    ],
+    "states": [
+      {
+        "id": "STATE-GROUND",
+        "name": "aircraft is on ground"
+      },
+      {
+        "id": "STATE-HYD",
+        "name": "hydraulic pressure is available"
+      }
+    ],
+    "features": [
+      {
+        "id": "FEAT-PREMIUM",
+        "name": "premium mode is enabled"
+      }
+    ]
+  },
+  "expected": {
+    "valid": false,
+    "pattern": "event-driven",
+    "diagnostics": [
+      {
+        "code": "expr.invalid_operator_sequence",
+        "severity": "error"
+      },
+      {
+        "code": "catalog.system_unresolved",
+        "severity": "error"
+      },
+      {
+        "code": "lint.vague_response",
+        "severity": "warning"
+      }
+    ],
+    "ast": {
+      "pattern": "event-driven",
+      "system": {
+        "role": "system",
+        "raw": "unknown system"
+      }
+    },
+    "responses": ["do something appropriate"]
+  }
+}

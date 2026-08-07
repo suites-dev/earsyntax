@@ -1,0 +1,70 @@
+{
+  "id": "LIB-ambiguous-event",
+  "text": "When reverse thrust is commanded, the engine control system shall enable reverse thrust.",
+  "options": {
+    "mode": "strict"
+  },
+  "catalog": {
+    "systems": [
+      {
+        "id": "SYS-ENGINE",
+        "name": "engine control system",
+        "aliases": ["engine ctrl system"]
+      }
+    ],
+    "events": [
+      {
+        "id": "EVT-REV",
+        "name": "reverse thrust is commanded"
+      },
+      {
+        "id": "EVT-EMB",
+        "name": "emergency braking is active"
+      }
+    ],
+    "states": [
+      {
+        "id": "STATE-GROUND",
+        "name": "aircraft is on ground"
+      },
+      {
+        "id": "STATE-HYD",
+        "name": "hydraulic pressure is available"
+      }
+    ],
+    "features": [
+      {
+        "id": "FEAT-PREMIUM",
+        "name": "premium mode is enabled"
+      }
+    ],
+    "conditions": [
+      {
+        "id": "COND-REV",
+        "name": "reverse thrust is commanded"
+      }
+    ]
+  },
+  "expected": {
+    "valid": true,
+    "pattern": "event-driven",
+    "diagnostics": [
+      {
+        "code": "catalog.event_ambiguous",
+        "severity": "warning"
+      },
+      {
+        "code": "expr.ambiguous_term",
+        "severity": "warning"
+      }
+    ],
+    "ast": {
+      "pattern": "event-driven",
+      "system": {
+        "role": "system",
+        "raw": "engine control system"
+      }
+    },
+    "responses": ["enable reverse thrust"]
+  }
+}

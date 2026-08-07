@@ -1,0 +1,21 @@
+{
+  "id": "VAL-010",
+  "text": "Where dunning management is enabled, the billing service shall retry declined charges.",
+  "expected": {
+    "valid": true,
+    "pattern": "optional-feature",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "optional-feature",
+      "feature": {
+        "kind": "term",
+        "text": "dunning management is enabled"
+      },
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": ["retry declined charges"]
+  }
+}

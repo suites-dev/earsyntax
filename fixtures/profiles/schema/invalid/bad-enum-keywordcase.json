@@ -1,0 +1,23 @@
+{
+  "expectedErrors": [{ "path": "dialect.keywordCase", "code": "invalid-enum" }],
+  "profile": {
+    "name": "strict",
+    "notation": "ears",
+    "dialect": {
+      "keywordCase": "loose",
+      "allowLiteralSystemName": [],
+      "commaAfterLeadingClause": "required",
+      "allowStoryWrapper": false,
+      "allowFrameMetadata": false,
+      "allowProhibition": false
+    },
+    "locator": {
+      "documentKinds": ["ears", "text"],
+      "include": [{ "id": "strict.every-line", "kind": "every-line" }],
+      "exclude": [],
+      "codeFences": "ignore"
+    },
+    "severity": {},
+    "idFormat": { "required": false }
+  }
+}

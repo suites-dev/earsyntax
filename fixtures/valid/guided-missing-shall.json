@@ -1,0 +1,11 @@
+{
+  "id": "VAL-035",
+  "text": "The billing service verifies the HMAC signature.",
+  "options": {
+    "mode": "guided"
+  },
+  "expected": {
+    "valid": true,
+    "diagnostics": [{ "code": "ears.missing_shall", "severity": "warning" }]
+  }
+}

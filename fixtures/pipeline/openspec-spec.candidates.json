@@ -1,0 +1,26 @@
+[
+  {
+    "file": "openspec-spec.md",
+    "line": 5,
+    "col": 1,
+    "text": "The billing service shall verify the signature.",
+    "profile": "openspec",
+    "locatorRuleId": "openspec.requirement"
+  },
+  {
+    "file": "openspec-spec.md",
+    "line": 9,
+    "col": 1,
+    "text": "If the signature is invalid, then the billing service shall reject the webhook.",
+    "profile": "openspec",
+    "locatorRuleId": "openspec.scenario"
+  },
+  {
+    "file": "openspec-spec.md",
+    "line": 13,
+    "col": 1,
+    "text": "The billing service shall log every attempt.",
+    "profile": "openspec",
+    "locatorRuleId": "openspec.requirement"
+  }
+]

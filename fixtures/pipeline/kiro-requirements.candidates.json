@@ -1,0 +1,18 @@
+[
+  {
+    "file": "kiro-requirements.md",
+    "line": 7,
+    "col": 4,
+    "text": "WHEN a payment webhook arrives THE SYSTEM SHALL verify the signature.",
+    "profile": "kiro",
+    "locatorRuleId": "kiro.acceptance-criteria-item"
+  },
+  {
+    "file": "kiro-requirements.md",
+    "line": 8,
+    "col": 4,
+    "text": "IF the signature is invalid THEN THE SYSTEM SHALL reject the webhook.",
+    "profile": "kiro",
+    "locatorRuleId": "kiro.acceptance-criteria-item"
+  }
+]

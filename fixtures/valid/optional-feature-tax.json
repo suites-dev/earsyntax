@@ -1,0 +1,17 @@
+{
+  "id": "VAL-011",
+  "text": "Where tax calculation is enabled, the billing service shall add sales tax to each invoice.",
+  "expected": {
+    "valid": true,
+    "pattern": "optional-feature",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "optional-feature",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": ["add sales tax to each invoice"]
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "fixture": "ears-x/prohibition.ears",
+  "profile": "ears-x",
+  "description": "Prohibition requirements (shall not). Valid under ears-x (dialect.allowProhibition=true; ast.prohibition=true), invalid under strict (ES-D-004, EARS-E016). Each line carries a per-profile expectation so a single file drives both sides of the ruling.",
+  "verification": "verified-core-api",
+  "lines": [
+    {
+      "line": 1,
+      "text": "The billing service shall not store raw card numbers.",
+      "pattern": "ubiquitous",
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E016", "code": "ears.prohibition_not_allowed", "severity": "error" }
+        ]
+      },
+      "ears-x": { "ok": true, "expect": [], "prohibition": true }
+    },
+    {
+      "line": 2,
+      "text": "While the account is delinquent, the billing service shall not issue new invoices.",
+      "pattern": "state-driven",
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E016", "code": "ears.prohibition_not_allowed", "severity": "error" }
+        ]
+      },
+      "ears-x": { "ok": true, "expect": [], "prohibition": true }
+    },
+    {
+      "line": 3,
+      "text": "When a chargeback is received, the billing service shall not retry the payment.",
+      "pattern": "event-driven",
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E016", "code": "ears.prohibition_not_allowed", "severity": "error" }
+        ]
+      },
+      "ears-x": { "ok": true, "expect": [], "prohibition": true }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "id": "INV-007",
+  "text": "When a payment webhook is received, while the payment provider is available, the billing service shall queue the event.",
+  "expected": {
+    "valid": false,
+    "pattern": "complex",
+    "diagnostics": [
+      {
+        "code": "ears.invalid_clause_order",
+        "severity": "error"
+      }
+    ]
+  }
+}

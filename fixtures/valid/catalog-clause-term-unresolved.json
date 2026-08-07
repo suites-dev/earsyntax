@@ -1,0 +1,21 @@
+{
+  "id": "VAL-041",
+  "text": "When a chargeback is received, the billing service shall open a dispute case.",
+  "catalog": {
+    "systems": [{ "id": "SYS-BILLING", "name": "billing service", "aliases": ["BFF"] }],
+    "events": [{ "id": "EVT-WEBHOOK", "name": "a payment webhook is received" }]
+  },
+  "expected": {
+    "valid": true,
+    "pattern": "event-driven",
+    "diagnostics": [
+      { "code": "expr.unknown_term", "severity": "warning" },
+      { "code": "catalog.event_unresolved", "severity": "warning" }
+    ],
+    "ast": {
+      "pattern": "event-driven",
+      "system": { "raw": "billing service", "role": "system" }
+    },
+    "responses": ["open a dispute case"]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "VAL-003",
+  "text": "The payment gateway shall record an audit log entry for every processed webhook.",
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "ubiquitous",
+      "system": {
+        "raw": "payment gateway",
+        "role": "system"
+      }
+    },
+    "responses": ["record an audit log entry for every processed webhook"]
+  }
+}

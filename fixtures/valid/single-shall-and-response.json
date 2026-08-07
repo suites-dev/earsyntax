@@ -1,0 +1,10 @@
+{
+  "id": "VAL-D008",
+  "text": "The billing service shall verify the HMAC signature and record an audit entry.",
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [],
+    "responses": ["verify the HMAC signature and record an audit entry"]
+  }
+}

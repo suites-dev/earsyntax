@@ -1,0 +1,17 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "composite": true,
+    "incremental": true,
+    "skipLibCheck": true
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./packages/core/tsconfig.build.json" },
+    { "path": "./packages/cli-contract/tsconfig.build.json" },
+    { "path": "./packages/extract/tsconfig.build.json" },
+    { "path": "./packages/cli/tsconfig.build.json" }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "fixture": "strict/invalid.ears",
+  "profile": "strict",
+  "locatorRuleId": "strict.every-line",
+  "description": "Expected extract output under the strict every-line locator. Extraction is locate-only and does not parse or lint, so every non-empty line is a candidate regardless of whether it later validates.",
+  "candidates": [
+    {
+      "file": "strict/invalid.ears",
+      "line": 1,
+      "col": 1,
+      "text": "WHEN a payment webhook is received, the billing service shall verify the HMAC signature.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/invalid.ears",
+      "line": 2,
+      "col": 1,
+      "text": "When a payment webhook is received the billing service shall verify the HMAC signature.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/invalid.ears",
+      "line": 3,
+      "col": 1,
+      "text": "The billing service shall not store raw card numbers.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/invalid.ears",
+      "line": 4,
+      "col": 1,
+      "text": "If the payment is declined, the billing service shall notify the customer.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/invalid.ears",
+      "line": 5,
+      "col": 1,
+      "text": "When a payment webhook is received, when a refund is requested, the billing service shall issue a refund.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/invalid.ears",
+      "line": 6,
+      "col": 1,
+      "text": "When a payment webhook is received, it shall verify the HMAC signature.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/invalid.ears",
+      "line": 7,
+      "col": 1,
+      "text": "While the payment provider is unavailable, the billing service shall shall queue retryable events.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    }
+  ]
+}

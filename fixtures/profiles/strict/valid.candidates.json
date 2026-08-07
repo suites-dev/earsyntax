@@ -1,0 +1,64 @@
+{
+  "fixture": "strict/valid.ears",
+  "profile": "strict",
+  "locatorRuleId": "strict.every-line",
+  "description": "Expected extract output under the strict every-line locator: each non-empty line is one candidate. Snapshot target for the future `extract` command. Field shape mirrors the Candidate contract (file, line, col, text, profile, locatorRuleId).",
+  "candidates": [
+    {
+      "file": "strict/valid.ears",
+      "line": 1,
+      "col": 1,
+      "text": "The billing service shall verify the HMAC signature of every incoming webhook.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/valid.ears",
+      "line": 2,
+      "col": 1,
+      "text": "While the payment provider is unavailable, the billing service shall queue retryable webhook events.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/valid.ears",
+      "line": 3,
+      "col": 1,
+      "text": "When a payment webhook is received, the billing service shall verify the HMAC signature.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/valid.ears",
+      "line": 4,
+      "col": 1,
+      "text": "Where tax calculation is enabled, the billing service shall add sales tax to each invoice.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/valid.ears",
+      "line": 5,
+      "col": 1,
+      "text": "If the HMAC signature is invalid, then the billing service shall reject the webhook.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/valid.ears",
+      "line": 6,
+      "col": 1,
+      "text": "While the payment provider is unavailable, when a payment webhook is received, the billing service shall queue the event for retry.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    },
+    {
+      "file": "strict/valid.ears",
+      "line": 7,
+      "col": 1,
+      "text": "Where dunning management is enabled, if a charge is declined, then the billing service shall schedule a retry.",
+      "profile": "strict",
+      "locatorRuleId": "strict.every-line"
+    }
+  ]
+}

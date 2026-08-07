@@ -1,0 +1,25 @@
+{
+  "expectedErrors": [{ "path": "severity.EARS-E999", "code": "unknown-diagnostic-id" }],
+  "profile": {
+    "name": "kiro",
+    "notation": "ears",
+    "dialect": {
+      "keywordCase": "case-insensitive",
+      "allowLiteralSystemName": ["THE SYSTEM"],
+      "commaAfterLeadingClause": "optional",
+      "allowStoryWrapper": true,
+      "allowFrameMetadata": false,
+      "allowProhibition": false
+    },
+    "locator": {
+      "documentKinds": ["markdown"],
+      "include": [
+        { "id": "kiro.item", "kind": "list-item", "underHeading": "^acceptance criteria$" }
+      ],
+      "exclude": [],
+      "codeFences": "ignore"
+    },
+    "severity": { "EARS-E999": "off" },
+    "idFormat": { "required": false }
+  }
+}

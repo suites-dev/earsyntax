@@ -1,0 +1,123 @@
+{
+  "fixture": "kiro/requirements.md",
+  "profile": "kiro",
+  "description": "Kiro house-style acceptance criteria (all-caps keywords, literal THE SYSTEM, no leading comma). Clean under kiro; the same lines fail under strict on casing (ES-D-007, EARS-E014) and, where a leading clause is present, the missing leading comma (ES-D-001, EARS-E015). Each line carries a per-profile expectation so one file drives both sides. The kiro profile also sets EARS-W011 and EARS-W014 to off so free-form domain vocabulary stays clean when a catalog is supplied; without a catalog neither warning fires, confirmed against lintEars on the canonical-cased equivalent of every line.",
+  "verification": "pending-c4b",
+  "currentBehavior": "The parser does not yet consume the dialect block (packages/core/src/shell-parser.ts and lint.ts ignore Options.dialect). Running lintEars on the raw all-caps, no-comma lines yields EARS-E008 (missing system name) for the leading-clause forms and parses the ubiquitous form as valid; it does not yet emit EARS-E014 or EARS-E015. Once C4b wires keywordCase='strict' to emit EARS-E014 and commaAfterLeadingClause='required' to emit EARS-E015, the strict column below holds and kiro (case-insensitive, THE SYSTEM literal, optional comma) stays clean.",
+  "lines": [
+    {
+      "line": 20,
+      "text": "WHEN a user submits valid credentials THE SYSTEM SHALL establish an authenticated session.",
+      "pattern": "event-driven",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    },
+    {
+      "line": 21,
+      "text": "WHEN a user submits an unrecognized email THE SYSTEM SHALL display a sign-in error that does not reveal which field was wrong.",
+      "pattern": "event-driven",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    },
+    {
+      "line": 22,
+      "text": "IF five consecutive sign-in attempts fail THEN THE SYSTEM SHALL lock the account for fifteen minutes.",
+      "pattern": "unwanted-behaviour",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    },
+    {
+      "line": 31,
+      "text": "WHILE a background sync is in progress THE SYSTEM SHALL disable the manual save control.",
+      "pattern": "state-driven",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    },
+    {
+      "line": 32,
+      "text": "WHERE offline mode is enabled THE SYSTEM SHALL queue outbound changes on the local device.",
+      "pattern": "optional-feature",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    },
+    {
+      "line": 33,
+      "text": "THE SYSTEM SHALL persist the working draft every thirty seconds.",
+      "pattern": "ubiquitous",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [{ "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" }]
+      }
+    },
+    {
+      "line": 42,
+      "text": "WHEN a sync request returns a network error THE SYSTEM SHALL show a retry banner above the editor.",
+      "pattern": "event-driven",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    },
+    {
+      "line": 43,
+      "text": "IF the retry banner is dismissed THEN THE SYSTEM SHALL schedule a silent retry after two minutes.",
+      "pattern": "unwanted-behaviour",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    },
+    {
+      "line": 44,
+      "text": "WHEN the access token expires THE SYSTEM SHALL redirect the author to the sign-in page.",
+      "pattern": "event-driven",
+      "kiro": { "ok": true, "expect": [] },
+      "strict": {
+        "ok": false,
+        "expect": [
+          { "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" },
+          { "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }
+        ]
+      }
+    }
+  ]
+}

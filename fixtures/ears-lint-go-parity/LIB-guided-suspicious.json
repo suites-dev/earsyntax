@@ -1,0 +1,55 @@
+{
+  "id": "LIB-guided-suspicious",
+  "text": "maybe enable reverse thrust someday",
+  "options": {
+    "mode": "guided"
+  },
+  "catalog": {
+    "systems": [
+      {
+        "id": "SYS-ENGINE",
+        "name": "engine control system",
+        "aliases": ["engine ctrl system"]
+      }
+    ],
+    "events": [
+      {
+        "id": "EVT-REV",
+        "name": "reverse thrust is commanded"
+      },
+      {
+        "id": "EVT-EMB",
+        "name": "emergency braking is active"
+      }
+    ],
+    "states": [
+      {
+        "id": "STATE-GROUND",
+        "name": "aircraft is on ground"
+      },
+      {
+        "id": "STATE-HYD",
+        "name": "hydraulic pressure is available"
+      }
+    ],
+    "features": [
+      {
+        "id": "FEAT-PREMIUM",
+        "name": "premium mode is enabled"
+      }
+    ]
+  },
+  "expected": {
+    "valid": true,
+    "diagnostics": [
+      {
+        "code": "ears.no_match",
+        "severity": "warning"
+      },
+      {
+        "code": "lint.suspicious_text_shape",
+        "severity": "warning"
+      }
+    ]
+  }
+}

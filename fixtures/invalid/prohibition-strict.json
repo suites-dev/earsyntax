@@ -1,0 +1,9 @@
+{
+  "id": "INV-D004",
+  "text": "The billing service shall not log the payment token.",
+  "expected": {
+    "valid": false,
+    "pattern": "ubiquitous",
+    "diagnostics": [{ "code": "ears.prohibition_not_allowed", "severity": "error" }]
+  }
+}

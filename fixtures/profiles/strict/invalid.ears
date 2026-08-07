@@ -1,0 +1,7 @@
+WHEN a payment webhook is received, the billing service shall verify the HMAC signature.
+When a payment webhook is received the billing service shall verify the HMAC signature.
+The billing service shall not store raw card numbers.
+If the payment is declined, the billing service shall notify the customer.
+When a payment webhook is received, when a refund is requested, the billing service shall issue a refund.
+When a payment webhook is received, it shall verify the HMAC signature.
+While the payment provider is unavailable, the billing service shall shall queue retryable events.

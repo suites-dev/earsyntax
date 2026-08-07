@@ -1,0 +1,17 @@
+{
+  "id": "VAL-015",
+  "text": "If the webhook timestamp is stale, then the billing service shall discard the event.",
+  "expected": {
+    "valid": true,
+    "pattern": "unwanted-behaviour",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "unwanted-behaviour",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": ["discard the event"]
+  }
+}

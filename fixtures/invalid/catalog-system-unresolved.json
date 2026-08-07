@@ -1,0 +1,26 @@
+{
+  "id": "INV-013",
+  "text": "The reconciliation engine shall verify the HMAC signature.",
+  "catalog": {
+    "systems": [
+      {
+        "id": "SYS-BILLING",
+        "name": "billing service",
+        "aliases": ["BFF"]
+      }
+    ]
+  },
+  "options": {
+    "mode": "strict"
+  },
+  "expected": {
+    "valid": false,
+    "pattern": "ubiquitous",
+    "diagnostics": [
+      {
+        "code": "catalog.system_unresolved",
+        "severity": "error"
+      }
+    ]
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "VAL-D001",
+  "text": "When a payment webhook is received the billing service shall verify the HMAC signature.",
+  "options": { "dialect": { "commaAfterLeadingClause": "optional" } },
+  "expected": {
+    "valid": true,
+    "pattern": "event-driven",
+    "diagnostics": [],
+    "ast": { "pattern": "event-driven", "system": { "raw": "billing service", "role": "system" } },
+    "responses": ["verify the HMAC signature"]
+  }
+}

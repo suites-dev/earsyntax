@@ -1,0 +1,11 @@
+{
+  "id": "VAL-039",
+  "text": "When a payment webhook is received and (), the billing service shall verify the HMAC signature.",
+  "options": {
+    "mode": "guided"
+  },
+  "expected": {
+    "valid": true,
+    "diagnostics": [{ "code": "expr.empty_subexpression", "severity": "warning" }]
+  }
+}

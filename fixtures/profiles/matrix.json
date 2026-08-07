@@ -1,0 +1,27 @@
+{
+  "description": "Cross-profile expectation matrix for the strict and ears-x fixtures. Row 1 is the superset proof: every line of strict/valid.ears validates clean under both strict and ears-x, unchanged. Rows 2 and 3 are the strict-fail / ears-x-pass pairs that witness the two ears-x tolerances (prohibition, frame metadata). Per-line and per-diagnostic detail lives in each fixture's sibling *.expected.json.",
+  "supersetInvariant": "Every strict-valid requirement is ears-x-valid unchanged. ears-x only adds tolerances (frame metadata, [source:] tags, shall not prohibition); it never rejects anything strict accepts.",
+  "rows": [
+    {
+      "fixture": "strict/valid.ears",
+      "strict": { "ok": true },
+      "ears-x": { "ok": true },
+      "note": "Superset proof: identical clean result under both profiles.",
+      "verification": "verified-core-api"
+    },
+    {
+      "fixture": "ears-x/prohibition.ears",
+      "strict": { "ok": false, "expectId": "EARS-E016" },
+      "ears-x": { "ok": true },
+      "note": "shall not: rejected under strict (ES-D-004), accepted as a prohibition kind under ears-x.",
+      "verification": "verified-core-api"
+    },
+    {
+      "fixture": "ears-x/frame-metadata.ears",
+      "strict": { "ok": false, "expectId": "EARS-E010" },
+      "ears-x": { "ok": true },
+      "note": "REQ-### frame id and [source:] tag: rejected under strict (not part of the sentence grammar), accepted under ears-x.",
+      "verification": "verified-core-api"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "expectedErrors": [{ "path": "locator.include[0].regex", "code": "unknown-key" }],
+  "profile": {
+    "name": "speckit",
+    "notation": "ears",
+    "dialect": {
+      "keywordCase": "strict",
+      "allowLiteralSystemName": [],
+      "commaAfterLeadingClause": "required",
+      "allowStoryWrapper": false,
+      "allowFrameMetadata": false,
+      "allowProhibition": false
+    },
+    "locator": {
+      "documentKinds": ["markdown"],
+      "include": [
+        {
+          "id": "speckit.req",
+          "kind": "heading-section",
+          "headingPattern": "^requirements$",
+          "regex": true
+        }
+      ],
+      "exclude": [],
+      "codeFences": "ignore"
+    },
+    "severity": {},
+    "idFormat": { "required": false }
+  }
+}

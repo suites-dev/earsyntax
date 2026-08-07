@@ -1,0 +1,7 @@
+{
+  "fixture": "kiro/design.md",
+  "profile": "kiro",
+  "locatorRuleId": "kiro.acceptance-criteria-item",
+  "description": "False-positive guard. Expected extract output under the kiro locator: zero candidates. The kiro locator only matches list items under a #### Acceptance Criteria heading, and design.md has none. EARS keywords appear only in narrative prose (Sync engine, Sequence) and in a fenced code block; codeFences is 'ignore', so the fenced requirement-looking lines are never eligible, and the bullet lists under Overview and Considerations sit under non-Acceptance-Criteria headings, so they are not candidates. Snapshot target for the future `extract` command, pending the extractor (W2-pipeline).",
+  "candidates": []
+}

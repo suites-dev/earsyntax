@@ -1,0 +1,8 @@
+{
+  "id": "INV-D005",
+  "text": "When a payment webhook is received, it shall verify the HMAC signature.",
+  "expected": {
+    "valid": false,
+    "diagnostics": [{ "code": "ears.missing_system", "severity": "error" }]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "id": "INV-002",
+  "text": "While the payment provider is unavailable, the billing service shall shall queue retryable events.",
+  "expected": {
+    "valid": false,
+    "pattern": "state-driven",
+    "diagnostics": [
+      {
+        "code": "ears.multiple_shall",
+        "severity": "error"
+      }
+    ]
+  }
+}

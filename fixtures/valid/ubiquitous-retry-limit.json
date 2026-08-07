@@ -1,0 +1,17 @@
+{
+  "id": "VAL-002",
+  "text": "The billing service shall retry failed webhook deliveries up to five times.",
+  "expected": {
+    "valid": true,
+    "pattern": "ubiquitous",
+    "diagnostics": [],
+    "ast": {
+      "pattern": "ubiquitous",
+      "system": {
+        "raw": "billing service",
+        "role": "system"
+      }
+    },
+    "responses": ["retry failed webhook deliveries up to five times"]
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "fixture": "strict/invalid.ears",
+  "profile": "strict",
+  "description": "One violation of each strict ES-D ruling, one per line. Each line names the exact registry id the strict profile emits and the ES-D decision it witnesses. Every line is verified against lintEars with the strict dialect.",
+  "findings": { "ok": false },
+  "lines": [
+    {
+      "line": 1,
+      "text": "WHEN a payment webhook is received, the billing service shall verify the HMAC signature.",
+      "ruling": "ES-D-007 keyword case",
+      "expect": [{ "id": "EARS-E014", "code": "ears.keyword_case", "severity": "error" }],
+      "verification": "verified-core-api"
+    },
+    {
+      "line": 2,
+      "text": "When a payment webhook is received the billing service shall verify the HMAC signature.",
+      "ruling": "ES-D-001 comma after leading clause",
+      "expect": [{ "id": "EARS-E015", "code": "ears.missing_leading_comma", "severity": "error" }],
+      "verification": "verified-core-api"
+    },
+    {
+      "line": 3,
+      "text": "The billing service shall not store raw card numbers.",
+      "ruling": "ES-D-004 negative response (shall not)",
+      "expect": [
+        { "id": "EARS-E016", "code": "ears.prohibition_not_allowed", "severity": "error" }
+      ],
+      "verification": "verified-core-api"
+    },
+    {
+      "line": 4,
+      "text": "If the payment is declined, the billing service shall notify the customer.",
+      "ruling": "ES-D-002 then keyword required in unwanted behaviour",
+      "expect": [{ "id": "EARS-E006", "code": "ears.invalid_if_then_form", "severity": "error" }],
+      "verification": "verified-core-api"
+    },
+    {
+      "line": 5,
+      "text": "When a payment webhook is received, when a refund is requested, the billing service shall issue a refund.",
+      "ruling": "ES-D-003 one trigger maximum (two When clauses)",
+      "expect": [{ "id": "EARS-E005", "code": "ears.invalid_clause_order", "severity": "error" }],
+      "verification": "verified-core-api"
+    },
+    {
+      "line": 6,
+      "text": "When a payment webhook is received, it shall verify the HMAC signature.",
+      "ruling": "ES-D-005 one system name, no pronoun reference",
+      "expect": [{ "id": "EARS-E008", "code": "ears.missing_system", "severity": "error" }],
+      "verification": "verified-core-api"
+    },
+    {
+      "line": 7,
+      "text": "While the payment provider is unavailable, the billing service shall shall queue retryable events.",
+      "ruling": "ES-D-008 one requirement per line (second shall outside an and-joined response)",
+      "expect": [{ "id": "EARS-E009", "code": "ears.multiple_shall", "severity": "error" }],
+      "verification": "verified-core-api"
+    }
+  ]
+}

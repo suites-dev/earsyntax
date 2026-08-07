@@ -1,0 +1,43 @@
+{
+  "fixture": "ears-x/frame-metadata.ears",
+  "profile": "ears-x",
+  "description": "REQ-### frame ids and [source: path:line] tags. Valid under ears-x (dialect.allowFrameMetadata=true; ids match idFormat.pattern ^REQ-\\d+$), invalid under strict (frame metadata is not part of the strict EARS sentence grammar, so the prefixed line does not match any shell pattern). Each line carries a per-profile expectation.",
+  "verification": "verified-core-api",
+  "lines": [
+    {
+      "line": 1,
+      "text": "REQ-001: The billing service shall verify the HMAC signature of every incoming webhook.",
+      "requirementId": "REQ-001",
+      "pattern": "ubiquitous",
+      "strict": {
+        "ok": false,
+        "expect": [{ "id": "EARS-E010", "code": "ears.no_match", "severity": "error" }]
+      },
+      "ears-x": { "ok": true, "expect": [] }
+    },
+    {
+      "line": 2,
+      "text": "REQ-002: When a payment webhook is received, the billing service shall verify the HMAC signature. [source: billing/webhook.ts:42]",
+      "requirementId": "REQ-002",
+      "source": "billing/webhook.ts:42",
+      "pattern": "event-driven",
+      "strict": {
+        "ok": false,
+        "expect": [{ "id": "EARS-E010", "code": "ears.no_match", "severity": "error" }]
+      },
+      "ears-x": { "ok": true, "expect": [] }
+    },
+    {
+      "line": 3,
+      "text": "REQ-003: If the HMAC signature is invalid, then the billing service shall reject the webhook. [source: billing/verify.ts:88]",
+      "requirementId": "REQ-003",
+      "source": "billing/verify.ts:88",
+      "pattern": "unwanted-behaviour",
+      "strict": {
+        "ok": false,
+        "expect": [{ "id": "EARS-E010", "code": "ears.no_match", "severity": "error" }]
+      },
+      "ears-x": { "ok": true, "expect": [] }
+    }
+  ]
+}
