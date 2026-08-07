@@ -153,6 +153,9 @@ jobs:
       - name: CLI e2e
         run: bash scripts/cli-e2e.sh
 
+      - name: Agentic loop demo
+        run: RUN_CLAUDE=0 PAUSE=0 bash scripts/agentic-loop-demo.sh
+
   deps:
     name: Dependency Boundaries
     runs-on: ubuntu-latest

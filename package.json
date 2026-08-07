@@ -20,7 +20,7 @@
     "test": "pnpm -r --filter './packages/**' test",
     "test:e2e": "vitest run --config vitest.conformance.config.ts",
     "e2e:cli": "pnpm build && bash scripts/cli-e2e.sh",
-    "conformance": "pnpm build && pnpm typecheck && pnpm typecheck:tests && pnpm lint && pnpm test && pnpm test:e2e && bash scripts/cli-e2e.sh",
+    "conformance": "pnpm build && pnpm typecheck && pnpm typecheck:tests && pnpm lint && pnpm test && pnpm test:e2e && bash scripts/cli-e2e.sh && RUN_CLAUDE=0 PAUSE=0 bash scripts/agentic-loop-demo.sh",
     "prepare": "husky",
     "version:alpha": "lerna version --conventional-commits --conventional-prerelease --preid alpha --no-private",
     "version:graduate": "lerna version --conventional-graduate --no-private",

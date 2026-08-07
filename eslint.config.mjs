@@ -182,6 +182,12 @@ export default [
           selector: 'TSInterfaceDeclaration[id.name=/^I[A-Z]/]',
           message: 'Do not prefix interfaces with "I". TypeScript uses structural typing.',
         },
+        {
+          selector:
+            "ImportExpression[source.value=/dist(\\/|$)/], CallExpression[callee.type='Import'][arguments.0.value=/dist(\\/|$)/]",
+          message:
+            'Do not dynamically import built dist artifacts from TypeScript source or tests. Import a package entry point instead.',
+        },
         // Optional properties, optional parameters, and optional chaining are
         // intentionally allowed. The frozen @earsyntax/core contract in
         // packages/core/src/types.ts uses optional properties throughout to
@@ -215,7 +221,7 @@ export default [
                 'Import from the package entry point, not /src paths. Use the @earsyntax/<package> export.',
             },
             {
-              group: ['**/dist/**', '@earsyntax/*/dist', '@earsyntax/*/dist/**'],
+              group: ['**/dist', '**/dist/**', '@earsyntax/*/dist', '@earsyntax/*/dist/**'],
               message:
                 'Do not import built dist artifacts from TypeScript source or tests. Import a package entry point instead.',
             },
@@ -256,9 +262,9 @@ export default [
       },
     },
     rules: {
-      // Test files live 2-3 directories deep under test/, so a 3-level relative
-      // import is same-package (test/a/b/ → src/). Only cross-package imports
-      // (4+ levels) need to be restricted.
+      // Test files can live deep enough that same-package fixture imports need
+      // multiple `../` segments. Cross-package source imports are still
+      // forbidden; use workspace package entry points instead.
       'no-restricted-imports': [
         'error',
         {
@@ -269,9 +275,19 @@ export default [
                 'Import from the package entry point, not /src paths. Use the @earsyntax/<package> export.',
             },
             {
-              group: ['**/dist/**', '@earsyntax/*/dist', '@earsyntax/*/dist/**'],
+              group: ['**/dist', '**/dist/**', '@earsyntax/*/dist', '@earsyntax/*/dist/**'],
               message:
                 'Do not import built dist artifacts from TypeScript source or tests. Import a package entry point instead.',
+            },
+            {
+              group: [
+                '../../../*/src',
+                '../../../*/src/*',
+                '../../../../*/src',
+                '../../../../*/src/*',
+              ],
+              message:
+                'Avoid cross-package source relative imports. Use workspace package imports instead.',
             },
             {
               group: ['../../../../*'],

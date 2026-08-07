@@ -8,7 +8,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import { execute, type ExecuteOptions, type FacadeResponse } from '@earsyntax/cli';
@@ -203,6 +203,19 @@ describe('business case: extraction explains validation scope', () => {
     });
   });
 
+  it('extracts Markdown stdin using the selected profile document kind', () => {
+    const { exitCode, json } = runJson(['extract', '-', '--profile', 'kiro'], {
+      stdin: readFileSync(fixture('fixtures/profiles/kiro/requirements.md'), 'utf8'),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(candidates(json)).toHaveLength(9);
+    expect(candidates(json).at(0)).toMatchObject({
+      profile: 'kiro',
+      locatorRuleId: 'kiro.acceptance-criteria-item',
+    });
+  });
+
   it('strips Spec Kit FR labels into requirement ids', () => {
     const { exitCode, json } = runJson([
       'extract',
@@ -345,6 +358,16 @@ describe('business case: doctor and init host-native integrations', () => {
     expect(arrayAt(json.next).map((entry) => String(objectAt(entry).command))).toContain(
       'earsyntax init --agent claude,codex,cursor,copilot,gemini --host kiro,speckit,openspec',
     );
+  });
+
+  it('normalizes a relative execute cwd the same way the binary does', () => {
+    const hostRepo = fixture('fixtures/host-repos/kiro');
+    const { exitCode, json } = runJson(['doctor'], {
+      cwd: relative(process.cwd(), hostRepo),
+    });
+
+    expect(exitCode).toBe(0);
+    expect(json.root).toBe(hostRepo);
   });
 
   it('renders integration files idempotently without creating .earsyntax or editing specs', () => {

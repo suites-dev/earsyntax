@@ -12,6 +12,7 @@
  */
 
 import process from 'node:process';
+import { resolve } from 'node:path';
 import { parseArgs, resolveGlobals, type ParsedArgs } from './args.js';
 import { createPainter } from './color.js';
 import type { CommandContext, CommandHandler } from './context.js';
@@ -48,14 +49,18 @@ export interface ExecuteOptions {
   stdin?: string;
 }
 
+/** Helper for consumers typing command-specific facade payloads. */
+export type CommandResponse<TPayload extends Record<string, unknown> = Record<string, unknown>> =
+  FacadeResponse & TPayload;
+
 /** The public in-process result for embedding and e2e tests. */
-export interface ExecuteResult {
+export interface ExecuteResult<TJson extends FacadeResponse = FacadeResponse> {
   /** The same exit code the binary would return. */
   exitCode: number;
-  /** The exact stdout text the binary would write, including the trailing newline. */
+  /** Captured stdout from the in-process dispatcher; pretty output is colorless. */
   stdout: string;
   /** Parsed facade JSON when `--json` was requested and stdout is valid JSON. */
-  json?: FacadeResponse;
+  json?: TJson;
 }
 
 /** A routed command: its handler and the flags it accepts beyond the universal set. */
@@ -116,7 +121,7 @@ function checkFlags(command: string, spec: CommandSpec, args: ParsedArgs): void 
  */
 export function run(argv: string[], options: RunOptions = {}): number {
   const write = options.stdout ?? ((text: string): void => void process.stdout.write(text));
-  const baseCwd = options.cwd ?? process.cwd();
+  const baseCwd = resolve(options.cwd ?? process.cwd());
   // Color only when writing to a real terminal; injected stdout (tests) stays plain.
   const color = options.stdout === undefined && process.stdout.isTTY;
 
@@ -140,7 +145,10 @@ export function run(argv: string[], options: RunOptions = {}): number {
  * parser, dispatcher, handlers, JSON/SARIF emission, and error normalization as
  * the binary.
  */
-export function execute(argv: readonly string[], options: ExecuteOptions = {}): ExecuteResult {
+export function execute<TJson extends FacadeResponse = FacadeResponse>(
+  argv: readonly string[],
+  options: ExecuteOptions = {},
+): ExecuteResult<TJson> {
   let stdout = '';
   const exitCode = run([...argv], {
     cwd: options.cwd,
@@ -158,7 +166,7 @@ export function execute(argv: readonly string[], options: ExecuteOptions = {}): 
     return {
       exitCode,
       stdout,
-      json: JSON.parse(stdout) as FacadeResponse,
+      json: JSON.parse(stdout) as TJson,
     };
   } catch {
     return { exitCode, stdout };

@@ -112,6 +112,14 @@ assert_contains() {
   fi
 }
 
+prepare_package_consumer() {
+  mkdir -p "$WORK_DIR/node_modules/@earsyntax"
+  ln -s "$REPO_ROOT/packages/cli" "$WORK_DIR/node_modules/@earsyntax/cli"
+  ln -s "$REPO_ROOT/packages/cli-contract" "$WORK_DIR/node_modules/@earsyntax/cli-contract"
+  ln -s "$REPO_ROOT/packages/core" "$WORK_DIR/node_modules/@earsyntax/core"
+  ln -s "$REPO_ROOT/packages/extract" "$WORK_DIR/node_modules/@earsyntax/extract"
+}
+
 write_intent() {
   mkdir -p "$WORK_DIR/docs"
   cat >"$WORK_DIR/$SOURCE_REL" <<'MD'
@@ -184,6 +192,12 @@ stdin_out="$WORK_DIR/stdin.txt"
 printf 'The billing service shall verify the HMAC signature.\n' | run_expect 0 "$stdin_out" validate - --profile strict
 assert_contains "$stdin_out" '1/1 valid across 1 file(s), 0 error(s), 0 warning(s)'
 pass "stdin validation works without an init workspace"
+
+section "1b. Return exit 2 for usage failures"
+missing_json="$WORK_DIR/missing.json"
+run_expect 2 "$missing_json" validate does-not-exist.ears --profile strict --json
+assert_json "$missing_json" "if (data.ok !== false) throw new Error('missing file should fail'); if (data.diagnostics[0].code !== 'validate.missing_file') throw new Error('wrong diagnostic');"
+pass "built binary preserves usage-failure exit code 2"
 
 section "2. Start from natural-language intent"
 write_intent
@@ -270,5 +284,12 @@ explain_json="$WORK_DIR/explain.json"
 run_expect 0 "$explain_json" explain EARS-E007 --json
 assert_json "$explain_json" "if (data.id !== 'EARS-E007') throw new Error('wrong diagnostic');"
 pass "SARIF, profiles, version, and explain work through the binary"
+
+section "11. Import the public package facade"
+package_api_json="$WORK_DIR/package-api.json"
+prepare_package_consumer
+(cd "$WORK_DIR" && node --input-type=module -e "import { execute } from '@earsyntax/cli'; const result = execute(['version', '--features', '--json']); if (result.exitCode !== 0) throw new Error('nonzero exit'); if (!result.json?.features?.commands?.includes('validate')) throw new Error('missing validate command'); process.stdout.write(result.stdout);") >"$package_api_json"
+assert_json "$package_api_json" "if (!data.features.commands.includes('validate')) throw new Error('missing validate feature');"
+pass "@earsyntax/cli package entrypoint executes through dist/index.js"
 
 printf "\n%sCLI e2e complete%s\n" "$BOLD$GREEN" "$RESET"

@@ -20,8 +20,8 @@
  */
 
 import { existsSync, globSync, readFileSync } from 'node:fs';
-import { type Candidate, resolveProfile } from '@earsyntax/core';
-import { extractCandidates, type PipelineFile } from '@earsyntax/extract';
+import { type Candidate, type Profile, resolveProfile } from '@earsyntax/core';
+import { extractCandidates, type DocumentKind, type PipelineFile } from '@earsyntax/extract';
 import type { CommandContext, CommandResult } from '../context.js';
 import type { FacadeDiagnostic } from '../facade-types.js';
 import { usageError } from '../errors.js';
@@ -30,6 +30,7 @@ import { buildResponse } from '../response.js';
 
 const GLOB_CHARS = /[*?[\]{}]/;
 const STDIN = '-';
+const DOCUMENT_KINDS: readonly DocumentKind[] = ['ears', 'text', 'markdown', 'yaml', 'json'];
 
 /** The facade candidate shape, in the frozen field order the JSON contract fixes. */
 interface FacadeCandidate {
@@ -101,6 +102,20 @@ function readSource(source: Source, stdin?: string): string {
   }
 }
 
+function isDocumentKind(value: string | undefined): value is DocumentKind {
+  return DOCUMENT_KINDS.some((kind) => kind === value);
+}
+
+/**
+ * Stdin has no extension, so infer its kind from the selected profile instead
+ * of letting the pipeline fall back to generic text. This keeps
+ * `extract - --profile kiro` equivalent to extracting a Kiro Markdown file.
+ */
+function kindForStdin(profile: Profile): DocumentKind {
+  const [firstKind] = profile.locator.documentKinds;
+  return isDocumentKind(firstKind) ? firstKind : 'text';
+}
+
 /** Project a pipeline {@link Candidate} into the frozen facade candidate order. */
 function toFacadeCandidate(candidate: Candidate): FacadeCandidate {
   return {
@@ -159,6 +174,7 @@ export function extractCommand(context: CommandContext): CommandResult {
   const files: PipelineFile[] = sources.map((source) => ({
     path: source.path,
     content: readSource(source, context.stdin),
+    ...(source.abs === undefined ? { kind: kindForStdin(profile) } : {}),
   }));
 
   const { candidates, notices } = extractCandidates({ files, profile });
